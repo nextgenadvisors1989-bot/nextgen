@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+:root {
+  --color-navy: #0F2C5C;
+  --color-blue: #1E4A8C;
+  --color-green: #16A34A;
+  --color-purple: #7C3AED;
+  --color-orange: #F97316;
+  --color-teal: #0D9488;
+  --color-red: #DC2626;
+  --color-gray-bg: #F8FAFC;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #F8FAFC;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid #1E4A8C;
+  outline-offset: 2px;
+}
+
+/* Table styles */
+table {
+  border-collapse: collapse;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
