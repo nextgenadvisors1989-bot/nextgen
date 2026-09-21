@@ -11,6 +11,8 @@ import bcrypt from "bcryptjs";
 import { sql } from "drizzle-orm";
 import { insertReturning, insertManyReturning } from "@/lib/db-helpers";
 
+const asDate = (value: string) => new Date(`${value}T00:00:00`);
+
 async function hashPwd(password: string) {
   return bcrypt.hash(password, 12);
 }
@@ -55,7 +57,7 @@ async function main() {
     "ESG and Sustainability Auditor", "General Compliance Auditor",
   ];
 
-  const insertedRoleTypes = await insertReturning(auditorRoleTypes, 
+  const insertedRoleTypes = await insertManyReturning(auditorRoleTypes,
     roleTypeNames.map(name => ({ name, isActive: true }))
   );
   console.log(`Seeded ${insertedRoleTypes.length} auditor role types`);
@@ -70,7 +72,7 @@ async function main() {
     "HR Manager", "HR Executive", "Accountant", "Operator", "Helper",
     "Director", "CEO", "CFO", "Factory Manager", "Production Manager",
   ];
-  const insertedDesignations = await insertReturning(designations, 
+  const insertedDesignations = await insertManyReturning(designations,
     designationNames.map(name => ({ name }))
   );
 
@@ -166,18 +168,18 @@ async function main() {
 
   // Create Departments
   const deptNames = ["Production", "Quality", "HR & Admin", "Accounts", "Maintenance", "Safety"];
-  const insertedDepts = await insertReturning(departments, 
+  const insertedDepts = await insertManyReturning(departments,
     deptNames.map(name => ({ employerId: employer1.id, name }))
   );
 
   // Create Employees
   const empData = [
-    { firstName: "Arun", lastName: "Murugan", email: "emp001@techcorp.com", phone: "9200000001", employeeType: "regular" as const, gender: "male" as const, joiningDate: "2022-01-15", pfNumber: "TN0123456789", esiNumber: "5300012301" },
-    { firstName: "Deepa", lastName: "Krishnan", email: "emp002@techcorp.com", phone: "9200000002", employeeType: "regular" as const, gender: "female" as const, joiningDate: "2022-03-01", pfNumber: "TN0123456790", esiNumber: "5300012302" },
-    { firstName: "Suresh", lastName: "Babu", email: "emp003@techcorp.com", phone: "9200000003", employeeType: "regular" as const, gender: "male" as const, joiningDate: "2021-06-10", pfNumber: "TN0123456791", esiNumber: "5300012303" },
-    { firstName: "Kamala", lastName: "Devi", email: "emp004@techcorp.com", phone: "9200000004", employeeType: "temporary" as const, gender: "female" as const, joiningDate: "2023-04-01" },
-    { firstName: "Ravi", lastName: "Shankar", email: "emp005@techcorp.com", phone: "9200000005", employeeType: "temporary" as const, gender: "male" as const, joiningDate: "2023-07-15" },
-    { firstName: "Abdul", lastName: "Rahman", email: "emp006@techcorp.com", phone: "9200000006", employeeType: "contractor" as const, gender: "male" as const, joiningDate: "2024-01-01" },
+    { firstName: "Arun", lastName: "Murugan", email: "emp001@techcorp.com", phone: "9200000001", employeeType: "regular" as const, gender: "male" as const, joiningDate: asDate("2022-01-15"), pfNumber: "TN0123456789", esiNumber: "5300012301" },
+    { firstName: "Deepa", lastName: "Krishnan", email: "emp002@techcorp.com", phone: "9200000002", employeeType: "regular" as const, gender: "female" as const, joiningDate: asDate("2022-03-01"), pfNumber: "TN0123456790", esiNumber: "5300012302" },
+    { firstName: "Suresh", lastName: "Babu", email: "emp003@techcorp.com", phone: "9200000003", employeeType: "regular" as const, gender: "male" as const, joiningDate: asDate("2021-06-10"), pfNumber: "TN0123456791", esiNumber: "5300012303" },
+    { firstName: "Kamala", lastName: "Devi", email: "emp004@techcorp.com", phone: "9200000004", employeeType: "temporary" as const, gender: "female" as const, joiningDate: asDate("2023-04-01") },
+    { firstName: "Ravi", lastName: "Shankar", email: "emp005@techcorp.com", phone: "9200000005", employeeType: "temporary" as const, gender: "male" as const, joiningDate: asDate("2023-07-15") },
+    { firstName: "Abdul", lastName: "Rahman", email: "emp006@techcorp.com", phone: "9200000006", employeeType: "contractor" as const, gender: "male" as const, joiningDate: asDate("2024-01-01") },
   ];
 
   const insertedEmployees = [];
@@ -247,7 +249,7 @@ async function main() {
       pfPercentage: "12",
       esiPercentage: "0.75",
       ptAmount: "200",
-      effectiveFrom: "2024-01-01",
+      effectiveFrom: asDate("2024-01-01"),
       isActive: true,
       createdBy: employerUser.id,
     });
@@ -259,7 +261,7 @@ async function main() {
     await db.insert(attendance).values({
       employeeId: emp.id,
       employerId: employer1.id,
-      date: today.toISOString().split("T")[0],
+      date: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
       clockIn: new Date(today.setHours(9, 0, 0)),
       clockOut: new Date(today.setHours(18, 0, 0)),
       method: "manual",
@@ -292,8 +294,8 @@ async function main() {
     employeeId: insertedEmployees[0].id,
     employerId: employer1.id,
     leaveType: "casual",
-    fromDate: "2026-07-15",
-    toDate: "2026-07-16",
+    fromDate: asDate("2026-07-15"),
+    toDate: asDate("2026-07-16"),
     days: "2",
     reason: "Family function",
     status: "pending",
@@ -316,8 +318,8 @@ async function main() {
     state: "Tamil Nadu",
     district: "Chennai",
     languages: ["English", "Tamil"],
-    validityStart: "2026-01-01",
-    validityEnd: "2027-12-31",
+    validityStart: asDate("2026-01-01"),
+    validityEnd: asDate("2027-12-31"),
     maxActiveAssignments: 10,
     status: "active",
     createdBy: adminUser.id,
@@ -364,8 +366,8 @@ async function main() {
     experience: 7,
     qualification: "B.E. Environmental Engineering",
     state: "Kerala",
-    validityStart: "2026-01-01",
-    validityEnd: "2027-12-31",
+    validityStart: asDate("2026-01-01"),
+    validityEnd: asDate("2027-12-31"),
     status: "active",
     createdBy: adminUser.id,
   });
@@ -394,8 +396,8 @@ async function main() {
     auditorId: auditor1.id,
     employerId: employer1.id,
     assignedBy: adminUser.id,
-    startDate: "2026-01-01",
-    endDate: "2026-12-31",
+    startDate: asDate("2026-01-01"),
+    endDate: asDate("2026-12-31"),
     isActive: true,
     notes: "Annual electrical and fire safety audits",
   });
@@ -471,7 +473,7 @@ async function main() {
   });
 
   if (electricalRole) {
-    await db.insert(auditTypeRoles).values({ auditTypeId: electricalAuditType[0].id, roleTypeId: electricalRole.id });
+    await db.insert(auditTypeRoles).values({ auditTypeId: electricalAuditType.id, roleTypeId: electricalRole.id });
   }
 
   const waterAuditType = await insertReturning(auditTypes, {
@@ -531,7 +533,7 @@ async function main() {
   });
 
   if (waterRole) {
-    await db.insert(auditTypeRoles).values({ auditTypeId: waterAuditType[0].id, roleTypeId: waterRole.id });
+    await db.insert(auditTypeRoles).values({ auditTypeId: waterAuditType.id, roleTypeId: waterRole.id });
   }
 
   const envAuditType = await insertReturning(auditTypes, {
@@ -587,7 +589,7 @@ async function main() {
   });
 
   if (envRole) {
-    await db.insert(auditTypeRoles).values({ auditTypeId: envAuditType[0].id, roleTypeId: envRole.id });
+    await db.insert(auditTypeRoles).values({ auditTypeId: envAuditType.id, roleTypeId: envRole.id });
   }
 
   const payrollAuditType = await insertReturning(auditTypes, {
@@ -632,20 +634,19 @@ async function main() {
   });
 
   if (payrollRole) {
-    await db.insert(auditTypeRoles).values({ auditTypeId: payrollAuditType[0].id, roleTypeId: payrollRole.id });
+    await db.insert(auditTypeRoles).values({ auditTypeId: payrollAuditType.id, roleTypeId: payrollRole.id });
   }
 
   console.log("Created audit types");
 
   // Create a sample audit
   await db.insert(audits).values({
-    auditNumber: "AUD-AUDIT-2026-000001",
-    auditTypeId: electricalAuditType[0].id,
+    auditTypeId: electricalAuditType.id,
     auditorId: auditor1.id,
     employerId: employer1.id,
     assignmentId: assignment1.id,
     status: "draft",
-    auditDate: "2026-07-20",
+    auditDate: asDate("2026-07-20"),
     formData: {
       general: {
         company: "TechCorp Industries Pvt Ltd",
@@ -732,11 +733,11 @@ async function main() {
   ]);
 
   // Create Compliance Calendar
-  await db.insert(complianceCalendar).values([
-    { employerId: employer1.id, title: "Monthly PF Return Filing", description: "File monthly PF return with EPFO", dueDate: "2026-07-15", frequency: "monthly", status: "pending", createdBy: adminUser.id },
-    { employerId: employer1.id, title: "Monthly ESI Return Filing", description: "File monthly ESI return", dueDate: "2026-07-21", frequency: "monthly", status: "pending", createdBy: adminUser.id },
-    { employerId: employer1.id, title: "Annual Electrical Safety Audit", description: "Mandatory annual electrical audit", dueDate: "2026-08-01", frequency: "annual", status: "pending", createdBy: adminUser.id },
-    { employerId: employer1.id, title: "Water Discharge Compliance Report", description: "Quarterly water discharge report to TNPCB", dueDate: "2026-09-30", frequency: "quarterly", status: "pending", createdBy: adminUser.id },
+  await insertManyReturning(complianceCalendar, [
+    { employerId: employer1.id, title: "Monthly PF Return Filing", description: "File monthly PF return with EPFO", dueDate: asDate("2026-07-15"), frequency: "monthly", status: "pending", createdBy: adminUser.id },
+    { employerId: employer1.id, title: "Monthly ESI Return Filing", description: "File monthly ESI return", dueDate: asDate("2026-07-21"), frequency: "monthly", status: "pending", createdBy: adminUser.id },
+    { employerId: employer1.id, title: "Annual Electrical Safety Audit", description: "Mandatory annual electrical audit", dueDate: asDate("2026-08-01"), frequency: "annual", status: "pending", createdBy: adminUser.id },
+    { employerId: employer1.id, title: "Water Discharge Compliance Report", description: "Quarterly water discharge report to TNPCB", dueDate: asDate("2026-09-30"), frequency: "quarterly", status: "pending", createdBy: adminUser.id },
   ]);
 
   // Create Notifications
@@ -747,7 +748,7 @@ async function main() {
   ]);
 
   // Create Digital Credentials
-  await db.insert(digitalCredentials).values([
+  await insertManyReturning(digitalCredentials, [
     {
       credentialId: "CRED-AUD-2026-001",
       ownerType: "auditor",
@@ -755,8 +756,8 @@ async function main() {
       userId: auditor1User.id,
       digitalVerificationNumber: "DVN-AUD-2026-RAVI-001",
       qrPayload: JSON.stringify({ id: "CRED-AUD-2026-001", type: "auditor", name: "Ravi Kumar" }),
-      validFrom: "2026-01-01",
-      validTo: "2027-12-31",
+      validFrom: asDate("2026-01-01"),
+      validTo: asDate("2027-12-31"),
       status: "active",
       issuedBy: adminUser.id,
     },
