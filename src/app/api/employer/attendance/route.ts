@@ -14,7 +14,9 @@ export async function GET(request: NextRequest) {
     const employerId = authUser.employerId;
     if (!employerId) return apiError("No employer associated", 400);
 
-    const date = new URL(request.url).searchParams.get("date") || new Date().toISOString().slice(0, 10);
+    const requestedDate = new URL(request.url).searchParams.get("date");
+    const [year, month, day] = (requestedDate || new Date().toISOString().slice(0, 10)).split("-").map(Number);
+    const date = new Date(year, month - 1, day);
 
     const rows = await db.select({
       id: attendance.id,

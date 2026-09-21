@@ -8,8 +8,9 @@ import { insertReturning, updateReturning } from "@/lib/db-helpers";
 
 export const dynamic = "force-dynamic";
 
-function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
+function todayDate(): Date {
+  const today = new Date();
+  return new Date(today.getFullYear(), today.getMonth(), today.getDate());
 }
 
 export async function GET() {
@@ -22,7 +23,7 @@ export async function GET() {
     const [today] = await db
       .select()
       .from(attendance)
-      .where(and(eq(attendance.employeeId, employeeId), eq(attendance.date, todayStr())))
+      .where(and(eq(attendance.employeeId, employeeId), eq(attendance.date, todayDate())))
       .limit(1);
 
     return apiResponse({ today: today || null });
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const action = body.action;
-    const date = todayStr();
+    const date = todayDate();
 
     const [existing] = await db
       .select()

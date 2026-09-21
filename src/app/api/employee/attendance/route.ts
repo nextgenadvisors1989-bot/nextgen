@@ -21,9 +21,9 @@ export async function GET(request: NextRequest) {
 
     const conditions = [eq(attendance.employeeId, employeeId)];
     if (month && year) {
-      const start = `${year}-${month.padStart(2, "0")}-01`;
+      const start = new Date(Number(year), Number(month) - 1, 1);
       const endDate = new Date(Number(year), Number(month), 0).getDate();
-      const end = `${year}-${month.padStart(2, "0")}-${String(endDate).padStart(2, "0")}`;
+      const end = new Date(Number(year), Number(month) - 1, endDate);
       conditions.push(gte(attendance.date, start), lte(attendance.date, end));
     }
 
