@@ -33,8 +33,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     for (const f of EDITABLE) if (body[f] !== undefined) updateData[f] = String(body[f]);
 
     const merged = { ...line, ...updateData };
-    const gross = parseFloat(merged.basic) + parseFloat(merged.da) + parseFloat(merged.hra) + parseFloat(merged.ta) + parseFloat(merged.overtimeWage) + parseFloat(String(merged.incentive)) + parseFloat(String(merged.bonus));
-    const totalDeductions = parseFloat(merged.pfDeduction) + parseFloat(merged.esiDeduction) + parseFloat(merged.ptDeduction) + parseFloat(String(merged.messDeduction)) + parseFloat(String(merged.otherDeductions));
+    const gross = Number(merged.basic ?? 0) + Number(merged.da ?? 0) + Number(merged.hra ?? 0) + Number(merged.ta ?? 0) + Number(merged.overtimeWage ?? 0) + Number(merged.incentive ?? 0) + Number(merged.bonus ?? 0);
+    const totalDeductions = Number(merged.pfDeduction ?? 0) + Number(merged.esiDeduction ?? 0) + Number(merged.ptDeduction ?? 0) + Number(merged.messDeduction ?? 0) + Number(merged.otherDeductions ?? 0);
     const netWage = gross - totalDeductions;
 
     const updated = await updateReturning(payrollLines, {

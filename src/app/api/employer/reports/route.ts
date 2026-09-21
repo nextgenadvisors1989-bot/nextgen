@@ -13,7 +13,7 @@ export async function GET() {
     const employerId = authUser.employerId;
     if (!employerId) return apiError("No employer associated", 400);
 
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const [byDept, attendanceTrend, monthlyPayroll, leaveByType, auditStatus] = await Promise.all([
       db.select({
