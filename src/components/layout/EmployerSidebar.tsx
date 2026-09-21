@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -7,6 +8,7 @@ import {
   DollarSign, BarChart3, Bell, Settings, LogOut, ChevronRight, UserPlus,
   ClipboardList, CreditCard, Gift, Minus, FileCheck, BadgeCheck, Shield,
   UserCheck, Layers,
+  Menu, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +40,7 @@ const nav = [
 
 export function EmployerSidebar() {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -45,9 +48,15 @@ export function EmployerSidebar() {
   }
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-slate-800 text-white flex flex-col h-screen sticky top-0">
+    <>
+      <button type="button" onClick={() => setMobileOpen(true)} className="fixed left-3 top-3 z-50 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 text-white shadow-lg md:hidden" aria-label="Open navigation">
+        <Menu className="h-5 w-5" />
+      </button>
+      {mobileOpen && <button type="button" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-40 bg-slate-950/50 md:hidden" aria-label="Close navigation" />}
+      <aside className={cn("fixed inset-y-0 left-0 z-50 flex h-screen w-72 flex-shrink-0 -translate-x-full flex-col bg-slate-800 text-white shadow-2xl transition-transform duration-200 md:sticky md:top-0 md:w-64 md:translate-x-0 md:shadow-none", mobileOpen && "translate-x-0")}>
       <div className="px-5 py-4 border-b border-slate-700">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-purple-600 flex items-center justify-center flex-shrink-0">
             <Building2 className="w-5 h-5 text-white" />
           </div>
@@ -55,6 +64,8 @@ export function EmployerSidebar() {
             <p className="text-xs font-bold text-white tracking-wider uppercase">Employer</p>
             <p className="text-[10px] text-slate-400">Workforce & Compliance</p>
           </div>
+          </div>
+          <button type="button" onClick={() => setMobileOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-700 hover:text-white md:hidden" aria-label="Close navigation"><X className="h-5 w-5" /></button>
         </div>
       </div>
 
@@ -64,6 +75,7 @@ export function EmployerSidebar() {
           return (
             <Link
               key={href}
+              onClick={() => setMobileOpen(false)}
               href={href}
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-0.5",
@@ -86,5 +98,6 @@ export function EmployerSidebar() {
         </button>
       </div>
     </aside>
+    </>
   );
 }

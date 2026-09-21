@@ -63,7 +63,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center px-3 py-6 sm:p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
@@ -75,7 +75,7 @@ export default function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Sign In</h2>
 
           {error && (
@@ -159,10 +159,10 @@ export default function LoginPage() {
               <button
                 key={acc.email}
                 onClick={() => fillDemo(acc.email, acc.password)}
-                className="flex items-center justify-between px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs text-white transition text-left"
+                className="flex min-w-0 items-center gap-3 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs text-white transition text-left"
               >
-                <span className="font-medium">{acc.label}</span>
-                <span className="text-blue-300">{acc.email}</span>
+                <span className="shrink-0 font-medium">{acc.label}</span>
+                <span className="min-w-0 break-all text-right text-blue-300">{acc.email}</span>
               </button>
             ))}
           </div>

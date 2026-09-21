@@ -17,6 +17,18 @@
 
 body {
   background-color: #F8FAFC;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+main {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  table {
+    min-width: 640px;
+  }
 }
 
 /* Scrollbar styling */
