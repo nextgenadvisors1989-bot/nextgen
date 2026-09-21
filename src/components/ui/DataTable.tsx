@@ -22,7 +22,7 @@ interface DataTableProps<T> {
   keyField?: string;
 }
 
-export function DataTable<T extends Record<string, unknown>>({
+export function DataTable<T extends object>({
   columns,
   data,
   total = 0,
@@ -35,6 +35,7 @@ export function DataTable<T extends Record<string, unknown>>({
   keyField = "id",
 }: DataTableProps<T>) {
   const totalPages = Math.ceil(total / pageSize);
+  const getCellValue = (row: T, key: string) => (row as Record<string, unknown>)[key];
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -71,12 +72,12 @@ export function DataTable<T extends Record<string, unknown>>({
             ) : (
               data.map((row, idx) => (
                 <tr
-                  key={String(row[keyField] || idx)}
+                  key={String(getCellValue(row, keyField) || idx)}
                   className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                 >
                   {columns.map((col) => (
                     <td key={col.key} className={`px-4 py-3 text-gray-700 ${col.className || ""}`}>
-                      {col.render ? col.render(row) : String(row[col.key] ?? "-")}
+                      {col.render ? col.render(row) : String(getCellValue(row, col.key) ?? "-")}
                     </td>
                   ))}
                 </tr>
