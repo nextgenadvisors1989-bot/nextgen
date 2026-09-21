@@ -158,7 +158,7 @@ export const users = mysqlTable(
 export const sessions = mysqlTable("sessions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("user_id").notNull(),
-  refreshToken: text("refresh_token").notNull().unique(),
+  refreshToken: varchar("refresh_token", { length: 512 }).notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   ipAddress: varchar("ip_address", { length: 45 }),
@@ -168,7 +168,7 @@ export const sessions = mysqlTable("sessions", {
 export const passwordResetTokens = mysqlTable("password_reset_tokens", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("user_id").notNull(),
-  token: text("token").notNull().unique(),
+  token: varchar("token", { length: 512 }).notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
   usedAt: timestamp("used_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -177,7 +177,7 @@ export const passwordResetTokens = mysqlTable("password_reset_tokens", {
 export const emailVerificationTokens = mysqlTable("email_verification_tokens", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("user_id").notNull(),
-  token: text("token").notNull().unique(),
+  token: varchar("token", { length: 512 }).notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
   usedAt: timestamp("used_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

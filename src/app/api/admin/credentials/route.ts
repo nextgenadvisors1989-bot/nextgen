@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
     const credentialId = generateId(ownerType === "employee" ? "EMP-CRED" : ownerType === "employer" ? "EMR-CRED" : "AUD-CRED", year, ownerId);
     const digitalVerificationNumber = generateId("DVN", year, Date.now() % 1000000);
 
-    const validFrom = new Date().toISOString().slice(0, 10);
-    const validTo = new Date(Date.now() + (validityMonths || 12) * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const validFrom = new Date();
+    const validTo = new Date(Date.now() + (validityMonths || 12) * 30 * 24 * 60 * 60 * 1000);
 
     const credential = await insertReturning(digitalCredentials, {
       credentialId, ownerType, ownerId,
