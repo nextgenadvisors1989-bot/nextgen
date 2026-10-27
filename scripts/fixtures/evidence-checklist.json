@@ -1,0 +1,1343 @@
+{
+ "source": "Factory Profile and Legal Register.docx",
+ "sections": [
+  {
+   "name": "Factory Profile",
+   "items": [
+    {
+     "group": null,
+     "name": "Company Profile",
+     "sort_order": 10
+    },
+    {
+     "group": null,
+     "name": "Business Registration License",
+     "sort_order": 20
+    },
+    {
+     "group": null,
+     "name": "Tax Registration",
+     "sort_order": 30
+    },
+    {
+     "group": null,
+     "name": "Organization chart",
+     "sort_order": 40
+    },
+    {
+     "group": null,
+     "name": "Land use/construction permit",
+     "sort_order": 50
+    },
+    {
+     "group": null,
+     "name": "List of Machineries",
+     "sort_order": 60
+    },
+    {
+     "group": null,
+     "name": "Company vehicle list",
+     "sort_order": 70
+    },
+    {
+     "group": null,
+     "name": "Production process flow chart",
+     "sort_order": 80
+    },
+    {
+     "group": null,
+     "name": "List of subcontractors, if any",
+     "sort_order": 90
+    },
+    {
+     "group": null,
+     "name": "Dormitory details",
+     "sort_order": 100
+    },
+    {
+     "group": null,
+     "name": "List of Fire equipment",
+     "sort_order": 110
+    },
+    {
+     "group": null,
+     "name": "Any certificate by any other independent organization like SA8000, ICTI etc.",
+     "sort_order": 120
+    },
+    {
+     "group": null,
+     "name": "Building approval plan (architectural & structural) from concern Govt. authority; Approved building construction lay out from engineering authority, if applicable",
+     "sort_order": 130
+    },
+    {
+     "group": null,
+     "name": "Building layout approval from fire service & Fire Occupancy Certificate",
+     "sort_order": 140
+    },
+    {
+     "group": null,
+     "name": "Employee name list",
+     "sort_order": 150
+    }
+   ],
+   "sort_order": 10
+  },
+  {
+   "name": "Recruitment / Hiring & Termination",
+   "items": [
+    {
+     "group": null,
+     "name": "Recruitment policies and procedures & Age verification process",
+     "sort_order": 10
+    },
+    {
+     "group": null,
+     "name": "Child Labor Remediation Procedure",
+     "sort_order": 20
+    },
+    {
+     "group": null,
+     "name": "Security Service Contract",
+     "sort_order": 30
+    },
+    {
+     "group": null,
+     "name": "Training Records other than Health & Safety",
+     "sort_order": 40
+    },
+    {
+     "group": null,
+     "name": "Work permits (internal/external)",
+     "sort_order": 50
+    },
+    {
+     "group": null,
+     "name": "Employment Contracts",
+     "sort_order": 60
+    },
+    {
+     "group": null,
+     "name": "Job announcement/description, job application form, if applicable",
+     "sort_order": 70
+    },
+    {
+     "group": null,
+     "name": "Labor broker contract & dispatching worker personal records/contract",
+     "sort_order": 80
+    },
+    {
+     "group": null,
+     "name": "Apprenticeship program (if applicable)",
+     "sort_order": 90
+    },
+    {
+     "group": null,
+     "name": "Adolescent workers (registration/approval letter from local labor bureau, health checking record)",
+     "sort_order": 100
+    },
+    {
+     "group": null,
+     "name": "Immigrant workers (working permit/visa, passport, contract, personal records)",
+     "sort_order": 110
+    },
+    {
+     "group": null,
+     "name": "Termination policy and procedure, training records",
+     "sort_order": 120
+    },
+    {
+     "group": null,
+     "name": "Employee resign records",
+     "sort_order": 130
+    }
+   ],
+   "sort_order": 20
+  },
+  {
+   "name": "Wages & Benefits",
+   "items": [
+    {
+     "group": null,
+     "name": "Minimum wage Notification",
+     "sort_order": 10
+    },
+    {
+     "group": null,
+     "name": "Payroll (Wage records)",
+     "sort_order": 20
+    },
+    {
+     "group": null,
+     "name": "Full & Final Settlement",
+     "sort_order": 30
+    },
+    {
+     "group": null,
+     "name": "Leave records",
+     "sort_order": 40
+    },
+    {
+     "group": null,
+     "name": "Bonus records",
+     "sort_order": 50
+    },
+    {
+     "group": null,
+     "name": "EOBI (Employees Old Age Benefit) records",
+     "sort_order": 60
+    },
+    {
+     "group": null,
+     "name": "Social security records & commercial insurance records",
+     "sort_order": 70
+    },
+    {
+     "group": null,
+     "name": "Receipts showing tax payments/social security remittances to appropriate public agencies",
+     "sort_order": 80
+    },
+    {
+     "group": null,
+     "name": "Evidence of granting maternity/paternity leave and subsequent return to work",
+     "sort_order": 90
+    },
+    {
+     "group": null,
+     "name": "Piece rate wages sheet, if applicable",
+     "sort_order": 100
+    },
+    {
+     "group": null,
+     "name": "Annual leave and any paid leave payment record",
+     "sort_order": 110
+    },
+    {
+     "group": null,
+     "name": "Bank transferring records (for wages if applicable).",
+     "sort_order": 120
+    }
+   ],
+   "sort_order": 30
+  },
+  {
+   "name": "Employee Treatment & Involvement",
+   "items": [
+    {
+     "group": null,
+     "name": "Records from disciplinary procedures",
+     "sort_order": 10
+    },
+    {
+     "group": null,
+     "name": "Meeting notes from any type of worker/management committee",
+     "sort_order": 20
+    },
+    {
+     "group": null,
+     "name": "Trade union records",
+     "sort_order": 30
+    },
+    {
+     "group": null,
+     "name": "Grievance register/Grievance mechanism (procedure, intake channel, investigation/solution/feedback records",
+     "sort_order": 40
+    },
+    {
+     "group": null,
+     "name": "Org Chart of Trade union, worker/management committee",
+     "sort_order": 50
+    },
+    {
+     "group": null,
+     "name": "Written policies regarding anti-harassment, physical/sexual/emotional abuse and non-discrimination, no forced labor",
+     "sort_order": 60
+    },
+    {
+     "group": null,
+     "name": "Freedom of association procedure",
+     "sort_order": 70
+    }
+   ],
+   "sort_order": 40
+  },
+  {
+   "name": "Health & Safety",
+   "items": [
+    {
+     "group": null,
+     "name": "Building plan approval/Permit",
+     "sort_order": 10
+    },
+    {
+     "group": null,
+     "name": "Fire NOC",
+     "sort_order": 20
+    },
+    {
+     "group": null,
+     "name": "Genset installation approval",
+     "sort_order": 30
+    },
+    {
+     "group": null,
+     "name": "Building Stability Certificate",
+     "sort_order": 40
+    },
+    {
+     "group": null,
+     "name": "Appointment of Labor Welfare/Safety Officer",
+     "sort_order": 50
+    },
+    {
+     "group": null,
+     "name": "Drinking Water Potability test",
+     "sort_order": 60
+    },
+    {
+     "group": null,
+     "name": "Boiler License",
+     "sort_order": 70
+    },
+    {
+     "group": null,
+     "name": "Lift License/Inspection certificate",
+     "sort_order": 80
+    },
+    {
+     "group": null,
+     "name": "Boiler Operator and Electrician Certificate",
+     "sort_order": 90
+    },
+    {
+     "group": null,
+     "name": "Noise and Illumination level test Certificate",
+     "sort_order": 100
+    },
+    {
+     "group": null,
+     "name": "Sanitation Certificate",
+     "sort_order": 110
+    },
+    {
+     "group": null,
+     "name": "Health Certificate for Workers",
+     "sort_order": 120
+    },
+    {
+     "group": null,
+     "name": "Doctor/Nurse Appointment Letter",
+     "sort_order": 130
+    },
+    {
+     "group": null,
+     "name": "First Aid Training Certificate",
+     "sort_order": 140
+    },
+    {
+     "group": null,
+     "name": "Fire Fighting Training Certificate",
+     "sort_order": 150
+    },
+    {
+     "group": null,
+     "name": "Fire Mock drill training records",
+     "sort_order": 160
+    },
+    {
+     "group": null,
+     "name": "Industrial accident records",
+     "sort_order": 170
+    },
+    {
+     "group": null,
+     "name": "Pollution Control board Consent order",
+     "sort_order": 180
+    },
+    {
+     "group": null,
+     "name": "Waste disposal records / Procedures",
+     "sort_order": 190
+    },
+    {
+     "group": null,
+     "name": "Personal Protective Equipment (PPE) training records",
+     "sort_order": 200
+    },
+    {
+     "group": null,
+     "name": "Chemical safety training records",
+     "sort_order": 210
+    },
+    {
+     "group": null,
+     "name": "List of chemicals used (Hazardous/Non-hazardous)",
+     "sort_order": 220
+    },
+    {
+     "group": null,
+     "name": "Material Safety Data Sheets (MSDS) records",
+     "sort_order": 230
+    },
+    {
+     "group": null,
+     "name": "Maintenance records of eye wash station",
+     "sort_order": 240
+    },
+    {
+     "group": null,
+     "name": "Machines maintenance/service records",
+     "sort_order": 250
+    },
+    {
+     "group": null,
+     "name": "Lock Out/Tag Out survey report, LOTO training records",
+     "sort_order": 260
+    },
+    {
+     "group": null,
+     "name": "Water Extraction Permit, if applicable",
+     "sort_order": 270
+    },
+    {
+     "group": null,
+     "name": "Permit for onsite waste disposal",
+     "sort_order": 280
+    },
+    {
+     "group": null,
+     "name": "License issued by government authority to hazardous waste collector",
+     "sort_order": 290
+    },
+    {
+     "group": null,
+     "name": "Contract agreement with licensed contractor for hazardous waste collection",
+     "sort_order": 300
+    },
+    {
+     "group": null,
+     "name": "Hazardous Waste Transfer Contract/License of Hazardous Waste Handler/License of Hazardous Waste",
+     "sort_order": 310
+    },
+    {
+     "group": null,
+     "name": "Transporter/Hazardous Waste Manifest, if applicable",
+     "sort_order": 320
+    },
+    {
+     "group": null,
+     "name": "Waste inventory and tracking records",
+     "sort_order": 330
+    },
+    {
+     "group": null,
+     "name": "Wastewater monitoring records",
+     "sort_order": 340
+    },
+    {
+     "group": null,
+     "name": "Flow Chart (indicating all key processes)",
+     "sort_order": 350
+    },
+    {
+     "group": null,
+     "name": "Drainage layout",
+     "sort_order": 360
+    },
+    {
+     "group": null,
+     "name": "Waste treatment equipment's maintenance records",
+     "sort_order": 370
+    },
+    {
+     "group": null,
+     "name": "Wastewater Treatment Plant operator certificate, if applicable",
+     "sort_order": 380
+    },
+    {
+     "group": null,
+     "name": "Approval of waste treatment system i.e. IEE (Initial Environmental Examination)/EIA (Environmental Impact Assessment)",
+     "sort_order": 390
+    },
+    {
+     "group": null,
+     "name": "Environmental Impact Assessment Reports and Approval/Environmental Protection Acceptance Report/Pollutant Discharge Permit if applicable",
+     "sort_order": 400
+    },
+    {
+     "group": null,
+     "name": "Air emissions control equipment's maintenance records",
+     "sort_order": 410
+    },
+    {
+     "group": null,
+     "name": "Ozone Depleting Substances (ODS) inventory and maintenance records",
+     "sort_order": 420
+    },
+    {
+     "group": null,
+     "name": "Fuel consumption record for factory's transportation.",
+     "sort_order": 430
+    },
+    {
+     "group": null,
+     "name": "Green House Gases (GHG) emissions inventory",
+     "sort_order": 440
+    },
+    {
+     "group": null,
+     "name": "Emergency response plan including relevant training and drills records",
+     "sort_order": 450
+    },
+    {
+     "group": null,
+     "name": "Risk Assessment (procedure & records)",
+     "sort_order": 460
+    },
+    {
+     "group": null,
+     "name": "Vehicle operator licenses for any/all types of motorized vehicles",
+     "sort_order": 470
+    },
+    {
+     "group": null,
+     "name": "Banned Chemicals List, if any",
+     "sort_order": 480
+    },
+    {
+     "group": null,
+     "name": "Meeting notes from recent health and safety committee",
+     "sort_order": 490
+    },
+    {
+     "group": null,
+     "name": "Air receiver is fit to operate certificate",
+     "sort_order": 500
+    },
+    {
+     "group": null,
+     "name": "Steam receiver is fit to operate certificate",
+     "sort_order": 510
+    },
+    {
+     "group": null,
+     "name": "Food test reports",
+     "sort_order": 520
+    },
+    {
+     "group": null,
+     "name": "Accident records/accident analysis records.",
+     "sort_order": 530
+    },
+    {
+     "group": null,
+     "name": "Electrical safety test report",
+     "sort_order": 540
+    },
+    {
+     "group": null,
+     "name": "Thermographic survey report",
+     "sort_order": 550
+    },
+    {
+     "group": null,
+     "name": "VOC test reports/Air emission monitoring report if applicable",
+     "sort_order": 560
+    },
+    {
+     "group": null,
+     "name": "Cooling tower water reports/legislation reports",
+     "sort_order": 570
+    },
+    {
+     "group": null,
+     "name": "Inspection reports (fire hydrant system, sprinkler, detection system, extinguisher, firefighting equipment,emergency lamps)",
+     "sort_order": 580
+    },
+    {
+     "group": null,
+     "name": "PPE suitability assessment, PPE selection criteria, PPE list, PPE inspection records",
+     "sort_order": 590
+    },
+    {
+     "group": null,
+     "name": "Confined space list, confined space entry procedure",
+     "sort_order": 600
+    },
+    {
+     "group": null,
+     "name": "PCB survey, PCB training records PCB",
+     "sort_order": 610
+    },
+    {
+     "group": null,
+     "name": "Asbestos survey, training records",
+     "sort_order": 620
+    },
+    {
+     "group": null,
+     "name": "Food supplier's medical reports",
+     "sort_order": 630
+    },
+    {
+     "group": null,
+     "name": "PHI report for the canteen",
+     "sort_order": 640
+    },
+    {
+     "group": null,
+     "name": "Canteen License",
+     "sort_order": 650
+    },
+    {
+     "group": null,
+     "name": "Hot Work operation procedure",
+     "sort_order": 660
+    },
+    {
+     "group": null,
+     "name": "Compressed gas cylinder operation procedure",
+     "sort_order": 670
+    },
+    {
+     "group": null,
+     "name": "Work permits for special & dangerous operations - forklift driver, lift operator, Electrician and Welder, boiler operator",
+     "sort_order": 680
+    }
+   ],
+   "sort_order": 50
+  },
+  {
+   "name": "Management Systems",
+   "items": [
+    {
+     "group": null,
+     "name": "Social & Labor Policies and Procedures (including goal/strategy/performance, responsible persons (roles & responsibility, CSR team org chart)",
+     "sort_order": 10
+    },
+    {
+     "group": null,
+     "name": "Factory rules and regulations/Employee handbook",
+     "sort_order": 20
+    },
+    {
+     "group": null,
+     "name": "EHS policy & procedure",
+     "sort_order": 30
+    },
+    {
+     "group": null,
+     "name": "Communication and training records for employees, suppliers, subcontractors",
+     "sort_order": 40
+    },
+    {
+     "group": null,
+     "name": "Internal audit records and improvement plan",
+     "sort_order": 50
+    }
+   ],
+   "sort_order": 60
+  },
+  {
+   "name": "SA8000",
+   "items": [
+    {
+     "group": "A) Licences & certificates",
+     "name": "Trade License",
+     "sort_order": 10
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Factory license",
+     "sort_order": 20
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Fire License",
+     "sort_order": 30
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Certificate of Incorporation",
+     "sort_order": 40
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Approved Building Construction Plan",
+     "sort_order": 50
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Approved Building Floor Lay out plan approval from Govt, dept.",
+     "sort_order": 60
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Bond License",
+     "sort_order": 70
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "ERC/IRC",
+     "sort_order": 80
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "EPB",
+     "sort_order": 90
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Floor Diagram",
+     "sort_order": 100
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "TIN/ VAT (11 Digit)",
+     "sort_order": 110
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "BGMEA/BLMEA Membership Certificate",
+     "sort_order": 120
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Boiler License/Generator Op Permission.",
+     "sort_order": 130
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Environment Certificate (if applicable)",
+     "sort_order": 140
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Drinking water test report",
+     "sort_order": 150
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Waste water lab test report",
+     "sort_order": 160
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Receipt, Name list & certificate of Social Insurance / Group Insurance.",
+     "sort_order": 170
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Freight Lift Operation License.",
+     "sort_order": 180
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Fire Insurance Policy",
+     "sort_order": 190
+    },
+    {
+     "group": "A) Licences & certificates",
+     "name": "Other's (if applicable)",
+     "sort_order": 200
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Salary sheet / Pay roll records Dec - May.",
+     "sort_order": 210
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Overtime sheet (Same as salary sheet)",
+     "sort_order": 220
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Piece rate record (If any).",
+     "sort_order": 230
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Time card (Same as salary sheet)",
+     "sort_order": 240
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Pay/ Wage slip",
+     "sort_order": 250
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Personal File (No...........)",
+     "sort_order": 260
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Doctor's, Nurse, Welfare Officer, Electrician, Child Care Attendee, Security Guards Personal Files.",
+     "sort_order": 270
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Maternity benefit file.",
+     "sort_order": 280
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Resign worker file",
+     "sort_order": 290
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Worker ID Card.",
+     "sort_order": 300
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Factory policies, rules & regulations",
+     "sort_order": 310
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Notice file",
+     "sort_order": 320
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Previous audit report.",
+     "sort_order": 330
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Salary payment Voucher.",
+     "sort_order": 340
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "Service Book/Employee hand book /Factory regulation",
+     "sort_order": 350
+    },
+    {
+     "group": "B) Wages & personnel records",
+     "name": "All labor contracts",
+     "sort_order": 360
+    },
+    {
+     "group": "C) Registers",
+     "name": "Attendance registers",
+     "sort_order": 370
+    },
+    {
+     "group": "C) Registers",
+     "name": "Over time register",
+     "sort_order": 380
+    },
+    {
+     "group": "C) Registers",
+     "name": "Leave register(C/L,S/L,E/L,M/L,F/L)",
+     "sort_order": 390
+    },
+    {
+     "group": "C) Registers",
+     "name": "Earn leave payment register 5) Maternity benefit register with file (No....)",
+     "sort_order": 400
+    },
+    {
+     "group": "C) Registers",
+     "name": "Child care register",
+     "sort_order": 410
+    },
+    {
+     "group": "C) Registers",
+     "name": "Fire Drill register",
+     "sort_order": 420
+    },
+    {
+     "group": "C) Registers",
+     "name": "Emergency preparedness",
+     "sort_order": 430
+    },
+    {
+     "group": "C) Registers",
+     "name": "Accident and Injury register",
+     "sort_order": 440
+    },
+    {
+     "group": "C) Registers",
+     "name": "Broken needle register (Tag gun, sewing,hand, knitting, linking)",
+     "sort_order": 450
+    },
+    {
+     "group": "C) Registers",
+     "name": "Blade register (button hole knife, cutting blade, Over lock knife, band knife)",
+     "sort_order": 460
+    },
+    {
+     "group": "C) Registers",
+     "name": "Daily Production Record.",
+     "sort_order": 470
+    },
+    {
+     "group": "C) Registers",
+     "name": "Management Policy",
+     "sort_order": 480
+    },
+    {
+     "group": "C) Registers",
+     "name": "Material Safety Data Sheet (MSDS)",
+     "sort_order": 490
+    },
+    {
+     "group": "C) Registers",
+     "name": "Recruitment Guidelines, Appeal Procedures and Records for Award & Punishment",
+     "sort_order": 500
+    },
+    {
+     "group": "C) Registers",
+     "name": "Electrical Maintenance Register",
+     "sort_order": 510
+    },
+    {
+     "group": "C) Registers",
+     "name": "Machine Maintenance Register",
+     "sort_order": 520
+    },
+    {
+     "group": "C) Registers",
+     "name": "File of few disciplinary cases",
+     "sort_order": 530
+    },
+    {
+     "group": "C) Registers",
+     "name": "Baby food register",
+     "sort_order": 540
+    },
+    {
+     "group": "C) Registers",
+     "name": "Switch off register",
+     "sort_order": 550
+    },
+    {
+     "group": "C) Registers",
+     "name": "Lefty workers letter issue register.",
+     "sort_order": 560
+    },
+    {
+     "group": "C) Registers",
+     "name": "Service Book issue register",
+     "sort_order": 570
+    },
+    {
+     "group": "C) Registers",
+     "name": "Grievance Register.",
+     "sort_order": 580
+    },
+    {
+     "group": "C) Registers",
+     "name": "Disciplinary Action Log",
+     "sort_order": 590
+    },
+    {
+     "group": "C) Registers",
+     "name": "WPC/WWC Register,",
+     "sort_order": 600
+    },
+    {
+     "group": "C) Registers",
+     "name": "BKMEA/BGMEA/Gov. Agencies visitor loç book.",
+     "sort_order": 610
+    },
+    {
+     "group": "C) Registers",
+     "name": "Ledger & Cash Book.",
+     "sort_order": 620
+    },
+    {
+     "group": "D) Training register",
+     "name": "New worker orientation",
+     "sort_order": 630
+    },
+    {
+     "group": "D) Training register",
+     "name": "Health and safety",
+     "sort_order": 640
+    },
+    {
+     "group": "D) Training register",
+     "name": "Code of Conduct",
+     "sort_order": 650
+    },
+    {
+     "group": "D) Training register",
+     "name": "Labor Law",
+     "sort_order": 660
+    },
+    {
+     "group": "D) Training register",
+     "name": "PPE",
+     "sort_order": 670
+    },
+    {
+     "group": "D) Training register",
+     "name": "Training record (Fire, Job, First aid etc.)",
+     "sort_order": 680
+    },
+    {
+     "group": "D) Training register",
+     "name": "Machine operating instruction",
+     "sort_order": 690
+    },
+    {
+     "group": "E) Other certificates",
+     "name": "Employee First-aid training certificate",
+     "sort_order": 700
+    },
+    {
+     "group": "E) Other certificates",
+     "name": "Employee Fire Fighting training certificate",
+     "sort_order": 710
+    },
+    {
+     "group": "E) Other certificates",
+     "name": "Juvenile workers health examination and registration record. (If applicable).",
+     "sort_order": 720
+    },
+    {
+     "group": "E) Other certificates",
+     "name": "Competency Certificate of Boiler Operator",
+     "sort_order": 730
+    },
+    {
+     "group": "E) Other certificates",
+     "name": "Fire trainer's certificate.",
+     "sort_order": 740
+    },
+    {
+     "group": "E) Other certificates",
+     "name": "Contract with Security, nearby medical and Canteen Suppliers & Waste disposal.",
+     "sort_order": 750
+    }
+   ],
+   "sort_order": 70
+  },
+  {
+   "name": "BSCI",
+   "items": [
+    {
+     "group": null,
+     "name": "Financial strength of the company",
+     "sort_order": 10
+    },
+    {
+     "group": null,
+     "name": "Financial balance sheet of the company",
+     "sort_order": 20
+    },
+    {
+     "group": null,
+     "name": "Complain register, complain policy/procedure",
+     "sort_order": 30
+    },
+    {
+     "group": null,
+     "name": "Environmental clearance Certificate (lf applicable)",
+     "sort_order": 40
+    },
+    {
+     "group": null,
+     "name": "Trade license",
+     "sort_order": 50
+    },
+    {
+     "group": null,
+     "name": "Certificate of Incorporation",
+     "sort_order": 60
+    },
+    {
+     "group": null,
+     "name": "BGMEA/BKMEA Membership Certificate",
+     "sort_order": 70
+    },
+    {
+     "group": null,
+     "name": "Group Insurance Certificate & Last premium payment record",
+     "sort_order": 80
+    },
+    {
+     "group": null,
+     "name": "Legal licenses",
+     "sort_order": 90
+    },
+    {
+     "group": null,
+     "name": "Not Limited to",
+     "sort_order": 100
+    },
+    {
+     "group": null,
+     "name": "Export Promotional Bureau Certificate",
+     "sort_order": 110
+    },
+    {
+     "group": null,
+     "name": "Factory license",
+     "sort_order": 120
+    },
+    {
+     "group": null,
+     "name": "Bond license",
+     "sort_order": 130
+    },
+    {
+     "group": null,
+     "name": "Import Registration Certificate",
+     "sort_order": 140
+    },
+    {
+     "group": null,
+     "name": "Export Registration Certificate (ERC)",
+     "sort_order": 150
+    },
+    {
+     "group": null,
+     "name": "Approved floor layout plan",
+     "sort_order": 160
+    },
+    {
+     "group": null,
+     "name": "Approved structural design",
+     "sort_order": 170
+    },
+    {
+     "group": null,
+     "name": "Boiler Certificate",
+     "sort_order": 180
+    },
+    {
+     "group": null,
+     "name": "Generator waver Certificate",
+     "sort_order": 190
+    },
+    {
+     "group": null,
+     "name": "Training record (All)",
+     "sort_order": 200
+    },
+    {
+     "group": null,
+     "name": "Disciplinary action record",
+     "sort_order": 210
+    },
+    {
+     "group": null,
+     "name": "Appointment for BSCI implementation",
+     "sort_order": 220
+    },
+    {
+     "group": null,
+     "name": "Source of legal minimum wages",
+     "sort_order": 230
+    },
+    {
+     "group": null,
+     "name": "Benefits remarks (Mandatory/Voluntary)",
+     "sort_order": 240
+    },
+    {
+     "group": null,
+     "name": "Accidents record",
+     "sort_order": 250
+    },
+    {
+     "group": null,
+     "name": "Environmental procedure not limited to water & waste management, chemical disposer & emission treatment",
+     "sort_order": 260
+    },
+    {
+     "group": null,
+     "name": "Inspection report & maintenance record on health & safety",
+     "sort_order": 270
+    },
+    {
+     "group": null,
+     "name": "Inspection report & maintenance record for fre fighting equipments",
+     "sort_order": 280
+    },
+    {
+     "group": null,
+     "name": "Drinking water test report",
+     "sort_order": 290
+    },
+    {
+     "group": null,
+     "name": "Inspection report, maintenance record and operating & safety instruction for dangerous machine; like- Lift, Boiler, Electrical equipments, Generator Valid certificate/Last Audit report",
+     "sort_order": 300
+    },
+    {
+     "group": null,
+     "name": "Workers participation committee (WPC)",
+     "sort_order": 310
+    },
+    {
+     "group": null,
+     "name": "Pay slip",
+     "sort_order": 320
+    },
+    {
+     "group": null,
+     "name": "Production capacity planning/cost calculation",
+     "sort_order": 330
+    },
+    {
+     "group": null,
+     "name": "Personal file",
+     "sort_order": 340
+    },
+    {
+     "group": null,
+     "name": "Doctor personnel file",
+     "sort_order": 350
+    },
+    {
+     "group": null,
+     "name": "Security personnel file",
+     "sort_order": 360
+    },
+    {
+     "group": null,
+     "name": "Electrician personnel file",
+     "sort_order": 370
+    },
+    {
+     "group": null,
+     "name": "Boiler operator personnel file",
+     "sort_order": 380
+    },
+    {
+     "group": null,
+     "name": "Nurse personnel file",
+     "sort_order": 390
+    },
+    {
+     "group": null,
+     "name": "Material safety data sheet (MSDS)",
+     "sort_order": 400
+    },
+    {
+     "group": null,
+     "name": "All policy and procedure",
+     "sort_order": 410
+    },
+    {
+     "group": null,
+     "name": "Salary sheet",
+     "sort_order": 420
+    },
+    {
+     "group": null,
+     "name": "Working rules/Hand Book",
+     "sort_order": 430
+    },
+    {
+     "group": null,
+     "name": "Time card/Time record",
+     "sort_order": 440
+    },
+    {
+     "group": null,
+     "name": "Hospital contract",
+     "sort_order": 450
+    },
+    {
+     "group": null,
+     "name": "Noise level test report",
+     "sort_order": 460
+    },
+    {
+     "group": null,
+     "name": "Lighting test report/record",
+     "sort_order": 470
+    },
+    {
+     "group": null,
+     "name": "Temperature test report/record",
+     "sort_order": 480
+    },
+    {
+     "group": null,
+     "name": "Air emission test report/record Welfare officer personnel file Resigned worker's personal file",
+     "sort_order": 490
+    },
+    {
+     "group": null,
+     "name": "Management Policy",
+     "sort_order": 500
+    },
+    {
+     "group": null,
+     "name": "Recruitment Guidelines, Appeal Procedures and Records for Award & Punishment.",
+     "sort_order": 510
+    },
+    {
+     "group": null,
+     "name": "Electrical Maintenance Register",
+     "sort_order": 520
+    },
+    {
+     "group": null,
+     "name": "Machine Maintenance Register",
+     "sort_order": 530
+    },
+    {
+     "group": null,
+     "name": "File of few disciplinary cases",
+     "sort_order": 540
+    },
+    {
+     "group": null,
+     "name": "Baby food resister",
+     "sort_order": 550
+    },
+    {
+     "group": null,
+     "name": "Switch off register",
+     "sort_order": 560
+    },
+    {
+     "group": null,
+     "name": "Lefty workers letter issue register",
+     "sort_order": 570
+    },
+    {
+     "group": null,
+     "name": "Service Book issue register",
+     "sort_order": 580
+    },
+    {
+     "group": null,
+     "name": "Grievance Register.",
+     "sort_order": 590
+    },
+    {
+     "group": null,
+     "name": "Disciplinary Action Log",
+     "sort_order": 600
+    },
+    {
+     "group": null,
+     "name": "WPC/WWC Register,",
+     "sort_order": 610
+    },
+    {
+     "group": null,
+     "name": "BKMEА/BGMEA/Gov.Agencies visitor log book",
+     "sort_order": 620
+    },
+    {
+     "group": null,
+     "name": "Ledger & Cash Book",
+     "sort_order": 630
+    }
+   ],
+   "sort_order": 80
+  }
+ ]
+}

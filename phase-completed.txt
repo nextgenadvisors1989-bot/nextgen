@@ -1,0 +1,143 @@
+ComplianceOS - phases completed
+Last updated: 2026-10-26
+Client: NextGen Socio & Enviro Advisors / One Legal Culture
+Stack: Next.js 15, React 19, Tailwind 3, MariaDB (XAMPP), served on port 3001 with `npm run serve`
+
+SUMMARY
+  Roadmap phases completed : 6 of 6 (steps 1 to 6 of the agreed build order)
+  Groundwork phases done before the roadmap : 5
+  All verification suites passed on the last build (see "How it was verified").
+  "Completed" means built and tested on demo data. It does not mean ready for real use:
+  see "Still open" at the end.
+
+
+GROUNDWORK (done before the roadmap)
+  G1  Public pages matched to the client's Socio site (logo, files, home blocks managed from the CMS).
+  G2  Alignment and responsive fixes across every module (tables, chips, "#" column, headers).
+  G3  Demo data for every role (admin, employer, employee, auditor, verifier) and the demo logins.
+  G4  Auditor types linked to audit forms: 46 audit forms mapped to the auditor types that own them.
+  G5  Speed fix: slow navigation came from running `next dev`; the app now runs from a production build
+      (`npm run serve` builds only when the source changed).
+
+
+ROADMAP PHASES (client's report samples, agreed order)
+
+  Phase 1 - CAPAR (Corrective Action and Prevention Action Report)                       DONE
+    - Categories (admin-editable), findings with photos, Act / Rule typed in by the auditor,
+      root cause, action plan, timeline, evidence.
+    - Verifier marks each finding Eligible / Not Eligible; report approved or returned.
+    - Employer sees only its own approved reports; PDF in the Intertek style on the company letterhead.
+    - Company letterhead and logo uploaded once in Company Settings, with a per-report override.
+    - Tests: verify-capar 96 checks.
+
+  Phase 2 - Legal register, Groundwater NOC, water meter log                              DONE
+    - NOC details, 18 standard conditions, meters, cumulative readings, usage against the approved
+      quantity (daily and monthly), Within / Near / Over limit, NOC expiry reminders.
+    - Only the Water auditor type (and admin) can write; the employer reads its own.
+    - NOC mirrored into the Legal Register as an Approval document; PDF.
+    - Tests: verify-water-noc 81 checks, water usage unit tests.
+
+  Phase 3 - Missing audit types, assessments, risk and permit forms                       DONE
+    - ETP Functionality Assessment in the H&M layout with an automatic Red / Yellow / Green grade
+      (design, process control, competence questions; findings and action plan table).
+    - 18 new forms: STP and CETP assessments, Environmental Compliance Audit, TSDF Audit,
+      Environmental Statement (Form V), Energy Audit, GHG Inventory Verification, Food Safety Audit,
+      HACCP Study, Water / Waste / Energy risk assessments, six work permits (work at height, lifting,
+      cold work, confined space, electrical isolation LOTO, excavation).
+    - New auditor types Food Safety and Electrical Safety; HAZOP is now a Study.
+    - Tests: verify-step3-forms 111 checks.
+
+  Phase 4 - Payslips, wage register, personal file, full and final, employee workday        DONE
+    - PDF fonts fixed (the bundled fonts had no rupee sign and no Tamil letters).
+    - Payslip in the client's Service Card cum Payslip format (Form 25 B, 15, 12, VI), English and Tamil,
+      plus the detailed payslip (?format=standard).
+    - Wage register in the client's Rule 11(5) landscape layout.
+    - Ten personal-file documents filled from the employee record: checklist cover, appointment order,
+      confirmation letter, service record, Form F, EPF Form 2, EPF Form 11, bank wage letter,
+      wage revision letter, affirmative statement. The 16-item checklist uses the client's wording.
+    - Full and final settlement PDF.
+    - Employee profile "My Workday": Active / Long leave / Exit, State local / Migrant,
+      Permanent / Temporary / Contract, wage today / week / month, check in / check out with duration,
+      permission requests approved by the employer, benefits, deductions, PF / UAN, payslip download and share.
+    - CTC chart for shift-rated workers (editable percentages).
+    - Tests: verify-step4 63 checks.
+
+  Phase 5 - Quotation and bill (GST invoice) generation                                   DONE
+    - Service catalogue (the ten service lines of the client's quotation), quotations
+      (Draft, Sent, Accepted / Rejected / Expired, Invoiced), GST tax invoices
+      (CGST + SGST or IGST, HSN / SAC summary, number given at issue), payments with numbered receipts.
+    - PDFs for the quotation, the tax invoice and the receipt in the client's layouts.
+    - Admin runs everything; an employer sees only its own issued documents (read-only).
+    - Tests: verify-billing 84 checks, GST unit tests.
+
+  Phase 6 - Public site menu and tools                                                    DONE
+    - Menu in the client's order (desktop Compliance menu, phone drawer, footer).
+    - Seven CMS-editable pages: Payroll / Compliance / IR, Social Security, Health & Safety,
+      Environmental, Service & Global Certification, Training, Audit Structure.
+    - Three tools in the top bar: Safety & Environmental Calculation (injury rates, risk score,
+      emissions, effluent load, water balance, EPF, ESI, gratuity, bonus, overtime),
+      Quotation Generation (request lands in Contact Enquiries; no fees shown publicly),
+      Bill Generation (explains the flow, links clients to Billing).
+    - Tests: verify-site 117 checks, calculator unit tests.
+
+
+  Phase 7 - Premium quotation, Designation Master, Factory Profile                        DONE
+    - Quotation icon in the admin header: pick client and services, the premium one-page A4
+      quotation (brand header, pillar icons, itemised table, GST summary, inclusions, notes,
+      payment terms, acceptance block) opens as a PDF. Defaults come from Settings > Billing.
+    - Designation Master: 1,001 designations in 10 industries loaded from the client's document
+      (`npm run db:seed-designations`). Full add / edit / delete for admin (shared master) and
+      employer (own rows); the employee form picks from it and prefills department, skill grade
+      and wages. A designation in use cannot be deleted; renaming follows through to employees.
+    - Factory Profile: one per employer (licences, people, units, departments, holidays, land,
+      welfare, treatment plants, power / boiler). Employer edits its own; admin opens any company
+      from the employer page.
+    - Fixed on the way: the submission PDF used wrong employer column names (500 error), the
+      browser tab had no favicon link, and the Factory Profile menu icon.
+    - Tests: verify-designations-factory 63 checks, browser audit 30 checks (desktop and phone).
+    - Note: the document's section totals (e.g. 150) do not match the names listed; 527 skill
+      levels were inferred by keywords and are flagged "level_inferred".
+  Phase 8 - CAPAR per the client's "Act and CAPAR" document                                DONE
+    - Act library: Act > Chapter > Section > Sub Section, each with Explain text and Amendments
+      (admin: Compliance > Acts > "Chapters & sections"). The auditor searches it inside the CAPAR row and
+      the path, requirement and amendments fill in (still editable; typing the Act by hand also works).
+    - CAPAR row (item form): status Incomplete / Not findings / Verified (Verified needs finding, root cause,
+      action plan and timeline, and records who signed off and when), Compliance + evidence images,
+      Recommendations, Verification / Assessment. The verifier's Eligible / Not Eligible is unchanged.
+      Existing rows were moved to the new status. The PDF prints the new fields.
+    - Audit Documents (the client's "Factory Profile" checklist): 258 documents in 8 sections
+      (Factory Profile, Recruitment, Wages, Employee Treatment, Health & Safety, Management Systems, SA8000, BSCI).
+      The employer lists documents (Provided / Not applicable, reference, validity, notes, files) and submits;
+      every submission is a dated snapshot. Admin edits the checklist and chooses which sections each auditor gets.
+    - Gate: an auditor with sections must download the employer's latest submitted pack (PDF) before a CAPAR can
+      be started for that company (409 with the reason). Downloads are recorded. Admin is never held up; an
+      auditor with no sections has nothing to download.
+    - Tests: verify-capar-pack 76 checks, browser audit 60 checks; verify-capar 96 still passes.
+    - Not built yet: the "Audit / Assessment Structure" table (the document gives no columns), the Garment
+      checklist and the Legal Register part of the same document (next topic).
+    - Known: the document-pack checklist is built from the clean first part of the Word file (it repeats and
+      mixes other lists further down). Health & Safety shows 68 items against 67 numbered in the file.
+
+HOW IT WAS VERIFIED (last full run)
+    verify-site 117/117, verify-billing 84/84, verify-step4 63/63, verify-step3-forms 111/111,
+    verify-capar 96/96, verify-water-noc 81/81, calculator / GST / water-usage unit tests pass,
+    API smoke test 0 server errors on 192 endpoints, 106/106 panel pages render,
+    responsive audit 0 problems on the new screens at phone, tablet and laptop widths.
+    (Some of these suites were last run on an earlier build than the final one; billing, site and
+    panels were re-run after the final changes.)
+
+
+STILL OPEN (needs the client's or the owner's decision)
+    - Billing: real bank details (the saved ones are placeholders), SAC code 998311 to be confirmed
+      by the accountant, invoice numbering is per calendar year (financial year if preferred).
+    - Public page wording: the seven new pages were written to describe scope only; review before publishing.
+    - Calculator emission factors are examples; enter the current published factors.
+    - Not built: "time card" payslip (no sample was supplied), an insurance deduction line (payroll
+      does not track it). The CTC chart uses the percentages from the client's sheet headings,
+      not their exact formulas.
+    - Not tested: on a real phone (browser narrow-width checks only); with real client data.
+    - Production use: runs on a local XAMPP MariaDB. A real server needs backups, HTTPS and its own
+      database setup. After a restart: `npm run serve`, and start MariaDB in ONE way only
+      (starting it twice corrupted its system tables once).
+    - Other projects' database users (holidayhype, verity_app) lost their grants in a MariaDB repair
+      and have not been restored.

@@ -1,0 +1,205 @@
+{
+  "settings": {
+    "company_name": "One Legal Culture / NextGen Socio & Enviro Advisors",
+    "company_phone": "+91 99948 99948",
+    "company_email": "info@onelegalculture.com",
+    "company_timing": "Mon - Sat: 9:00 AM - 6:00 PM",
+    "company_address": "No.123, Green Avenue, SIDCO Industrial Estate, Coimbatore - 641 021, Tamil Nadu, India.",
+    "company_website": "www.onelegalculture.com",
+    "company_tagline": "Compliance | Safety | Sustainability",
+    "social_facebook": "https://facebook.com",
+    "social_linkedin": "https://linkedin.com",
+    "social_twitter": "https://x.com",
+    "social_instagram": "https://instagram.com"
+  },
+  "sections": [
+    {
+      "key": "hero",
+      "type": "hero",
+      "heading": "ONE LEGAL CULTURE",
+      "subheading": "COMPLIANCE | SAFETY | SUSTAINABILITY",
+      "content_html": "Your Trusted Partner for Legal Compliance, Risk Management, Environment, Safety and Sustainability Solutions.",
+      "items": [
+        { "value": "500+", "label": "Satisfied Clients", "icon": "shield" },
+        { "value": "1000+", "label": "Compliance Projects", "icon": "clipboard" },
+        { "value": "50+", "label": "Expert Professionals", "icon": "users" }
+      ]
+    },
+    {
+      "key": "gateways",
+      "type": "features",
+      "heading": "Login portals",
+      "subheading": "Role-based secure access",
+      "items": [
+        { "title": "ADMIN LOGIN", "text": "Secure access for system administrators and management.", "link": "/login", "linkLabel": "LOGIN NOW", "icon": "lock" },
+        { "title": "EMPLOYEE LOGIN", "text": "Access compliance, training, documents and reports.", "link": "/login", "linkLabel": "LOGIN NOW", "icon": "user-check" },
+        { "title": "CUSTOMER LOGIN", "text": "Track compliance, reports and project updates.", "link": "/login", "linkLabel": "LOGIN NOW", "icon": "building" }
+      ]
+    },
+    {
+      "key": "pillars",
+      "type": "features",
+      "heading": "Enterprise Compliance Ecosystem",
+      "subheading": "Central & State Statutory Standards",
+      "items": [
+        { "title": "Legal Compliance", "icon": "scale" },
+        { "title": "Risk Management", "icon": "alert" },
+        { "title": "Environment Mgmt", "icon": "leaf" },
+        { "title": "Safety & Health", "icon": "heart" },
+        { "title": "Sustainability", "icon": "globe" },
+        { "title": "Ethics & Governance", "icon": "book" }
+      ]
+    },
+    {
+      "key": "services",
+      "type": "services",
+      "heading": "Our Core Advisory Services",
+      "subheading": "Delivering statutory legal registers, occupational safety, zero liquid discharge, and global sustainability certifications.",
+      "items": [
+        { "title": "Legal & Statutory Compliance", "text": "Complete support for applicable Acts, Rules, Regulations, Notifications and Returns.", "icon": "scale", "link": "/services", "linkLabel": "Read More" },
+        { "title": "Safety Audit (IS 14489)", "text": "Occupational Safety & Health Audit, Fire Safety Audit and Workplace Safety Solutions.", "icon": "hardhat", "link": "/services", "linkLabel": "Read More" },
+        { "title": "Environment Compliance", "text": "Consent, Environmental Clearance, Monitoring, Waste Management and Reporting.", "icon": "leaf", "link": "/services", "linkLabel": "Read More" },
+        { "title": "HAZOP Study", "text": "Process Hazard Analysis (HAZOP) for identifying risks and recommending controls.", "icon": "alert", "link": "/services", "linkLabel": "Read More" },
+        { "title": "ETP / STP Assessment", "text": "Assessment, Optimization, Performance Evaluation and Compliance Support.", "icon": "droplet", "link": "/services", "linkLabel": "Read More" },
+        { "title": "Energy & Water Audit", "text": "Energy Audit, Water Audit, GHG Emission, Carbon Footprint and Sustainability Reporting.", "icon": "zap", "link": "/services", "linkLabel": "Read More" },
+        { "title": "Training & Manpower", "text": "Training Programs, Skill Development and Manpower Sourcing Solutions.", "icon": "users", "link": "/services", "linkLabel": "Read More" },
+        { "title": "Certification Support", "text": "Support for ISO, SA8000, BSCI, WRAP, OEKO-TEX, GOTS, ZDHC and more.", "icon": "star", "link": "/services", "linkLabel": "Read More" }
+      ]
+    },
+    {
+      "key": "statutory",
+      "type": "text",
+      "heading": "Government Acts, Portals & Statutory Hub",
+      "subheading": "Central & State Statutory Provisions, Official Regulatory Authority Links, and Compliance Reports."
+    },
+    {
+      "key": "acts",
+      "type": "features",
+      "heading": "Acts, Rules & Notifications",
+      "items": [
+        { "title": "Factories Act 1948", "subtitle": "Central", "link": "/acts-compliance" },
+        { "title": "Environment (Protection) Act 1986", "subtitle": "MoEFCC", "link": "/acts-compliance" },
+        { "title": "Water (Prevention & Control) Act 1974", "subtitle": "CPCB", "link": "/acts-compliance" },
+        { "title": "Air (Prevention & Control) Act 1981", "subtitle": "CPCB", "link": "/acts-compliance" },
+        { "title": "Hazardous & Other Wastes Rules 2016", "subtitle": "Hazardous", "link": "/acts-compliance" },
+        { "title": "E-Waste (Management) Rules 2022", "subtitle": "E-Waste", "link": "/acts-compliance" },
+        { "title": "Plastic Waste Management Rules 2016", "subtitle": "Plastic", "link": "/acts-compliance" },
+        { "title": "Fire Services Act & Rules", "subtitle": "Safety", "link": "/acts-compliance" }
+      ]
+    },
+    {
+      "key": "links_central",
+      "type": "features",
+      "heading": "Central Government Links",
+      "items": [
+        { "title": "Ministry of Labour & Employment", "link": "https://labour.gov.in" },
+        { "title": "Ministry of Env, Forest & CC", "link": "https://moef.gov.in" },
+        { "title": "Central Pollution Control Board (CPCB)", "link": "https://cpcb.nic.in" },
+        { "title": "Factory Advice Service (DGFASLI)", "link": "https://dgfasli.gov.in" },
+        { "title": "Food Safety & Standards (FSSAI)", "link": "https://fssai.gov.in" },
+        { "title": "Bureau of Indian Standards (BIS)", "link": "https://bis.gov.in" }
+      ]
+    },
+    {
+      "key": "links_state",
+      "type": "features",
+      "heading": "State Government - Tamil Nadu",
+      "items": [
+        { "title": "TN Pollution Control Board (TNPCB)", "link": "https://tnpcb.gov.in" },
+        { "title": "Directorate of Safety & Health (DISH)", "link": "https://dish.tn.gov.in" },
+        { "title": "Labour Department Tamil Nadu", "link": "https://labour.tn.gov.in" },
+        { "title": "Dept of Fire & Rescue Services", "link": "https://fireservices.tn.gov.in" },
+        { "title": "TANGEDCO (Electricity Board)", "link": "https://tangedco.gov.in" },
+        { "title": "Other State Government Links", "link": "https://tn.gov.in" }
+      ]
+    },
+    {
+      "key": "reports_grid",
+      "type": "features",
+      "heading": "Compliance & Technical Reports",
+      "items": [
+        { "title": "Compliance", "subtitle": "Reports", "link": "/reports" },
+        { "title": "HAZOP Study", "subtitle": "Reports", "link": "/reports" },
+        { "title": "ETP/STP", "subtitle": "Assessment", "link": "/reports" },
+        { "title": "Safety Audit", "subtitle": "IS 14489", "link": "/reports" },
+        { "title": "Environment", "subtitle": "Monitoring", "link": "/reports" },
+        { "title": "Energy Audit", "subtitle": "Reports", "link": "/reports" },
+        { "title": "Water Audit", "subtitle": "Balance", "link": "/reports" },
+        { "title": "More", "subtitle": "Dossiers", "link": "/reports" }
+      ]
+    },
+    {
+      "key": "expertise",
+      "type": "features",
+      "heading": "My Expertise & Services",
+      "subheading": "WHAT WE OFFER",
+      "items": [
+        { "title": "Safety Audit & Legal Compliance", "text": "Safety audits as per Factories Act, 1948 & Rules, IS Code 14489:2018 and other related acts." },
+        { "title": "Fire Safety Systems Audit", "text": "Fire alarm systems, Hydrant systems, Sprinkler systems, Emergency exits, Fire extinguishers & PPEs." },
+        { "title": "Environmental Auditing", "text": "Environmental compliance audits as per Environment (Protection) Act, 1986." },
+        { "title": "Water Auditing", "text": "Water usage efficiency, Conservation, Wastewater management and regulatory compliance." },
+        { "title": "Chemical Safety & MSIHC Compliance", "text": "Compliance with Manufacture, Storage and Import of Hazardous Chemicals (MSIHC) Act, 1989 & Rules." },
+        { "title": "Risk Assessment & Hazard Identification", "text": "HAZID, HAZOP, Job Safety Analysis (JSA), Process Safety Management (PSM)." },
+        { "title": "Occupational Health & Safety", "text": "Workplace safety management, Ergonomics, Health surveillance and hazard control." },
+        { "title": "Documentation & Statutory Compliance", "text": "Preparation of safety manuals, SOPs, emergency plans, mock drills & statutory records." }
+      ]
+    },
+    {
+      "key": "certifications",
+      "type": "features",
+      "heading": "Supported International Brand & Sustainability Standards",
+      "subheading": "GLOBAL BENCHMARKS & CERTIFICATIONS",
+      "items": [
+        { "title": "GOTS", "subtitle": "Global Organic" },
+        { "title": "Textile Exchange", "subtitle": "GRS / OCS / RCS" },
+        { "title": "Sedex SMETA", "subtitle": "4-Pillar Ethical" },
+        { "title": "Higg Index", "subtitle": "SAC / FEM / FSLM" },
+        { "title": "SLCP", "subtitle": "Social & Labor" },
+        { "title": "OEKO-TEX", "subtitle": "Standard 100" },
+        { "title": "BSCI", "subtitle": "Amfori Social" },
+        { "title": "ICS", "subtitle": "Initiative Clause" },
+        { "title": "ZDHC", "subtitle": "MRSL Level 3" },
+        { "title": "SA8000", "subtitle": "Social Account" },
+        { "title": "WRAP", "subtitle": "12 Principles" }
+      ]
+    },
+    {
+      "key": "industries",
+      "type": "features",
+      "heading": "Industries We Serve",
+      "subheading": "Statutory advisory engineered for India's high-growth industrial clusters.",
+      "items": [
+        { "title": "Textile & Apparel", "text": "Garmenting, spinning & knitting compliance.", "icon": "shirt" },
+        { "title": "Petrochemical & Petroleum", "text": "PESO & dangerous storage norms.", "icon": "fuel" },
+        { "title": "Dyeing & Processing", "text": "ZLD & red category TNPCB consents.", "icon": "droplet" },
+        { "title": "Leather & Tanning", "text": "Zero discharge & chrome recovery.", "icon": "factory" },
+        { "title": "Printing Industry", "text": "VOC control & hazardous ink waste.", "icon": "printer" },
+        { "title": "Food Industry", "text": "FSSAI standards & effluent hygiene.", "icon": "utensils" },
+        { "title": "Pharmaceuticals", "text": "GMP & bulk drug regulatory permits.", "icon": "pill" },
+        { "title": "Engineering & Chemical", "text": "IS 14489 safety & vessel testing.", "icon": "cog" },
+        { "title": "Plastic Industry", "text": "EPR registration & PWM rules.", "icon": "layers" },
+        { "title": "Renewable Energy", "text": "Solar, wind & green power compliance.", "icon": "sun" }
+      ]
+    },
+    {
+      "key": "proof",
+      "type": "stats",
+      "heading": "Key performance",
+      "items": [
+        { "value": "15+", "label": "Years of Experience", "icon": "award" },
+        { "value": "500+", "label": "Happy Clients", "icon": "users" },
+        { "value": "1000+", "label": "Projects Completed", "icon": "check" },
+        { "value": "50+", "label": "Expert Consultants", "icon": "briefcase" },
+        { "value": "25+", "label": "Industries Served", "icon": "factory" },
+        { "value": "100%", "label": "Commitment to Compliance", "icon": "shield" }
+      ]
+    },
+    {
+      "key": "enquiry",
+      "type": "text",
+      "heading": "Schedule Plant Audit & Statutory Advisory",
+      "subheading": "Connect directly with our Principal Environmental Engineers, Chartered Safety Auditors (IS 14489), and Corporate Legal Advocates.",
+      "content_html": "DISH & TNPCB Statutory Clearances Guaranteed with Zero Closure Notice Liability."
+    }
+  ]
+}

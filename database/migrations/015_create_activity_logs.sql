@@ -1,0 +1,97 @@
+-- 015_create_activity_logs.sql — activity trail, audit trail and error log
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS activity_logs (
+  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id        BIGINT UNSIGNED DEFAULT NULL,
+  user_name      VARCHAR(200) DEFAULT NULL,
+  user_role      VARCHAR(100) DEFAULT NULL,
+  employer_id    BIGINT UNSIGNED DEFAULT NULL,
+  action         VARCHAR(100) NOT NULL COMMENT 'created | updated | deleted | submitted | approved …',
+  module         VARCHAR(100) NOT NULL,
+  entity_type    VARCHAR(100) DEFAULT NULL,
+  entity_id      BIGINT UNSIGNED DEFAULT NULL,
+  entity_label   VARCHAR(500) DEFAULT NULL,
+  description    TEXT,
+  old_values_json JSON DEFAULT NULL,
+  new_values_json JSON DEFAULT NULL,
+  changed_fields JSON DEFAULT NULL,
+  ip_address     VARCHAR(45) DEFAULT NULL,
+  user_agent     VARCHAR(500) DEFAULT NULL,
+  request_method VARCHAR(10) DEFAULT NULL,
+  request_url    VARCHAR(1000) DEFAULT NULL,
+  status         ENUM('success','failed','warning') NOT NULL DEFAULT 'success',
+  severity       ENUM('info','low','medium','high','critical') NOT NULL DEFAULT 'info',
+  duration_ms    INT DEFAULT NULL,
+  created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_al_user (user_id),
+  KEY idx_al_employer (employer_id),
+  KEY idx_al_module (module),
+  KEY idx_al_action (action),
+  KEY idx_al_entity (entity_type, entity_id),
+  KEY idx_al_created (created_at),
+  CONSTRAINT fk_al_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_al_employer FOREIGN KEY (employer_id) REFERENCES employers(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS audit_trails (
+  id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  table_name    VARCHAR(100) NOT NULL,
+  record_id     BIGINT UNSIGNED NOT NULL,
+  operation     ENUM('INSERT','UPDATE','DELETE','SOFT_DELETE','RESTORE') NOT NULL,
+  field_name    VARCHAR(100) DEFAULT NULL,
+  old_value     LONGTEXT,
+  new_value     LONGTEXT,
+  changed_by    BIGINT UNSIGNED DEFAULT NULL,
+  changed_by_name VARCHAR(200) DEFAULT NULL,
+  ip_address    VARCHAR(45) DEFAULT NULL,
+  reason        VARCHAR(500) DEFAULT NULL,
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_at_table (table_name, record_id),
+  KEY idx_at_changed_by (changed_by),
+  KEY idx_at_created (created_at),
+  CONSTRAINT fk_at_changed_by FOREIGN KEY (changed_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS error_logs (
+  id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  error_code    VARCHAR(50) DEFAULT NULL,
+  error_type    VARCHAR(150) NOT NULL,
+  message       TEXT NOT NULL,
+  stack_trace   LONGTEXT,
+  file_path     VARCHAR(500) DEFAULT NULL,
+  line_number   INT DEFAULT NULL,
+  route         VARCHAR(500) DEFAULT NULL,
+  request_method VARCHAR(10) DEFAULT NULL,
+  request_body  LONGTEXT,
+  user_id       BIGINT UNSIGNED DEFAULT NULL,
+  ip_address    VARCHAR(45) DEFAULT NULL,
+  severity      ENUM('debug','info','warning','error','critical','fatal') NOT NULL DEFAULT 'error',
+  is_resolved   BOOLEAN NOT NULL DEFAULT FALSE,
+  resolved_by   BIGINT UNSIGNED DEFAULT NULL,
+  resolved_at   DATETIME DEFAULT NULL,
+  resolution_note TEXT,
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_elog_severity (severity),
+  KEY idx_elog_resolved (is_resolved),
+  KEY idx_elog_created (created_at),
+  CONSTRAINT fk_elog_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS login_attempts (
+  id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  email       VARCHAR(255) NOT NULL,
+  user_id     BIGINT UNSIGNED DEFAULT NULL,
+  success     BOOLEAN NOT NULL DEFAULT FALSE,
+  failure_reason VARCHAR(200) DEFAULT NULL,
+  ip_address  VARCHAR(45) DEFAULT NULL,
+  user_agent  VARCHAR(500) DEFAULT NULL,
+  attempted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_lga_email (email),
+  KEY idx_lga_ip (ip_address),
+  KEY idx_lga_attempted (attempted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

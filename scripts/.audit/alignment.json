@@ -1,0 +1,18 @@
+[
+  {
+    "panel": "admin",
+    "path": "/admin/billing",
+    "width": 1366,
+    "problems": [
+      "1 chip(s) wrap onto two lines: DS"
+    ]
+  },
+  {
+    "panel": "admin",
+    "path": "/admin/billing",
+    "width": 820,
+    "problems": [
+      "1 chip(s) wrap onto two lines: DS"
+    ]
+  }
+]

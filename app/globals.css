@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sidebar-width: 260px;
+  --header-height: 64px;
+}
+
+* { box-sizing: border-box; }
+
+/* A grid with no explicit column template gets one shrinkable column, so long content (a path, a cron
+   string, a wide input) can never push a phone-width page sideways. grid-cols-* utilities still win. */
+@layer base {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+  background: #f5f5f5;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbars: thin and unobtrusive in panels, hidden on the public site. */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+@layer components {
+  .card { @apply rounded-lg border border-line bg-white shadow-[0_1px_3px_rgba(0,0,0,0.1)]; }
+  .card-pad { @apply p-4 sm:p-6; }
+  .page-title { @apply text-2xl font-bold text-ink; }
+  .section-title { @apply text-lg font-semibold text-ink; }
+  .label { @apply mb-1.5 block text-sm font-medium text-ink-soft; }
+  .helper { @apply mt-1 text-xs text-ink-muted; }
+  .error-text { @apply mt-1 text-xs text-red-600; }
+  .table-base { @apply w-full border-collapse text-left text-sm; }
+  .table-head { @apply border-b-2 border-line bg-surface-muted px-3 py-3 text-[13px] font-semibold text-ink-soft; }
+  .table-cell { @apply border-b border-line px-3 py-3 text-sm text-ink; }
+  .link { @apply text-brand-600 hover:text-brand-700 hover:underline; }
+  .focus-ring { @apply focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Button system — 8px radius, brand #3b82f6, 150ms transitions.
+   Used alongside <Button>/<LinkButton> so plain <a>/<Link> tags can share
+   the exact same look (PDF previews, table row actions, filter toolbars).
+   ───────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
+           transition-all duration-150 ease-in-out disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-primary { @apply bg-brand-500 text-white hover:-translate-y-[2px] hover:bg-brand-600 hover:shadow-md; }
+  .btn-outline { @apply border border-line bg-white text-ink-soft hover:-translate-y-[2px] hover:border-brand-300 hover:text-brand-600; }
+  .btn-ghost { @apply text-ink-soft hover:bg-surface-muted; }
+  .btn-danger { @apply bg-red-600 text-white hover:-translate-y-[2px] hover:bg-red-700; }
+  .btn-success { @apply bg-emerald-600 text-white hover:-translate-y-[2px] hover:bg-emerald-700; }
+  .btn-warning { @apply bg-amber-500 text-white hover:-translate-y-[2px] hover:bg-amber-600; }
+  .btn-sm { @apply px-3 py-1.5 text-[13px]; }
+  .btn-lg { @apply px-6 py-2.5 text-base; }
+  .btn-icon {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted
+           transition-colors duration-150 hover:bg-surface-muted hover:text-brand-600;
+  }
+  .btn-icon-danger { @apply hover:bg-red-50 hover:text-red-600; }
+  .table-head-actions { @apply w-[120px] text-right; }
+  .table-cell-actions { @apply text-right; }
+  .detail-label { @apply text-xs uppercase tracking-wide text-ink-muted; }
+  .detail-value { @apply mt-0.5 text-sm text-ink; }
+}
+
+/* Skeleton shimmer used by every loading state. */
+.skeleton {
+  background: linear-gradient(90deg, #eef2f7 25%, #e2e8f0 37%, #eef2f7 63%);
+  background-size: 400% 100%;
+  animation: skeleton-pulse 1.5s ease infinite;
+}
+@keyframes skeleton-pulse {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* Print styles so tables/PDF previews print cleanly. */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #ffffff; }
+  .card { box-shadow: none; border: 1px solid #e2e8f0; }
+}
+
+/* Rich text editor content. */
+.prose-editor { line-height: 1.7; }
+.prose-editor h1 { font-size: 1.6rem; font-weight: 700; margin: 1rem 0 0.5rem; }
+.prose-editor h2 { font-size: 1.3rem; font-weight: 700; margin: 0.9rem 0 0.5rem; }
+.prose-editor h3 { font-size: 1.1rem; font-weight: 600; margin: 0.8rem 0 0.4rem; }
+.prose-editor p { margin: 0.6rem 0; }
+.prose-editor ul { list-style: disc; padding-left: 1.4rem; margin: 0.6rem 0; }
+.prose-editor ol { list-style: decimal; padding-left: 1.4rem; margin: 0.6rem 0; }
+.prose-editor table { border-collapse: collapse; width: 100%; margin: 0.8rem 0; }
+.prose-editor td, .prose-editor th { border: 1px solid #e2e8f0; padding: 8px 10px; }
+.prose-editor blockquote { border-left: 3px solid #3b82f6; padding-left: 12px; color: #475569; margin: 0.8rem 0; }
+.prose-editor a { color: #2563eb; text-decoration: underline; }
+
+/* Public website palette: the inner pages (about, services, resources, ...) are written with the app's blue "brand"
+   scale; inside the public layout it is remapped to the site's navy and gold so every page matches the home page. */
+.public-theme .bg-brand-500, .public-theme .bg-brand-600 { background-color: #c59b27; }
+.public-theme .hover\:bg-brand-600:hover, .public-theme .hover\:bg-brand-700:hover { background-color: #b0881e; }
+.public-theme .bg-brand-50, .public-theme .bg-brand-100, .public-theme .hover\:bg-brand-100:hover { background-color: #fef7e0; }
+.public-theme .text-brand-600, .public-theme .text-brand-700, .public-theme .text-brand-800, .public-theme .text-brand-900,
+.public-theme .hover\:text-brand-600:hover { color: #9a7518; }
+.public-theme .border-brand-500, .public-theme .border-brand-300 { border-color: #c59b27; }
+.public-theme .accent-brand-500 { accent-color: #c59b27; }
+.public-theme .focus\:border-brand-500:focus, .public-theme .focus\:ring-brand-500:focus { border-color: #c59b27; --tw-ring-color: #c59b27; }
+.public-theme .from-brand-600 { --tw-gradient-from: #0b2545 var(--tw-gradient-from-position); --tw-gradient-to: rgb(11 37 69 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+.public-theme .to-brand-800, .public-theme .to-brand-900 { --tw-gradient-to: #0b1e36 var(--tw-gradient-to-position); }
+.public-theme .via-slate-800 { --tw-gradient-stops: var(--tw-gradient-from), #0b2545 var(--tw-gradient-via-position), var(--tw-gradient-to); }

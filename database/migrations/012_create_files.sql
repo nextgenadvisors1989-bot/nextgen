@@ -1,0 +1,76 @@
+-- 012_create_files.sql — polymorphic file store with versioning and access control
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS files (
+  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  uuid           VARCHAR(36) NOT NULL,
+  original_name  VARCHAR(500) NOT NULL,
+  stored_name    VARCHAR(500) NOT NULL,
+  storage_driver ENUM('local','s3','gcs','azure') NOT NULL DEFAULT 'local',
+  storage_path   VARCHAR(1000) NOT NULL,
+  mime_type      VARCHAR(150) DEFAULT NULL,
+  extension      VARCHAR(20) DEFAULT NULL,
+  size_bytes     BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  checksum_sha256 CHAR(64) DEFAULT NULL,
+  entity_type    ENUM('EMPLOYER','EMPLOYEE','AUDITOR','AUDIT_ASSIGNMENT','AUDIT_REPORT','SUBMISSION',
+                      'PAYSLIP','PAYROLL_RUN','COMPLIANCE_DOCUMENT','WORK_PERMIT','CMS_MEDIA',
+                      'STUDY','RISK','ASSESSMENT','USER','OTHER') NOT NULL DEFAULT 'OTHER',
+  entity_id      BIGINT UNSIGNED DEFAULT NULL,
+  category       VARCHAR(100) DEFAULT NULL,
+  version        INT NOT NULL DEFAULT 1,
+  parent_file_id BIGINT UNSIGNED DEFAULT NULL,
+  is_current_version BOOLEAN NOT NULL DEFAULT TRUE,
+  access_level   ENUM('private','employer','auditor','verifier','public','restricted') NOT NULL DEFAULT 'private',
+  allowed_role_ids JSON DEFAULT NULL,
+  description    VARCHAR(500) DEFAULT NULL,
+  tags           VARCHAR(500) DEFAULT NULL,
+  download_count INT NOT NULL DEFAULT 0,
+  is_archived    BOOLEAN NOT NULL DEFAULT FALSE,
+  expires_at     DATETIME DEFAULT NULL,
+  uploaded_by    BIGINT UNSIGNED DEFAULT NULL,
+  created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at     DATETIME DEFAULT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_files_uuid (uuid),
+  KEY idx_files_entity (entity_type, entity_id),
+  KEY idx_files_uploader (uploaded_by),
+  KEY idx_files_parent (parent_file_id),
+  KEY idx_files_access (access_level),
+  KEY idx_files_created (created_at),
+  KEY idx_files_deleted_at (deleted_at),
+  CONSTRAINT fk_files_uploaded_by FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_files_parent FOREIGN KEY (parent_file_id) REFERENCES files(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS file_versions (
+  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  file_id        BIGINT UNSIGNED NOT NULL,
+  version        INT NOT NULL,
+  storage_path   VARCHAR(1000) NOT NULL,
+  size_bytes     BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  checksum_sha256 CHAR(64) DEFAULT NULL,
+  change_note    VARCHAR(500) DEFAULT NULL,
+  uploaded_by    BIGINT UNSIGNED DEFAULT NULL,
+  created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_fv (file_id, version),
+  KEY idx_fv_file (file_id),
+  CONSTRAINT fk_fv_file FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE,
+  CONSTRAINT fk_fv_uploaded_by FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS file_access_logs (
+  id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  file_id     BIGINT UNSIGNED NOT NULL,
+  user_id     BIGINT UNSIGNED DEFAULT NULL,
+  action      ENUM('view','download','upload','delete','share','version') NOT NULL,
+  ip_address  VARCHAR(45) DEFAULT NULL,
+  user_agent  VARCHAR(500) DEFAULT NULL,
+  created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_fal_file (file_id),
+  KEY idx_fal_user (user_id),
+  CONSTRAINT fk_fal_file FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE,
+  CONSTRAINT fk_fal_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
