@@ -43,6 +43,7 @@
     "verify:step4": "python scripts/verify-step4.py",
     "db:seed-designations": "python scripts/seed-demo.py designations",
     "db:seed-evidence": "python scripts/seed-demo.py evidence",
+    "db:seed-masters": "tsx scripts/seed-masters.ts",
     "parse:evidence": "python -I scripts/parse-evidence-checklist.py",
     "parse:designations": "python -I scripts/parse-designations.py",
     "verify:billing": "python scripts/verify-billing.py",
