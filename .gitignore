@@ -23,7 +23,7 @@ storage/backups/
 storage/tmp/
 
 # Logs
-logs/
+/logs/
 *.log
 npm-debug.log*
 yarn-error.log*
