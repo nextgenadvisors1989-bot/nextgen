@@ -210,6 +210,7 @@ export async function createReport(actor: Actor, input: unknown) {
   const data = caparCreateSchema.parse(input);
 
   let auditorId: number | null = role === 'auditor' ? Number(actor.user.auditorId ?? 0) || null : (data.auditor_id ?? null);
+  if (role === 'auditor' && !auditorId) fail('FORBIDDEN', 'Your login is not linked to an auditor profile yet. Ask the administrator to link it (Users > Link to an auditor).');
   const assignment = data.assignment_id ? await repo.assignmentForHeader(data.assignment_id) : null;
   // An auditor reports on an audit the administrator assigned to them; the audit decides the company, unit, date and verifier.
   if (role === 'auditor' && !data.assignment_id) fail('VALIDATION_FAILED', 'Choose the audit you are reporting on. Only audits the administrator assigned to you are listed.', { issues: [{ field: 'assignment_id', message: 'Choose the audit' }] });
@@ -634,7 +635,8 @@ export async function lookup(user: AuthUser, type: string, params: { q?: string;
     return rows.map((row) => ({ value: String(row.id), label: String(row.company_name), hint: [row.employer_code, row.city].filter(Boolean).join(' · ') }));
   }
   if (type === 'myaudits') {
-    const rows = await repo.lookupMyAudits(role === 'auditor' ? Number(user.auditorId ?? 0) : null);
+    if (role === 'auditor' && !user.auditorId) return [];
+    const rows = await repo.lookupMyAudits(role === 'auditor' ? Number(user.auditorId) : null);
     return rows.map((row) => ({
       value: String(row.id),
       label: `${row.company_name}${row.unit_name ? ` - ${row.unit_name}` : ''}`,
@@ -653,7 +655,8 @@ export async function lookup(user: AuthUser, type: string, params: { q?: string;
     return rows.map((row) => ({ value: String(row.id), label: String(row.unit_name), hint: row.location ? String(row.location) : undefined }));
   }
   if (type === 'assignments' && params.employerId) {
-    const rows = await repo.lookupAssignments(params.employerId, role === 'auditor' ? Number(user.auditorId ?? 0) : null);
+    if (role === 'auditor' && !user.auditorId) return [];
+    const rows = await repo.lookupAssignments(params.employerId, role === 'auditor' ? Number(user.auditorId) : null);
     return rows.map((row) => ({ value: String(row.id), label: `${row.assignment_number} - ${row.audit_title}`, hint: String(row.status) }));
   }
   if (type === 'verifiers') {
