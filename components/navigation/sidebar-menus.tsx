@@ -61,6 +61,7 @@ export function adminMenu(counts: { employees?: number; employers?: number; pend
           label: 'CAPAR Reports', icon: icon('shield'),
           children: [
             { label: 'All CAPAR Reports', href: '/admin/capar' },
+            { label: 'CAPAR Management', href: '/admin/capar/management' },
             { label: 'Categories', href: '/admin/capar/categories' },
             { label: 'Audit Documents', href: '/admin/audit-documents' },
           ],

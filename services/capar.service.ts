@@ -11,6 +11,7 @@
  */
 import { searchProvisions } from '@/services/act-provision.service';
 import { assertPackDownloaded } from '@/services/evidence.service';
+import { checklistForAuditor } from '@/services/capar-checklist.service';
 import { localToday } from '@/lib/utils/dates';
 import { query, queryOne, type RowDataPacket } from '@/lib/db/mysql';
 import { writeActivityLog } from '@/lib/logger/activity-log';
@@ -63,11 +64,25 @@ async function loadScoped(user: AuthUser, id: number): Promise<{ report: Report;
   return { report, role };
 }
 
-const EDITABLE = ['Draft', 'Returned'];
+// The auditor can keep correcting a report after submitting it; a change sends the row they touched back to the verifier. Approved reports are locked.
+const EDITABLE = ['Draft', 'Returned', 'Submitted', 'Under Review'];
+const SUBMITTABLE = ['Draft', 'Returned'];
 const IN_REVIEW = ['Submitted', 'Under Review'];
 
 function isOwner(user: AuthUser, report: Report) {
   return Number(report.auditor_id) === Number(user.auditorId);
+}
+
+/**
+ * Details an auditor cannot type over because they come from records the administrator keeps: the facility, its address, the auditor printed
+ * name and the firm, and (for a report started from an audit) the audit date and the verifier chosen for it.
+ */
+function lockedFields(role: CaparRole, report: Report): string[] {
+  if (role !== 'auditor') return [];
+  const locked = ['facility_name', 'facility_address', 'auditor_print_name', 'audit_firm'];
+  if (report.assignment_id) locked.push('audit_date');
+  if (report.assignment_id && report.verifier_id) locked.push('verifier_id');
+  return locked;
 }
 
 function canEdit(user: AuthUser, role: CaparRole, report: Report) {
@@ -143,7 +158,7 @@ export async function getReportDetail(user: AuthUser, id: number) {
   const reviewer = (role === 'admin' || role === 'verifier') && inReview;
   const can = {
     edit: editable,
-    submit: editable && user.permissions.includes('*') || (editable && user.permissions.includes('capar.update')),
+    submit: editable && SUBMITTABLE.includes(String(report.status)) && (user.permissions.includes('*') || user.permissions.includes('capar.update')),
     delete: editable && report.status === 'Draft' && (user.permissions.includes('*') || user.permissions.includes('capar.delete')),
     verify: reviewer && (user.permissions.includes('*') || user.permissions.includes('capar.verify')),
     decide: reviewer && (user.permissions.includes('*') || user.permissions.includes('capar.approve')),
@@ -151,18 +166,21 @@ export async function getReportDetail(user: AuthUser, id: number) {
     download: user.permissions.includes('*') || user.permissions.includes('capar.download'),
   };
 
-  const [categories, events] = await Promise.all([
+  const [categories, events, checklist] = await Promise.all([
     repo.listCategories(false),
     role === 'employer' ? Promise.resolve([]) : repo.listEvents(id),
+    checklistForAuditor(Number(report.auditor_id)),
   ]);
 
   return {
     report: { ...report, auditor_signature_path: undefined, review_comments: role === 'employer' ? null : report.review_comments },
     findings: withFiles,
     categories,
+    checklist,
     events,
     role,
     can,
+    locked: lockedFields(role, report),
     branding: {
       logoUrl: report.logo_file_id ? `/api/files/${report.logo_file_id}/download` : null,
       letterheadUrl: report.letterhead_file_id ? `/api/files/${report.letterhead_file_id}/download` : null,
@@ -193,48 +211,53 @@ export async function createReport(actor: Actor, input: unknown) {
 
   let auditorId: number | null = role === 'auditor' ? Number(actor.user.auditorId ?? 0) || null : (data.auditor_id ?? null);
   const assignment = data.assignment_id ? await repo.assignmentForHeader(data.assignment_id) : null;
+  // An auditor reports on an audit the administrator assigned to them; the audit decides the company, unit, date and verifier.
+  if (role === 'auditor' && !data.assignment_id) fail('VALIDATION_FAILED', 'Choose the audit you are reporting on. Only audits the administrator assigned to you are listed.', { issues: [{ field: 'assignment_id', message: 'Choose the audit' }] });
   if (data.assignment_id) {
     if (!assignment) fail('INVALID_REFERENCE', 'That audit assignment does not exist');
-    if (Number(assignment!.employer_id) !== data.employer_id) fail('VALIDATION_FAILED', 'That audit assignment belongs to a different employer');
+    if (data.employer_id && Number(assignment!.employer_id) !== data.employer_id) fail('VALIDATION_FAILED', 'That audit assignment belongs to a different employer');
     if (role === 'auditor' && Number(assignment!.auditor_id) !== auditorId) fail('FORBIDDEN', 'That audit is assigned to another auditor');
     if (!auditorId) auditorId = Number(assignment!.auditor_id);
   }
+  const employerId = assignment ? Number(assignment.employer_id) : data.employer_id;
+  if (!employerId) fail('VALIDATION_FAILED', 'Select the employer', { issues: [{ field: 'employer_id', message: 'Select the employer' }] });
   if (!auditorId) fail('VALIDATION_FAILED', 'Choose the auditor who is writing this report');
   const auditor = await repo.auditorById(auditorId!);
   if (!auditor) fail('INVALID_REFERENCE', 'That auditor does not exist');
 
-  const employer = await repo.employerForHeader(data.employer_id);
+  const employer = await repo.employerForHeader(employerId!);
   if (!employer) fail('INVALID_REFERENCE', 'That employer does not exist');
   // Before the audit starts the auditor must have read the pack the employer submitted (when the administrator gave this auditor any sections).
-  if (role === 'auditor') await assertPackDownloaded(actor.user, data.employer_id);
-  const unitId = data.unit_id ?? (assignment?.unit_id ? Number(assignment.unit_id) : null);
-  const unit = unitId ? await repo.unitForHeader(unitId, data.employer_id) : null;
+  if (role === 'auditor') await assertPackDownloaded(actor.user, employerId!);
+  const fromAssignment = role === 'auditor';
+  const unitId = (fromAssignment ? null : data.unit_id) ?? (assignment?.unit_id ? Number(assignment.unit_id) : null);
+  const unit = unitId ? await repo.unitForHeader(unitId, employerId!) : null;
   if (unitId && !unit) fail('INVALID_REFERENCE', 'That unit does not belong to this employer');
 
-  const facilityName = data.facility_name ?? (unit ? `${employer!.company_name} - ${unit.unit_name}` : String(employer!.company_name));
+  const facilityName = (fromAssignment ? undefined : data.facility_name) ?? (unit ? `${employer!.company_name} - ${unit.unit_name}` : String(employer!.company_name));
   const employerAddress = [employer!.address_line_1, employer!.address_line_2, employer!.city, employer!.state, employer!.pincode]
     .filter(Boolean).join(', ');
   const today = localToday();
-  const auditDate = data.audit_date ?? (assignment?.start_date ? String(assignment.start_date) : today);
-  const firm = data.audit_firm ?? (await companyName()) ?? null;
+  const auditDate = (fromAssignment ? undefined : data.audit_date) ?? (assignment?.start_date ? String(assignment.start_date) : today);
+  const firm = (fromAssignment ? undefined : data.audit_firm) ?? (await companyName()) ?? null;
 
   const reportNumber = await nextDocumentNumber('capar');
   const id = await repo.insertReport({
     uuid: crypto.randomUUID(),
     report_number: reportNumber,
     title: data.title ?? `CAPAR - ${facilityName} - ${auditDate}`,
-    employer_id: data.employer_id,
+    employer_id: employerId,
     unit_id: unitId,
     assignment_id: data.assignment_id ?? null,
     auditor_id: auditorId,
-    verifier_id: data.verifier_id ?? (assignment?.verifier_id ? Number(assignment.verifier_id) : null),
+    verifier_id: (fromAssignment ? undefined : data.verifier_id) ?? (assignment?.verifier_id ? Number(assignment.verifier_id) : null),
     facility_name: facilityName,
-    facility_address: data.facility_address ?? (unit?.address ? String(unit.address) : employerAddress) ?? null,
+    facility_address: (fromAssignment ? undefined : data.facility_address) ?? (unit?.address ? String(unit.address) : employerAddress) ?? null,
     representative_name: data.representative_name ?? (employer!.contact_person_name ? String(employer!.contact_person_name) : null),
     representative_title: data.representative_title ?? (employer!.contact_person_designation ? String(employer!.contact_person_designation) : null),
     audit_date: auditDate,
     audit_firm: firm || null,
-    auditor_print_name: data.auditor_print_name ?? String(auditor!.name),
+    auditor_print_name: (fromAssignment ? undefined : data.auditor_print_name) ?? String(auditor!.name),
     standard_reference: data.standard_reference ?? null,
     status: 'Draft',
     created_by: actor.user.id,
@@ -249,7 +272,9 @@ export async function updateReport(actor: Actor, id: number, input: unknown) {
   assertPermission(actor.user, 'capar.update');
   const { report, role } = await loadScoped(actor.user, id);
   mustEdit(actor.user, role, report);
-  const data = caparUpdateSchema.parse(input);
+  const parsed = caparUpdateSchema.parse(input) as Record<string, unknown>;
+  for (const key of lockedFields(role, report)) delete parsed[key];
+  const data = parsed as ReturnType<typeof caparUpdateSchema.parse>;
   if (data.verifier_id) {
     const verifiers = await repo.lookupVerifiers();
     if (!verifiers.some((verifier) => Number(verifier.id) === data.verifier_id)) fail('VALIDATION_FAILED', 'Choose a verifier from the list');
@@ -271,7 +296,14 @@ export async function deleteReport(actor: Actor, id: number) {
 
 /* ───────────────────────────── findings ───────────────────────────── */
 
-async function checkFindingRefs(data: { category_id?: number | null; act_id?: number | null; provision_id?: number | null; resource_id?: number | null }) {
+async function checkFindingRefs(data: { category_id?: number | null; evidence_item_id?: number | null; act_id?: number | null; provision_id?: number | null; resource_id?: number | null }, reportId?: number, findingId?: number) {
+  if (data.evidence_item_id) {
+    const item = await queryOne<RowDataPacket>("SELECT id FROM evidence_items WHERE id = ? AND deleted_at IS NULL", [data.evidence_item_id]);
+    if (!item) fail('INVALID_REFERENCE', 'That checklist item no longer exists');
+    const taken = await queryOne<RowDataPacket>(
+      'SELECT id FROM capar_findings WHERE report_id = ? AND evidence_item_id = ? AND deleted_at IS NULL AND id <> ?', [reportId ?? 0, data.evidence_item_id, findingId ?? 0]);
+    if (taken) fail('DUPLICATE', 'This checklist item already has a row in the report. Open it and edit it.');
+  }
   if (data.provision_id) {
     const row = await queryOne<RowDataPacket>('SELECT id FROM act_provisions WHERE id = ? AND deleted_at IS NULL', [data.provision_id]);
     if (!row) fail('INVALID_REFERENCE', 'That Act provision is no longer in the library');
@@ -334,7 +366,7 @@ export async function addFinding(actor: Actor, reportId: number, input: unknown)
   const { report, role } = await loadScoped(actor.user, reportId);
   mustEdit(actor.user, role, report);
   const data = findingSchema.parse(input);
-  await checkFindingRefs(data);
+  await checkFindingRefs(data, reportId);
   const sortOrder = await repo.nextFindingOrder(reportId);
   const id = await repo.insertFinding(reportId, { ...data, ...itemStatusRules(actor.user, {}, data), sort_order: sortOrder });
   await repo.updateReport(reportId, { updated_by: actor.user.id });
@@ -348,7 +380,7 @@ export async function updateFinding(actor: Actor, reportId: number, findingId: n
   mustEdit(actor.user, role, report);
   const finding = await loadFinding(reportId, findingId);
   const data = findingSchema.parse(input);
-  await checkFindingRefs(data);
+  await checkFindingRefs(data, reportId, findingId);
 
   const patch: Record<string, unknown> = { ...data, ...itemStatusRules(actor.user, finding, data) };
   // Closing an action stamps the date; reopening it clears it.
@@ -356,8 +388,8 @@ export async function updateFinding(actor: Actor, reportId: number, findingId: n
     patch.closed_on = localToday();
   }
   if (data.action_status && data.action_status !== 'Closed' && data.closed_on === undefined) patch.closed_on = null;
-  // A change after the verifier returned the report has to be looked at again.
-  if (report.status === 'Returned' && finding.verification_status !== 'Pending') {
+  // A change after the verifier returned the report, or while it is in review, has to be looked at again.
+  if ((report.status === 'Returned' || IN_REVIEW.includes(String(report.status))) && finding.verification_status !== 'Pending') {
     patch.verification_status = 'Pending';
     patch.verified_by = null;
     patch.verified_at = null;
@@ -436,6 +468,7 @@ export async function submitReport(actor: Actor, id: number) {
   assertPermission(actor.user, 'capar.update');
   const { report, role } = await loadScoped(actor.user, id);
   mustEdit(actor.user, role, report);
+  if (!SUBMITTABLE.includes(String(report.status))) fail('INVALID_STATE', 'This report has already been submitted. Your changes are saved as you make them.');
 
   const findings = await repo.listFindings(id);
   const problems: { field: string; message: string }[] = [];
@@ -589,13 +622,31 @@ export async function lookup(user: AuthUser, type: string, params: { q?: string;
 
   if (type === 'employers') {
     const term = `%${q}%`;
+    // An auditor is offered only the companies the administrator has assigned an audit to them for.
+    const mine = role === 'auditor';
     const rows = await query<RowDataPacket>(
-      `SELECT id, company_name, employer_code, city FROM employers
-        WHERE deleted_at IS NULL AND status = 'active' AND (company_name LIKE ? OR employer_code LIKE ?)
-        ORDER BY company_name LIMIT 50`,
-      [term, term]
+      `SELECT e.id, e.company_name, e.employer_code, e.city FROM employers e
+        WHERE e.deleted_at IS NULL AND e.status = 'active' AND (e.company_name LIKE ? OR e.employer_code LIKE ?)
+          ${mine ? "AND EXISTS (SELECT 1 FROM audit_assignments a WHERE a.employer_id = e.id AND a.auditor_id = ? AND a.deleted_at IS NULL AND a.status <> 'Cancelled')" : ''}
+        ORDER BY e.company_name LIMIT 50`,
+      mine ? [term, term, Number(user.auditorId ?? 0)] : [term, term]
     );
     return rows.map((row) => ({ value: String(row.id), label: String(row.company_name), hint: [row.employer_code, row.city].filter(Boolean).join(' · ') }));
+  }
+  if (type === 'myaudits') {
+    const rows = await repo.lookupMyAudits(role === 'auditor' ? Number(user.auditorId ?? 0) : null);
+    return rows.map((row) => ({
+      value: String(row.id),
+      label: `${row.company_name}${row.unit_name ? ` - ${row.unit_name}` : ''}`,
+      hint: `${row.assignment_number} · ${row.audit_title}`,
+      employerId: Number(row.employer_id),
+      company: String(row.company_name),
+      unit: row.unit_name ? String(row.unit_name) : null,
+      auditDate: row.start_date ? String(row.start_date).slice(0, 10) : null,
+      verifierId: row.verifier_id ? Number(row.verifier_id) : null,
+      verifier: row.verifier_name ? String(row.verifier_name) : null,
+      status: String(row.status),
+    }));
   }
   if (type === 'units' && params.employerId) {
     const rows = await query<RowDataPacket>('SELECT id, unit_name, location FROM company_units WHERE employer_id = ? AND deleted_at IS NULL ORDER BY unit_name', [params.employerId]);

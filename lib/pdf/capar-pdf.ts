@@ -1,5 +1,5 @@
 /**
- * CAPAR PDF: the Corrective Action Plan Acknowledgement Report in the layout third-party auditors use.
+ * CAPAR PDF: the Corrective Action and Preventive Action Report in the layout third-party auditors use.
  *
  *   1. letterhead (the report's own letterhead image, or logo + firm) and the title
  *   2. a bordered header: facility, audit date, address, representative, auditor, firm
@@ -15,6 +15,7 @@ import { query, queryOne, type RowDataPacket } from '@/lib/db/mysql';
 import { companyBranding, drawLetterhead, fileIdFromUrl, loadImage } from '@/lib/pdf/branding';
 import { BORDER, categoryBar, headerGrid, labelled, textHeight } from '@/lib/pdf/blocks';
 import { formatDate } from '@/lib/utils/dates';
+import { checklistForAuditor } from '@/services/capar-checklist.service';
 import {
   COLORS, CONTENT_WIDTH, MARGIN, createPdf, ensureSpace, renderPdf, setFont, spacer, stampFooters, table, type Doc,
 } from '@/lib/pdf/base';
@@ -25,6 +26,7 @@ export interface CaparPdfFinding extends Record<string, unknown> {
   minimum_requirement: string | null; local_law: string | null; finding: string | null; root_cause: string | null;
   action_plan: string | null; timeline_date: string | null; timeline_note: string | null; action_status: string;
   closed_on: string | null; verification_status: string; verification_remark: string | null; files: CaparPdfFile[];
+  evidence_item_name?: string | null; evidence_section_id?: number | null; evidence_section_name?: string | null;
   item_status?: string; compliance_note?: string | null; recommendation?: string | null; assessment?: string | null; signed_by?: string | null; signed_at?: string | null;
 }
 
@@ -34,7 +36,7 @@ async function drawFinding(doc: Doc, number: number, finding: CaparPdfFinding, i
   const violation = finding.outcome === 'Violation';
 
   // keep the title together with the start of the body
-  const title = `${number}.  ${finding.act_rule || 'Act / Rule not stated'}`;
+  const title = `${number}.  ${finding.evidence_item_name ? `${finding.evidence_item_name}${finding.act_rule ? ` - ${finding.act_rule}` : ''}` : finding.act_rule || 'Act / Rule not stated'}`;
   const titleHeight = textHeight(doc, title, 9.5, width - 80, true);
   ensureSpace(doc, titleHeight + 48);
   const top = doc.y;
@@ -118,10 +120,31 @@ async function drawFinding(doc: Doc, number: number, finding: CaparPdfFinding, i
   doc.y += 8;
 }
 
+/** A checklist document with nothing to report: one line, its number, its name and its state. */
+function drawDocumentLine(doc: Doc, number: number, name: string, label: string, color: string) {
+  const x = MARGIN + 8;
+  const width = CONTENT_WIDTH - 16;
+  const text = `${number}.  ${name}`;
+  const height = textHeight(doc, text, 9, width - 100);
+  ensureSpace(doc, height + 8);
+  const top = doc.y;
+  setFont(doc, 9);
+  doc.fillColor(COLORS.body).text(text, x, top, { width: width - 100 });
+  setFont(doc, 7.5, { bold: true });
+  doc.fillColor(color).text(label, x + width - 96, top + 1, { width: 96, align: 'right', lineBreak: false });
+  doc.y = top + height + 3;
+  doc.save().lineWidth(0.3).strokeColor(COLORS.line).moveTo(MARGIN, doc.y).lineTo(MARGIN + CONTENT_WIDTH, doc.y).stroke().restore();
+  doc.y += 4;
+}
+
+export interface CaparChecklistPdfSection { id: number; name: string; items: { id: number; name: string }[] }
+
 export interface CaparPdfInput {
   report: Record<string, unknown>;
   findings: CaparPdfFinding[];
   categories: { id: number; name: string }[];
+  /** Every document of the sections the auditor was given, so the report lists the ones not checked as well. */
+  checklist?: CaparChecklistPdfSection[];
 }
 
 export async function generateCaparPdf(input: CaparPdfInput): Promise<Buffer> {
@@ -145,7 +168,7 @@ export async function generateCaparPdf(input: CaparPdfInput): Promise<Buffer> {
 
   const doc = createPdf({
     title: `CAPAR - ${String(report.report_number)}`,
-    subject: String(report.title ?? 'Corrective Action Plan Acknowledgement Report'),
+    subject: String(report.title ?? 'Corrective Action and Preventive Action Report'),
     author: String(report.audit_firm || branding.name || 'ComplianceOS'),
   });
 
@@ -153,7 +176,7 @@ export async function generateCaparPdf(input: CaparPdfInput): Promise<Buffer> {
   drawLetterhead(doc, { firm: String(report.audit_firm || branding.name || ''), address: branding.address, logo: branding.logo, letterhead: letterheadImage });
 
   setFont(doc, 14, { bold: true });
-  doc.fillColor(COLORS.ink).text('CORRECTIVE ACTION PLAN ACKNOWLEDGEMENT REPORT', MARGIN, doc.y, { width: CONTENT_WIDTH, align: 'center' });
+  doc.fillColor(COLORS.ink).text('CORRECTIVE ACTION AND PREVENTIVE ACTION REPORT (CAPAR)', MARGIN, doc.y, { width: CONTENT_WIDTH, align: 'center' });
   doc.y += 4;
   setFont(doc, 8.5);
   doc.fillColor(COLORS.muted).text(
@@ -175,30 +198,63 @@ export async function generateCaparPdf(input: CaparPdfInput): Promise<Buffer> {
   /* ── 3. summary by category ── */
   const known = new Map(categories.map((category) => [category.id, category.name]));
   findings.forEach((finding) => { if (finding.category_id && !known.has(finding.category_id)) known.set(finding.category_id, finding.category_name ?? 'Other'); });
+  // Rows taken from the document checklist are printed under their checklist section (below); the rest under the category they were filed in.
+  const checklist = input.checklist ?? [];
+  const filed = findings.filter((finding) => !finding.evidence_item_id);
   const byCategory = [...known.entries()].map(([id, name]) => ({
-    id, name, rows: findings.filter((finding) => finding.category_id === id),
+    id, name, rows: filed.filter((finding) => finding.category_id === id),
   }));
-  const loose = findings.filter((finding) => !finding.category_id);
+  const loose = filed.filter((finding) => !finding.category_id);
   if (loose.length) byCategory.push({ id: 0, name: 'Not categorised', rows: loose });
 
-  const summaryRows = byCategory
-    .filter((group) => group.rows.length > 0 || categories.some((category) => category.id === group.id))
-    .map((group) => {
-      const violations = group.rows.filter((row) => row.outcome === 'Violation').length;
-      return { category: group.name.toUpperCase(), result: violations === 0 ? 'No Violation' : `${violations} violation${violations === 1 ? '' : 's'} - details below` };
-    });
+  const itemRow = (itemId: number) => findings.find((finding) => Number(finding.evidence_item_id) === itemId);
+  const isNoIssue = (finding: CaparPdfFinding | undefined) => Boolean(finding) && (finding!.item_status === 'Not findings' || finding!.outcome === 'No Violation');
+  const checklistSummary = checklist.map((section) => {
+    const rows = section.items.map((item) => itemRow(item.id));
+    const noIssue = rows.filter((row) => isNoIssue(row)).length;
+    const issues = rows.filter((row) => row && !isNoIssue(row)).length;
+    const unchecked = rows.length - noIssue - issues;
+    return {
+      category: section.name.toUpperCase(),
+      result: `${rows.length} documents: ${noIssue} no issue, ${issues} issue${issues === 1 ? '' : 's'}, ${unchecked} not checked`,
+    };
+  });
+  // Free-typed categories are summarised only when they hold something once the checklist is in use.
+  const summaryRows = [
+    ...checklistSummary,
+    ...byCategory
+      .filter((group) => group.rows.length > 0 || (!checklist.length && categories.some((category) => category.id === group.id)))
+      .map((group) => {
+        const violations = group.rows.filter((row) => row.outcome === 'Violation').length;
+        return { category: group.name.toUpperCase(), result: violations === 0 ? 'No Violation' : `${violations} violation${violations === 1 ? '' : 's'} - details below` };
+      }),
+  ];
   table(doc, {
     columns: [
-      { key: 'category', label: 'Minimum requirement', width: 0.46 },
-      { key: 'result', label: 'Violation', width: 0.54 },
+      { key: 'category', label: 'Section', width: 0.44 },
+      { key: 'result', label: 'Result', width: 0.56 },
     ],
     rows: summaryRows,
     empty: 'No findings were recorded.',
-    maxRows: 60,
+    maxRows: 80,
   });
   spacer(doc, 8);
 
-  /* ── 4. findings ── */
+  /* ── 4. the documents, section by section, then the rows filed under a category ── */
+  for (const section of checklist) {
+    const checkedCount = section.items.filter((item) => itemRow(item.id)).length;
+    categoryBar(doc, section.name, `${checkedCount} of ${section.items.length} checked`);
+    let number = 0;
+    for (const item of section.items) {
+      number += 1;
+      const finding = itemRow(item.id);
+      const hasDetail = finding && (finding.finding || finding.recommendation || finding.assessment || finding.files.length);
+      if (!finding) drawDocumentLine(doc, number, item.name, 'NOT CHECKED', COLORS.muted);
+      else if (isNoIssue(finding) && !hasDetail) drawDocumentLine(doc, number, item.name, 'NO ISSUE', COLORS.success);
+      else await drawFinding(doc, number, finding, images, final);
+    }
+    doc.y += 6;
+  }
   for (const group of byCategory) {
     if (!group.rows.length) continue;
     const violations = group.rows.filter((row) => row.outcome === 'Violation').length;
@@ -258,10 +314,13 @@ export async function loadCaparPdfInput(reportId: number): Promise<CaparPdfInput
   );
   if (!report) return null;
   const findings = await query<RowDataPacket>(
-    `SELECT f.*, c.name AS category_name
-       FROM capar_findings f LEFT JOIN capar_categories c ON c.id = f.category_id
+    `SELECT f.*, c.name AS category_name, ei.name AS evidence_item_name, ei.section_id AS evidence_section_id, es.name AS evidence_section_name
+       FROM capar_findings f
+       LEFT JOIN capar_categories c ON c.id = f.category_id
+       LEFT JOIN evidence_items ei ON ei.id = f.evidence_item_id
+       LEFT JOIN evidence_sections es ON es.id = ei.section_id
       WHERE f.report_id = ? AND f.deleted_at IS NULL
-      ORDER BY COALESCE(c.sort_order, 999999), f.category_id, f.sort_order, f.id`,
+      ORDER BY COALESCE(es.sort_order, 999998), COALESCE(c.sort_order, 999999), f.category_id, ei.sort_order, f.sort_order, f.id`,
     [reportId]
   );
   const ids = findings.map((finding) => Number(finding.id));
@@ -274,8 +333,17 @@ export async function loadCaparPdfInput(reportId: number): Promise<CaparPdfInput
       )
     : [];
   const categories = await query<RowDataPacket>('SELECT id, name FROM capar_categories WHERE deleted_at IS NULL AND status = \'active\' ORDER BY sort_order, name');
+  // The documents the administrator gave this auditor (CAPAR Management), plus any a row was recorded against.
+  const checklist = await checklistForAuditor(Number(report.auditor_id));
+  for (const finding of findings) {
+    if (!finding.evidence_item_id) continue;
+    let section = checklist.find((entry) => entry.id === Number(finding.evidence_section_id));
+    if (!section) { section = { id: Number(finding.evidence_section_id), name: String(finding.evidence_section_name ?? 'Checklist'), items: [] }; checklist.push(section); }
+    if (!section.items.some((item) => item.id === Number(finding.evidence_item_id))) section.items.push({ id: Number(finding.evidence_item_id), group_name: null, name: String(finding.evidence_item_name ?? 'Checklist item') });
+  }
   return {
     report,
+    checklist,
     categories: categories.map((category) => ({ id: Number(category.id), name: String(category.name) })),
     findings: findings.map((finding) => ({
       ...finding,

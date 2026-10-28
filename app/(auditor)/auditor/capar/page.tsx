@@ -12,7 +12,7 @@ export default async function AuditorCaparPage() {
     <div className="space-y-6">
       <PageHeader
         title="CAPAR Reports"
-        description="Corrective Action Plan Acknowledgement Reports you have written: findings with the Act or Rule, photo, root cause, action plan and timeline."
+        description="Corrective Action and Preventive Action Reports you have written: findings with the Act or Rule, photo, root cause, action plan and timeline."
         breadcrumbs={[{ label: 'Dashboard', href: '/auditor/dashboard' }, { label: 'CAPAR Reports' }]}
       />
       <CaparRegister panel="auditor" canCreate />

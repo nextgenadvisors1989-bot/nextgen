@@ -26,7 +26,8 @@ const date = z
   .optional();
 
 export const caparCreateSchema = z.object({
-  employer_id: z.coerce.number().int().positive('Select the employer'),
+  /** Required unless an audit assignment is given: the assignment then decides the employer. */
+  employer_id: z.coerce.number().int().positive('Select the employer').optional(),
   unit_id: id,
   assignment_id: id,
   /** Only an administrator may write a report on behalf of another auditor. */
@@ -63,6 +64,7 @@ export const caparUpdateSchema = z.object({
 
 export const findingSchema = z.object({
   category_id: id,
+  evidence_item_id: id,
   outcome: z.enum(FINDING_OUTCOMES).optional(),
   item_status: z.enum(ITEM_STATUSES).optional(),
   act_rule: text(500),

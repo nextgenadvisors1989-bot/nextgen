@@ -23,6 +23,7 @@ import { useToast } from '@/components/ui/toast';
 import { api, apiFetch, fieldErrors } from '@/lib/utils/api-client';
 import { formatDate, formatDateTime } from '@/lib/utils/dates';
 import { FindingModal } from '@/components/capar/finding-modal';
+import { CaparChecklist } from '@/components/capar/capar-checklist';
 import { CAPAR_STATUS_TONE, type CaparCategory, type CaparDetail, type CaparFinding, type CaparPanel } from '@/types/capar';
 
 type Draft = Record<string, string>;
@@ -80,20 +81,22 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
 
   const groups = useMemo(() => {
     if (!detail) return [] as { category: CaparCategory | null; findings: CaparFinding[] }[];
+    // Rows tied to a checklist document are shown in the checklist; these are the rows typed in under a category.
+    const free = detail.findings.filter((finding) => !finding.evidence_item_id);
     const known = new Map(detail.categories.map((category) => [category.id, category]));
     const result: { category: CaparCategory | null; findings: CaparFinding[] }[] = detail.categories.map((category) => ({
       category,
-      findings: detail.findings.filter((finding) => finding.category_id === category.id),
+      findings: free.filter((finding) => finding.category_id === category.id),
     }));
     // A finding filed under a heading the admin has since switched off keeps showing, under its old name.
     const orphanNames = new Map<number, string>();
-    detail.findings.forEach((finding) => {
+    free.forEach((finding) => {
       if (finding.category_id && !known.has(finding.category_id)) orphanNames.set(finding.category_id, finding.category_name ?? 'Other');
     });
     orphanNames.forEach((name, id) => {
-      result.push({ category: { id, name, description: null, sort_order: 9999, status: 'inactive' }, findings: detail.findings.filter((finding) => finding.category_id === id) });
+      result.push({ category: { id, name, description: null, sort_order: 9999, status: 'inactive' }, findings: free.filter((finding) => finding.category_id === id) });
     });
-    const loose = detail.findings.filter((finding) => !finding.category_id);
+    const loose = free.filter((finding) => !finding.category_id);
     if (loose.length) result.push({ category: null, findings: loose });
     return result;
   }, [detail]);
@@ -106,6 +109,8 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
   }
 
   const { report, can, events, branding } = detail;
+  // Details that come from the administrator records are shown, not typed (see lockedFields in the service).
+  const locked = new Set(detail.locked ?? []);
   const set = (key: string) => (value: string) => setDraft((current) => ({ ...current, [key]: value }));
   const violations = detail.findings.filter((finding) => finding.outcome === 'Violation');
   const verifiedCount = detail.findings.filter((finding) => finding.verification_status !== 'Pending').length;
@@ -174,7 +179,7 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {can.download && (
-                <a className="btn btn-outline btn-sm" href={`/api/pdf/capar/${report.id}`} target="_blank" rel="noreferrer">Download PDF</a>
+                <a className="btn btn-outline btn-sm" href={`/api/pdf/capar/${report.id}`} target="_blank" rel="noreferrer">Generate &amp; download report</a>
               )}
               {can.delete && <Button size="sm" variant="outline" onClick={() => setConfirm('delete')}>Delete draft</Button>}
               {can.reopen && <Button size="sm" variant="outline" onClick={() => setConfirm('reopen')}>Reopen for correction</Button>}
@@ -202,22 +207,24 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
       <Card padded={false}>
         <CardHeader
           title="Facility and audit details"
-          description={canEdit ? 'Prefilled from the employer record. Correct anything that is different on site.' : undefined}
+          description={canEdit ? 'Locked details come from the records the administrator keeps. You fill in the representative, standard and notes.' : undefined}
           action={canEdit && dirtyKeys.length > 0 ? <Button size="sm" onClick={saveDetails} loading={saving}>Save details</Button> : undefined}
         />
         <CardBody>
           {canEdit ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="md:col-span-2"><Input label="Report title" value={draft.title} onChange={(e) => set('title')(e.target.value)} error={errors.title} /></div>
-              <Input label="Facility" value={draft.facility_name} onChange={(e) => set('facility_name')(e.target.value)} error={errors.facility_name} />
-              <DatePicker label="Audit date" value={draft.audit_date} onChange={set('audit_date')} error={errors.audit_date} />
-              <div className="md:col-span-2"><Textarea label="Facility address" rows={2} value={draft.facility_address} onChange={(e) => set('facility_address')(e.target.value)} /></div>
+              {locked.has('facility_name') ? <Fixed label="Facility" value={report.facility_name} /> : <Input label="Facility" value={draft.facility_name} onChange={(e) => set('facility_name')(e.target.value)} error={errors.facility_name} />}
+              {locked.has('audit_date') ? <Fixed label="Audit date" value={report.audit_date ? formatDate(report.audit_date) : '-'} /> : <DatePicker label="Audit date" value={draft.audit_date} onChange={set('audit_date')} error={errors.audit_date} />}
+              <div className="md:col-span-2">
+                {locked.has('facility_address') ? <Fixed label="Facility address" value={report.facility_address ?? '-'} /> : <Textarea label="Facility address" rows={2} value={draft.facility_address} onChange={(e) => set('facility_address')(e.target.value)} />}
+              </div>
               <Input label="Facility representative" value={draft.representative_name} onChange={(e) => set('representative_name')(e.target.value)} />
               <Input label="Representative title" value={draft.representative_title} onChange={(e) => set('representative_title')(e.target.value)} />
-              <Input label="Audit firm" value={draft.audit_firm} onChange={(e) => set('audit_firm')(e.target.value)} />
-              <Input label="Auditor name (as printed)" value={draft.auditor_print_name} onChange={(e) => set('auditor_print_name')(e.target.value)} />
+              {locked.has('audit_firm') ? <Fixed label="Audit firm" value={report.audit_firm ?? '-'} /> : <Input label="Audit firm" value={draft.audit_firm} onChange={(e) => set('audit_firm')(e.target.value)} />}
+              {locked.has('auditor_print_name') ? <Fixed label="Auditor name (as printed)" value={report.auditor_print_name ?? report.auditor_name} /> : <Input label="Auditor name (as printed)" value={draft.auditor_print_name} onChange={(e) => set('auditor_print_name')(e.target.value)} />}
               <Input label="Standard / reference" value={draft.standard_reference} onChange={(e) => set('standard_reference')(e.target.value)} placeholder="e.g. H&M MR Standards" />
-              <Select label="Verifier" required options={verifiers} value={draft.verifier_id} onChange={set('verifier_id')} placeholder="Who reviews this report" searchable error={errors.verifier_id} />
+              {locked.has('verifier_id') ? <Fixed label="Verifier" value={report.verifier_name ?? '-'} /> : <Select label="Verifier" required options={verifiers} value={draft.verifier_id} onChange={set('verifier_id')} placeholder="Who reviews this report" searchable error={errors.verifier_id} />}
               <div className="md:col-span-2"><Textarea label="Summary notes (optional)" rows={2} value={draft.summary_notes} onChange={(e) => set('summary_notes')(e.target.value)} /></div>
             </div>
           ) : (
@@ -233,7 +240,7 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
             </dl>
           )}
 
-          {canEdit && (
+          {canEdit && panel === 'admin' && (
             <div className="mt-6 grid grid-cols-1 gap-4 border-t border-line pt-4 md:grid-cols-2">
               <BrandingControl label="Logo on this report" url={branding.logoUrl} onUpload={(file) => uploadBranding('logo', file)} onClear={() => clearBranding('logo')} />
               <BrandingControl label="Letterhead on this report" url={branding.letterheadUrl} onUpload={(file) => uploadBranding('letterhead', file)} onClear={() => clearBranding('letterhead')} />
@@ -243,22 +250,45 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
         </CardBody>
       </Card>
 
-      {/* ── findings ── */}
-      <section className="space-y-4" aria-label="Findings">
+      {/* ── checklist: the sheet's section / document rows ── */}
+      <CaparChecklist
+        reportId={reportId}
+        checklist={detail.checklist ?? []}
+        findings={detail.findings}
+        categories={detail.categories}
+        canEdit={canEdit}
+        onChanged={load}
+        onRemove={(finding) => setRemoving(finding)}
+        renderRow={(finding) => (
+          <FindingCard
+            finding={finding}
+            index={1}
+            canEdit={false}
+            canVerify={can.verify}
+            reportId={reportId}
+            onEdit={() => undefined}
+            onRemove={() => undefined}
+            onChanged={load}
+          />
+        )}
+      />
+
+      {/* ── findings typed in under a category ── */}
+      <section className="space-y-4" aria-label="Other findings">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-ink">Findings</h2>
+            <h2 className="text-lg font-semibold text-ink">Other findings</h2>
             <p className="text-sm text-ink-muted">
-              {can.verify ? 'Mark each finding Eligible or Not Eligible. Only eligible findings go into the final report.' : 'Grouped by category. A category with no findings prints as "No Violation".'}
+              {can.verify ? 'Mark each finding Eligible or Not Eligible. Only eligible findings go into the final report.' : 'Rows that do not belong to a checklist document, grouped by category.'}
             </p>
           </div>
-          {canEdit && <Button size="sm" onClick={() => setFindingModal({ open: true, finding: null, categoryId: null })}>+ Add finding</Button>}
+          {canEdit && <Button size="sm" variant="outline" onClick={() => setFindingModal({ open: true, finding: null, categoryId: null })}>+ Add other finding</Button>}
         </div>
 
         {errors.findings && <p className="text-sm text-red-600">{errors.findings}</p>}
 
         {groups.map(({ category, findings }) => {
-          if (!findings.length && !canEdit) return null;
+          if (!findings.length) return null;
           return (
             <Card key={category?.id ?? 'loose'} padded={false}>
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface-muted px-4 py-3">
@@ -479,6 +509,19 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
 }
 
 /* ───────────────────────────── pieces ───────────────────────────── */
+
+/** A detail that is shown but cannot be changed here. */
+function Fixed({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span className="label">{label}</span>
+      <p className="flex min-h-[2.5rem] items-center gap-2 rounded-lg border border-line bg-surface-muted px-3 py-2 text-sm text-ink">
+        <svg className="h-3.5 w-3.5 shrink-0 text-ink-muted" viewBox="0 0 20 20" fill="currentColor" aria-label="Locked"><path fillRule="evenodd" d="M10 1a4 4 0 00-4 4v2H5a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-1V5a4 4 0 00-4-4zm2 6V5a2 2 0 10-4 0v2h4z" clipRule="evenodd" /></svg>
+        <span className="whitespace-pre-line">{value}</span>
+      </p>
+    </div>
+  );
+}
 
 function Meta({ label, value, wide }: { label: string; value: string; wide?: boolean }) {
   return (

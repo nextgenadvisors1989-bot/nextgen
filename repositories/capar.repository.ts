@@ -198,11 +198,14 @@ export function softDeleteReport(id: number) {
 export function listFindings(reportId: number) {
   return query<Row>(
     `SELECT f.*, c.name AS category_name, c.sort_order AS category_order,
+            ei.name AS evidence_item_name, ei.section_id AS evidence_section_id, es.name AS evidence_section_name,
             ca.short_name AS act_short_name, ca.act_name AS act_name,
             cr.title AS resource_title, cr.external_url AS resource_external_url, cr.file_id AS resource_file_id,
             CONCAT_WS(' ', vu.first_name, vu.last_name) AS verified_by_name
        FROM capar_findings f
        LEFT JOIN capar_categories c ON c.id = f.category_id
+       LEFT JOIN evidence_items ei ON ei.id = f.evidence_item_id
+       LEFT JOIN evidence_sections es ON es.id = ei.section_id
        LEFT JOIN compliance_acts ca ON ca.id = f.act_id
        LEFT JOIN cms_resources cr ON cr.id = f.resource_id
        LEFT JOIN users vu ON vu.id = f.verified_by
@@ -225,7 +228,7 @@ export async function nextFindingOrder(reportId: number) {
 }
 
 const FINDING_FIELDS = [
-  'category_id', 'outcome', 'item_status', 'act_rule', 'act_id', 'provision_id', 'compliance_note', 'recommendation', 'assessment', 'signed_by', 'signed_at', 'resource_id', 'minimum_requirement', 'local_law', 'finding', 'root_cause',
+  'category_id', 'evidence_item_id', 'outcome', 'item_status', 'act_rule', 'act_id', 'provision_id', 'compliance_note', 'recommendation', 'assessment', 'signed_by', 'signed_at', 'resource_id', 'minimum_requirement', 'local_law', 'finding', 'root_cause',
   'action_plan', 'timeline_date', 'timeline_note', 'action_status', 'closed_on', 'verification_status', 'verification_remark',
   'verified_by', 'verified_at', 'sort_order',
 ] as const;
@@ -307,6 +310,21 @@ export function lookupAssignments(employerId: number, auditorId: number | null) 
       WHERE employer_id = ? AND deleted_at IS NULL AND status <> 'Cancelled' ${auditorId ? 'AND auditor_id = ?' : ''}
       ORDER BY created_at DESC LIMIT 50`,
     auditorId ? [employerId, auditorId] : [employerId]
+  );
+}
+
+/** The audits assigned to an auditor (all of them for an administrator), each with its company, unit, date and verifier. */
+export function lookupMyAudits(auditorId: number | null) {
+  return query<Row>(
+    `SELECT a.id, a.assignment_number, a.audit_title, a.employer_id, a.start_date, a.status, a.verifier_id,
+            e.company_name, u.unit_name, CONCAT_WS(' ', vu.first_name, vu.last_name) AS verifier_name
+       FROM audit_assignments a
+       JOIN employers e ON e.id = a.employer_id AND e.deleted_at IS NULL
+       LEFT JOIN company_units u ON u.id = a.unit_id
+       LEFT JOIN users vu ON vu.id = a.verifier_id
+      WHERE a.deleted_at IS NULL AND a.status <> 'Cancelled' AND a.assignment_type = 'AUDIT' ${auditorId ? 'AND a.auditor_id = ?' : ''}
+      ORDER BY a.created_at DESC LIMIT 100`,
+    auditorId ? [auditorId] : []
   );
 }
 

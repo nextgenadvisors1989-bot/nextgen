@@ -40,6 +40,10 @@ export interface CaparFinding {
   report_id: number;
   category_id: number | null;
   category_name: string | null;
+  evidence_item_id: number | null;
+  evidence_item_name: string | null;
+  evidence_section_id: number | null;
+  evidence_section_name: string | null;
   sort_order: number;
   outcome: 'Violation' | 'No Violation';
   item_status: 'Incomplete' | 'Not findings' | 'Verified';
@@ -123,10 +127,19 @@ export interface CaparEvent {
   created_at: string;
 }
 
+export interface CaparChecklistSection {
+  id: number;
+  name: string;
+  items: { id: number; group_name: string | null; name: string }[];
+}
+
 export interface CaparDetail {
   report: CaparReport;
   findings: CaparFinding[];
   categories: CaparCategory[];
+  checklist: CaparChecklistSection[];
+  /** Details this person cannot change (they come from the administrator records). */
+  locked: string[];
   events: CaparEvent[];
   role: CaparPanel;
   can: { edit: boolean; submit: boolean; delete: boolean; verify: boolean; decide: boolean; reopen: boolean; download: boolean };

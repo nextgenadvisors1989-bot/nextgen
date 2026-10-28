@@ -12,7 +12,7 @@ export default async function EmployerCaparPage() {
     <div className="space-y-6">
       <PageHeader
         title="CAPAR Reports"
-        description="Corrective Action Plan Acknowledgement Reports about your establishment, with the action plan and timeline for each finding."
+        description="Corrective Action and Preventive Action Reports about your establishment, with the action plan and timeline for each finding."
         breadcrumbs={[{ label: 'Dashboard', href: '/employer/dashboard' }, { label: 'CAPAR Reports' }]}
       />
       <CaparRegister panel="employer" />
