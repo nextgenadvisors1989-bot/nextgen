@@ -29,10 +29,22 @@ export interface CaparFile {
   file_id: number;
   kind: 'Photo' | 'Evidence';
   caption: string | null;
+  source: 'auditor' | 'employer';
   original_name: string;
   mime_type: string | null;
   size_bytes: number;
   url: string;
+}
+
+export interface CaparMessage {
+  id: number;
+  finding_id: number;
+  sender_role: 'employer' | 'auditor';
+  sender_name: string;
+  subject: string;
+  body: string;
+  created_at: string;
+  files: { file_id: number; name: string; mime_type: string | null; size: number; url: string }[];
 }
 
 export interface CaparFinding {
@@ -44,6 +56,8 @@ export interface CaparFinding {
   evidence_item_name: string | null;
   evidence_section_id: number | null;
   evidence_section_name: string | null;
+  evidence_group_id: number | null;
+  evidence_group_name: string | null;
   sort_order: number;
   outcome: 'Violation' | 'No Violation';
   item_status: 'Incomplete' | 'Not findings' | 'Verified';
@@ -73,6 +87,15 @@ export interface CaparFinding {
   verification_remark: string | null;
   verified_by_name: string | null;
   verified_at: string | null;
+  response_status: 'Pending' | 'Employer Submitted' | 'Approved' | 'Declined';
+  response_text: string | null;
+  employer_signed: boolean;
+  employer_signed_by: string | null;
+  employer_signed_at: string | null;
+  response_reviewed_by: string | null;
+  response_reviewed_at: string | null;
+  response_review_note: string | null;
+  messages: CaparMessage[];
   files: CaparFile[];
 }
 
@@ -87,6 +110,14 @@ export interface CaparReport {
   unit_name: string | null;
   assignment_id: number | null;
   assignment_number: string | null;
+  audit_type_id: number | null;
+  audit_type_name: string | null;
+  buyer_standards: string | null;
+  audit_purpose: string | null;
+  has_signature: boolean;
+  others_selected: number | boolean;
+  others_note: string | null;
+  signed_at: string | null;
   auditor_id: number;
   auditor_name: string;
   verifier_id: number | null;
@@ -138,14 +169,21 @@ export interface CaparDetail {
   findings: CaparFinding[];
   categories: CaparCategory[];
   checklist: CaparChecklistSection[];
+  /** The six common categories; `selected` is what the auditor ticked for this report. */
+  groups: { id: number; name: string; selected: boolean }[];
   /** Details this person cannot change (they come from the administrator records). */
   locked: string[];
   events: CaparEvent[];
   role: CaparPanel;
-  can: { edit: boolean; submit: boolean; delete: boolean; verify: boolean; decide: boolean; reopen: boolean; download: boolean };
+  can: { edit: boolean; submit: boolean; delete: boolean; verify: boolean; decide: boolean; reopen: boolean; download: boolean; respond: boolean; review: boolean; message: boolean };
   branding: { logoUrl: string | null; letterheadUrl: string | null };
 }
 
 export const CAPAR_STATUS_TONE: Record<string, 'slate' | 'info' | 'violet' | 'warning' | 'success'> = {
   Draft: 'slate', Submitted: 'info', 'Under Review': 'violet', Returned: 'warning', Approved: 'success',
+};
+
+/** What a status is called on screen: a submitted report waits for the employer. */
+export const CAPAR_STATUS_LABEL: Record<string, string> = {
+  Draft: 'Draft', Submitted: 'Pending', 'Under Review': 'Employer submitted', Returned: 'Returned', Approved: 'Closed',
 };

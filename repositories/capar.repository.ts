@@ -76,13 +76,14 @@ const REPORT_SELECT = `
          a.name AS auditor_name, a.auditor_code, a.signature_path AS auditor_signature_path,
          a.user_id AS auditor_user_id,
          CONCAT_WS(' ', v.first_name, v.last_name) AS verifier_name,
-         aa.assignment_number
+         aa.assignment_number, atp.name AS audit_type_name
     FROM capar_reports r
     JOIN employers e ON e.id = r.employer_id
     JOIN auditors a ON a.id = r.auditor_id
     LEFT JOIN company_units u ON u.id = r.unit_id
     LEFT JOIN users v ON v.id = r.verifier_id
-    LEFT JOIN audit_assignments aa ON aa.id = r.assignment_id`;
+    LEFT JOIN audit_assignments aa ON aa.id = r.assignment_id
+    LEFT JOIN audit_types atp ON atp.id = r.audit_type_id`;
 
 export function findReport(id: number) {
   return queryOne<Row>(`${REPORT_SELECT} WHERE r.id = ? AND r.deleted_at IS NULL`, [id]);
@@ -172,7 +173,7 @@ const REPORT_FIELDS = [
   'title', 'verifier_id', 'facility_name', 'facility_address', 'representative_name', 'representative_title', 'audit_date',
   'audit_firm', 'auditor_print_name', 'standard_reference', 'summary_notes', 'closing_meeting_date', 'closing_statement',
   'facility_signatory', 'facility_signed_date', 'letterhead_file_id', 'logo_file_id', 'status', 'submitted_at', 'reviewed_at',
-  'approved_at', 'review_comments', 'revision_count', 'updated_by',
+  'approved_at', 'review_comments', 'revision_count', 'updated_by', 'audit_type_id', 'buyer_standards', 'audit_purpose', 'signature_kind', 'signature_data', 'signed_at', 'others_selected', 'others_note',
 ] as const;
 
 export async function updateReport(id: number, data: Record<string, unknown>) {
@@ -199,6 +200,7 @@ export function listFindings(reportId: number) {
   return query<Row>(
     `SELECT f.*, c.name AS category_name, c.sort_order AS category_order,
             ei.name AS evidence_item_name, ei.section_id AS evidence_section_id, es.name AS evidence_section_name,
+            eg.id AS evidence_group_id, eg.name AS evidence_group_name,
             ca.short_name AS act_short_name, ca.act_name AS act_name,
             cr.title AS resource_title, cr.external_url AS resource_external_url, cr.file_id AS resource_file_id,
             CONCAT_WS(' ', vu.first_name, vu.last_name) AS verified_by_name
@@ -206,6 +208,7 @@ export function listFindings(reportId: number) {
        LEFT JOIN capar_categories c ON c.id = f.category_id
        LEFT JOIN evidence_items ei ON ei.id = f.evidence_item_id
        LEFT JOIN evidence_sections es ON es.id = ei.section_id
+       LEFT JOIN capar_groups eg ON eg.id = COALESCE(ei.capar_group_id, (SELECT g0.id FROM capar_groups g0 WHERE g0.status = 'active' ORDER BY g0.sort_order, g0.id LIMIT 1))
        LEFT JOIN compliance_acts ca ON ca.id = f.act_id
        LEFT JOIN cms_resources cr ON cr.id = f.resource_id
        LEFT JOIN users vu ON vu.id = f.verified_by
@@ -231,6 +234,8 @@ const FINDING_FIELDS = [
   'category_id', 'evidence_item_id', 'outcome', 'item_status', 'act_rule', 'act_id', 'provision_id', 'compliance_note', 'recommendation', 'assessment', 'signed_by', 'signed_at', 'resource_id', 'minimum_requirement', 'local_law', 'finding', 'root_cause',
   'action_plan', 'timeline_date', 'timeline_note', 'action_status', 'closed_on', 'verification_status', 'verification_remark',
   'verified_by', 'verified_at', 'sort_order',
+  'response_status', 'response_text', 'employer_signature_kind', 'employer_signature_data', 'employer_signed_by', 'employer_signed_at',
+  'response_reviewed_by', 'response_reviewed_at', 'response_review_note',
 ] as const;
 
 export function insertFinding(reportId: number, data: Record<string, unknown>) {
@@ -257,7 +262,7 @@ export function softDeleteFinding(id: number) {
 export function listFindingFiles(findingIds: number[]) {
   if (!findingIds.length) return Promise.resolve([] as Row[]);
   return query<Row>(
-    `SELECT ff.id AS link_id, ff.finding_id, ff.file_id, ff.kind, ff.caption, ff.sort_order,
+    `SELECT ff.id AS link_id, ff.finding_id, ff.file_id, ff.kind, ff.caption, ff.sort_order, ff.source,
             f.original_name, f.mime_type, f.size_bytes, f.storage_path
        FROM capar_finding_files ff
        JOIN files f ON f.id = ff.file_id AND f.deleted_at IS NULL
@@ -267,10 +272,17 @@ export function listFindingFiles(findingIds: number[]) {
   );
 }
 
-export function insertFindingFile(data: { finding_id: number; file_id: number; kind: string; caption: string | null; created_by: number }) {
+export function insertFindingFile(data: { finding_id: number; file_id: number; kind: string; caption: string | null; created_by: number; source?: 'auditor' | 'employer' }) {
   return insert(
-    'INSERT INTO capar_finding_files (finding_id, file_id, kind, caption, created_by) VALUES (?, ?, ?, ?, ?)',
-    [data.finding_id, data.file_id, data.kind, data.caption, data.created_by]
+    'INSERT INTO capar_finding_files (finding_id, file_id, kind, caption, created_by, source) VALUES (?, ?, ?, ?, ?, ?)',
+    [data.finding_id, data.file_id, data.kind, data.caption, data.created_by, data.source ?? 'auditor']
+  );
+}
+
+export function query_insertMessage(data: { report_id: number; finding_id: number; sender_role: string; sender_id: number; sender_name: string; subject: string; body: string }) {
+  return insert(
+    'INSERT INTO capar_finding_messages (report_id, finding_id, sender_role, sender_id, sender_name, subject, body) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [data.report_id, data.finding_id, data.sender_role, data.sender_id, data.sender_name, data.subject, data.body]
   );
 }
 

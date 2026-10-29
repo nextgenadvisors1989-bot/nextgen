@@ -12,7 +12,7 @@ export default async function AdminCaparManagementPage() {
     <div className="space-y-6">
       <PageHeader
         title="CAPAR Management"
-        description="The documents a CAPAR report is made of, and which auditors see which documents."
+        description="The six categories every CAPAR report has, and the category each document belongs to."
         breadcrumbs={[{ label: 'Dashboard', href: '/admin/dashboard' }, { label: 'CAPAR Reports', href: '/admin/capar' }, { label: 'Management' }]}
       />
       <CaparManagement />

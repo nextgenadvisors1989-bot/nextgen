@@ -10,16 +10,17 @@
  *   employer  approved reports about their own company
  */
 import { searchProvisions } from '@/services/act-provision.service';
-import { assertPackDownloaded } from '@/services/evidence.service';
-import { checklistForAuditor } from '@/services/capar-checklist.service';
+import { checklistGroups, listGroups, reportGroupIds, setReportGroups } from '@/services/capar-checklist.service';
 import { localToday } from '@/lib/utils/dates';
-import { query, queryOne, type RowDataPacket } from '@/lib/db/mysql';
+import { execute, query, queryOne, type RowDataPacket } from '@/lib/db/mysql';
 import { writeActivityLog } from '@/lib/logger/activity-log';
 import { notifyUser } from '@/lib/notifications/notification-service';
 import { assertPermission } from '@/lib/auth/permission-check';
 import { saveUploads, archiveFile, type UploadInput } from '@/lib/files/file-service';
 import { nextDocumentNumber } from '@/lib/utils/report-number';
 import { buildPagination, parsePagination } from '@/lib/utils/pagination';
+import { z } from 'zod';
+import { submitSchema } from '@/lib/validations/capar.validation';
 import {
   caparCreateSchema, caparUpdateSchema, categorySchema, categoryUpdateSchema, decisionSchema, findingSchema,
   verifyFindingSchema, CAPAR_FILE_KINDS,
@@ -58,7 +59,7 @@ async function loadScoped(user: AuthUser, id: number): Promise<{ report: Report;
   if (role === 'verifier' && (Number(report.verifier_id) !== user.id || report.status === 'Draft')) {
     return fail('FORBIDDEN', 'This CAPAR report is not assigned to you for review');
   }
-  if (role === 'employer' && (Number(report.employer_id) !== Number(user.employerId) || report.status !== 'Approved')) {
+  if (role === 'employer' && (Number(report.employer_id) !== Number(user.employerId) || report.status === 'Draft')) {
     return fail('NOT_FOUND', 'CAPAR report not found');
   }
   return { report, role };
@@ -67,6 +68,7 @@ async function loadScoped(user: AuthUser, id: number): Promise<{ report: Report;
 // The auditor can keep correcting a report after submitting it; a change sends the row they touched back to the verifier. Approved reports are locked.
 const EDITABLE = ['Draft', 'Returned', 'Submitted', 'Under Review'];
 const SUBMITTABLE = ['Draft', 'Returned'];
+const RESPONDABLE = ['Submitted', 'Under Review'];
 const IN_REVIEW = ['Submitted', 'Under Review'];
 
 function isOwner(user: AuthUser, report: Report) {
@@ -79,7 +81,7 @@ function isOwner(user: AuthUser, report: Report) {
  */
 function lockedFields(role: CaparRole, report: Report): string[] {
   if (role !== 'auditor') return [];
-  const locked = ['facility_name', 'facility_address', 'auditor_print_name', 'audit_firm'];
+  const locked = ['facility_name', 'facility_address', 'auditor_print_name', 'audit_firm', 'audit_type_id'];
   if (report.assignment_id) locked.push('audit_date');
   if (report.assignment_id && report.verifier_id) locked.push('verifier_id');
   return locked;
@@ -119,7 +121,7 @@ export async function listReports(user: AuthUser, params: ReportListParams) {
   const scope: Pick<repo.ReportListFilters, 'auditorId' | 'verifierId' | 'employerId' | 'statuses'> = {};
   if (role === 'auditor') scope.auditorId = Number(user.auditorId ?? 0) || -1;
   if (role === 'verifier') { scope.verifierId = user.id; scope.statuses = ['Submitted', 'Under Review', 'Returned', 'Approved']; }
-  if (role === 'employer') { scope.employerId = Number(user.employerId ?? 0) || -1; scope.statuses = ['Approved']; }
+  if (role === 'employer') { scope.employerId = Number(user.employerId ?? 0) || -1; scope.statuses = ['Submitted', 'Under Review', 'Returned', 'Approved']; }
 
   const { total, rows } = await repo.listReports({
     ...scope,
@@ -146,8 +148,22 @@ export async function getReportDetail(user: AuthUser, id: number) {
       .map((finding) => ({ ...finding, verification_remark: null, verified_by_name: null }));
   }
   const files = await repo.listFindingFiles(findings.map((finding) => Number(finding.id)));
+  const messages = await query<RowDataPacket>(
+    'SELECT id, finding_id, sender_role, sender_name, subject, body, created_at FROM capar_finding_messages WHERE report_id = ? ORDER BY id', [id]);
+  const messageFiles = messages.length
+    ? await query<RowDataPacket>(
+        `SELECT mf.message_id, f.id AS file_id, f.original_name, f.mime_type, f.size_bytes
+           FROM capar_message_files mf JOIN files f ON f.id = mf.file_id AND f.deleted_at IS NULL
+          WHERE mf.message_id IN (${messages.map(() => '?').join(',')}) ORDER BY f.id`, messages.map((message) => Number(message.id)))
+    : [];
   const withFiles = findings.map((finding) => ({
     ...finding,
+    employer_signature_data: undefined,
+    employer_signed: Boolean(finding.employer_signature_kind),
+    messages: messages.filter((message) => Number(message.finding_id) === Number(finding.id)).map((message) => ({
+      ...message,
+      files: messageFiles.filter((file) => Number(file.message_id) === Number(message.id)).map((file) => ({ file_id: Number(file.file_id), name: String(file.original_name), mime_type: file.mime_type ? String(file.mime_type) : null, size: Number(file.size_bytes), url: `/api/files/${Number(file.file_id)}/download` })),
+    })),
     files: files
       .filter((file) => Number(file.finding_id) === Number(finding.id))
       .map((file) => ({ ...file, storage_path: undefined, url: `/api/files/${file.file_id}/download` })),
@@ -160,23 +176,31 @@ export async function getReportDetail(user: AuthUser, id: number) {
     edit: editable,
     submit: editable && SUBMITTABLE.includes(String(report.status)) && (user.permissions.includes('*') || user.permissions.includes('capar.update')),
     delete: editable && report.status === 'Draft' && (user.permissions.includes('*') || user.permissions.includes('capar.delete')),
-    verify: reviewer && (user.permissions.includes('*') || user.permissions.includes('capar.verify')),
-    decide: reviewer && (user.permissions.includes('*') || user.permissions.includes('capar.approve')),
+    // The verifier step is gone: the employer answers and the auditor closes the report.
+    verify: false,
+    decide: false,
     reopen: role === 'admin' && report.status === 'Approved',
+    // The employer answers each finding; the auditor (or an administrator) reviews the answers. Both can write on a finding until the report closes.
+    respond: role === 'employer' && RESPONDABLE.includes(String(report.status)),
+    review: (role === 'admin' || (role === 'auditor' && isOwner(user, report))) && RESPONDABLE.includes(String(report.status)),
+    message: (role === 'employer' || role === 'admin' || (role === 'auditor' && isOwner(user, report))) && RESPONDABLE.includes(String(report.status)),
     download: user.permissions.includes('*') || user.permissions.includes('capar.download'),
   };
 
-  const [categories, events, checklist] = await Promise.all([
+  const [categories, events, checklist, groups, picked] = await Promise.all([
     repo.listCategories(false),
     role === 'employer' ? Promise.resolve([]) : repo.listEvents(id),
-    checklistForAuditor(Number(report.auditor_id)),
+    checklistGroups(),
+    listGroups(),
+    reportGroupIds(id),
   ]);
 
   return {
-    report: { ...report, auditor_signature_path: undefined, review_comments: role === 'employer' ? null : report.review_comments },
+    report: { ...report, auditor_signature_path: undefined, signature_data: undefined, has_signature: Boolean(report.signature_data), review_comments: role === 'employer' ? null : report.review_comments },
     findings: withFiles,
     categories,
     checklist,
+    groups: groups.map((group) => ({ ...group, selected: picked.includes(group.id) })),
     events,
     role,
     can,
@@ -226,10 +250,14 @@ export async function createReport(actor: Actor, input: unknown) {
   const auditor = await repo.auditorById(auditorId!);
   if (!auditor) fail('INVALID_REFERENCE', 'That auditor does not exist');
 
+  if (role === 'auditor' && !data.audit_type_id) fail('VALIDATION_FAILED', 'Choose the audit you are going to report on', { issues: [{ field: 'audit_type_id', message: 'Choose the audit type' }] });
+  if (role === 'auditor' && !String(data.audit_purpose ?? '').trim()) fail('VALIDATION_FAILED', 'Say why this audit is being done', { issues: [{ field: 'audit_purpose', message: 'Enter the purpose of the audit' }] });
+  const auditType = data.audit_type_id ? await queryOne<RowDataPacket>('SELECT id, name FROM audit_types WHERE id = ? AND deleted_at IS NULL', [data.audit_type_id]) : null;
+  if (data.audit_type_id && !auditType) fail('INVALID_REFERENCE', 'That audit type is not in the list');
+
   const employer = await repo.employerForHeader(employerId!);
   if (!employer) fail('INVALID_REFERENCE', 'That employer does not exist');
-  // Before the audit starts the auditor must have read the pack the employer submitted (when the administrator gave this auditor any sections).
-  if (role === 'auditor') await assertPackDownloaded(actor.user, employerId!);
+  // The employer's Audit Documents pack is NOT required to start: the auditor is only reminded when it has not been submitted.
   const fromAssignment = role === 'auditor';
   const unitId = (fromAssignment ? null : data.unit_id) ?? (assignment?.unit_id ? Number(assignment.unit_id) : null);
   const unit = unitId ? await repo.unitForHeader(unitId, employerId!) : null;
@@ -250,6 +278,9 @@ export async function createReport(actor: Actor, input: unknown) {
     employer_id: employerId,
     unit_id: unitId,
     assignment_id: data.assignment_id ?? null,
+    audit_type_id: auditType ? Number(auditType.id) : null,
+    buyer_standards: auditType && String(auditType.name).startsWith('International Buyer') ? data.buyer_standards ?? null : null,
+    audit_purpose: data.audit_purpose ?? null,
     auditor_id: auditorId,
     verifier_id: (fromAssignment ? undefined : data.verifier_id) ?? (assignment?.verifier_id ? Number(assignment.verifier_id) : null),
     facility_name: facilityName,
@@ -280,7 +311,9 @@ export async function updateReport(actor: Actor, id: number, input: unknown) {
     const verifiers = await repo.lookupVerifiers();
     if (!verifiers.some((verifier) => Number(verifier.id) === data.verifier_id)) fail('VALIDATION_FAILED', 'Choose a verifier from the list');
   }
-  await repo.updateReport(id, { ...data, updated_by: actor.user.id });
+  const { group_ids: groupIds, ...fields } = data as typeof data & { group_ids?: number[] };
+  if (groupIds) await setReportGroups(id, groupIds);
+  if (Object.keys(fields).length) await repo.updateReport(id, { ...fields, updated_by: actor.user.id });
   const updated = await repo.findReport(id);
   await log(actor, updated!, 'updated', `CAPAR ${String(report.report_number)} details updated`);
   return updated!;
@@ -395,8 +428,13 @@ export async function updateFinding(actor: Actor, reportId: number, findingId: n
     patch.verified_by = null;
     patch.verified_at = null;
   }
+  if (RESPONDABLE.includes(String(report.status)) && finding.response_status !== 'Pending') {
+    patch.response_status = 'Pending';
+    patch.response_review_note = null;
+  }
   await repo.updateFinding(findingId, patch);
   await repo.updateReport(reportId, { updated_by: actor.user.id });
+  if (RESPONDABLE.includes(String(report.status))) await recomputeStatus(report.id as number, actor);
   return repo.findFinding(findingId);
 }
 
@@ -408,6 +446,7 @@ export async function deleteFinding(actor: Actor, reportId: number, findingId: n
   await repo.softDeleteFinding(findingId);
   await repo.updateReport(reportId, { updated_by: actor.user.id });
   await log(actor, report, 'updated', `Finding removed from CAPAR ${String(report.report_number)}`);
+  if (RESPONDABLE.includes(String(report.status))) await recomputeStatus(Number(report.id), actor);
 }
 
 /* ───────────────────────────── finding files (photos / evidence) ───────────────────────────── */
@@ -432,6 +471,144 @@ export async function attachFiles(actor: Actor, reportId: number, findingId: num
   await repo.updateReport(reportId, { updated_by: actor.user.id });
   return saved;
 }
+
+/* ───────────────────────────── the employer's answers and the auditor's review ───────────────────────────── */
+
+const messageSchema = z.object({
+  subject: z.string().trim().min(3, 'Write a subject').max(200),
+  body: z.string().trim().min(2, 'Write your message').max(4000),
+});
+const respondSchema = z.object({
+  response_text: z.string().trim().min(5, 'Say what has been done to fix this').max(6000),
+  signature_kind: z.enum(['drawn', 'typed']),
+  signature_data: z.string().min(2, 'Sign before you submit').max(400000),
+});
+const reviewSchema = z.object({
+  decision: z.enum(['approve', 'decline']),
+  note: z.string().trim().max(2000).optional().nullable(),
+});
+
+async function notifyEmployerUsers(report: Report, input: { title: string; message: string; channels?: ('in_app' | 'email')[] }) {
+  const users = await query<RowDataPacket>('SELECT DISTINCT user_id FROM employer_users WHERE employer_id = ?', [Number(report.employer_id)]);
+  for (const row of users) {
+    await notifyUser({
+      userId: Number(row.user_id), title: input.title, message: input.message, type: 'action_required', category: 'REPORT', priority: 'high',
+      actionUrl: `/employer/capar/${Number(report.id)}`, actionLabel: 'Open the report', entityType: 'capar_report', entityId: Number(report.id),
+      channels: input.channels ?? ['in_app', 'email'],
+    }).catch(() => undefined);
+  }
+}
+
+async function notifyAuditorUser(report: Report, input: { title: string; message: string }) {
+  if (!report.auditor_user_id) return;
+  await notifyUser({
+    userId: Number(report.auditor_user_id), title: input.title, message: input.message, type: 'action_required', category: 'REPORT', priority: 'high',
+    actionUrl: `/auditor/capar/${Number(report.id)}`, actionLabel: 'Open the report', entityType: 'capar_report', entityId: Number(report.id),
+    channels: ['in_app', 'email'],
+  }).catch(() => undefined);
+}
+
+/**
+ * The report's state follows its rows. When every finding that is a violation has been approved the report is closed; otherwise it is
+ * "Under Review" while an answer from the employer is waiting for the auditor, and "Submitted" (pending) while the employer has to answer.
+ */
+async function recomputeStatus(reportId: number, actor: Actor) {
+  const report = await repo.findReport(reportId);
+  if (!report || !RESPONDABLE.includes(String(report.status))) return;
+  const rows = await query<RowDataPacket>("SELECT response_status FROM capar_findings WHERE report_id = ? AND outcome = 'Violation' AND deleted_at IS NULL", [reportId]);
+  if (rows.length && rows.every((row) => row.response_status === 'Approved')) {
+    await repo.updateReport(reportId, { status: 'Approved', approved_at: new Date(), reviewed_at: new Date(), updated_by: actor.user.id });
+    await repo.insertEvent({ report_id: reportId, action: 'Approved', comments: 'Every finding was answered and approved. The report is closed.', actor_id: actor.user.id, actor_name: actor.user.fullName });
+    await log(actor, report, 'approved', `CAPAR ${String(report.report_number)} closed: every finding approved`);
+    await notifyEmployerUsers(report, { title: 'CAPAR report closed', message: `${String(report.title)} (${String(report.report_number)}) is closed. Every finding was approved.`, channels: ['in_app', 'email'] });
+    await notifyAuditorUser(report, { title: 'CAPAR report closed', message: `${String(report.title)} (${String(report.report_number)}) is closed. Every finding was approved.` });
+    return;
+  }
+  const next = rows.some((row) => row.response_status === 'Employer Submitted') ? 'Under Review' : 'Submitted';
+  if (next !== report.status) await repo.updateReport(reportId, { status: next, updated_by: actor.user.id });
+}
+
+export async function addMessage(actor: Actor, reportId: number, findingId: number, input: unknown, uploads: UploadInput[] = []) {
+  assertPermission(actor.user, 'capar.read');
+  const { report, role } = await loadScoped(actor.user, reportId);
+  if (role === 'verifier') fail('FORBIDDEN', 'You cannot write on this report');
+  if (role === 'auditor' && !isOwner(actor.user, report)) fail('FORBIDDEN', 'This CAPAR report was written by another auditor');
+  if (report.status === 'Approved') fail('INVALID_STATE', 'This report is closed.');
+  if (!RESPONDABLE.includes(String(report.status))) fail('INVALID_STATE', 'The report has not been sent to the employer yet.');
+  await loadFinding(reportId, findingId);
+  const data = messageSchema.parse(input);
+  const side = role === 'employer' ? 'employer' : 'auditor';
+  const messageId = await repo.query_insertMessage({ report_id: reportId, finding_id: findingId, sender_role: side, sender_id: actor.user.id, sender_name: actor.user.fullName, subject: data.subject, body: data.body });
+  if (uploads.length) {
+    const saved = await saveUploads(uploads, { entityType: 'CAPAR', entityId: reportId, category: 'CAPAR message', accessLevel: 'private' }, { user: actor.user, ip: actor.ip ?? null });
+    for (const file of saved) await execute('INSERT IGNORE INTO capar_message_files (message_id, file_id) VALUES (?, ?)', [messageId, file.id]);
+  }
+  const note = { title: `Message on ${String(report.report_number)}: ${data.subject}`, message: `${actor.user.fullName}: ${data.body.slice(0, 300)}${uploads.length ? ` (${uploads.length} file${uploads.length === 1 ? '' : 's'} attached)` : ''}` };
+  if (side === 'employer') await notifyAuditorUser(report, note); else await notifyEmployerUsers(report, note);
+  return { id: messageId };
+}
+
+export async function attachEmployerFiles(actor: Actor, reportId: number, findingId: number, files: UploadInput[]) {
+  assertPermission(actor.user, 'capar.read');
+  const { report, role } = await loadScoped(actor.user, reportId);
+  if (role !== 'employer') fail('FORBIDDEN', 'Only the employer attaches the proof of a fix');
+  if (!RESPONDABLE.includes(String(report.status))) fail('INVALID_STATE', 'This report is not open for answers.');
+  const finding = await loadFinding(reportId, findingId);
+  if (!['Pending', 'Declined'].includes(String(finding.response_status))) fail('INVALID_STATE', 'This finding has already been answered.');
+  if (!files.length) fail('VALIDATION_FAILED', 'Choose at least one file');
+  const saved = await saveUploads(files, { entityType: 'CAPAR', entityId: reportId, category: 'CAPAR employer proof', accessLevel: 'employer' }, { user: actor.user, ip: actor.ip ?? null });
+  for (const file of saved) await repo.insertFindingFile({ finding_id: findingId, file_id: file.id, kind: 'Evidence', caption: null, created_by: actor.user.id, source: 'employer' });
+  return saved;
+}
+
+export async function respondToFinding(actor: Actor, reportId: number, findingId: number, input: unknown) {
+  assertPermission(actor.user, 'capar.read');
+  const { report, role } = await loadScoped(actor.user, reportId);
+  if (role !== 'employer') fail('FORBIDDEN', 'Only the employer answers a finding');
+  if (!RESPONDABLE.includes(String(report.status))) fail('INVALID_STATE', 'This report is not open for answers.');
+  const finding = await loadFinding(reportId, findingId);
+  if (finding.outcome !== 'Violation') fail('INVALID_STATE', 'Only a finding with an issue needs an answer.');
+  if (!['Pending', 'Declined'].includes(String(finding.response_status))) fail('INVALID_STATE', 'This finding has already been answered.');
+  const parsed = respondSchema.safeParse(input ?? {});
+  if (!parsed.success) {
+    const issues = parsed.error.issues.map((issue) => ({ field: String(issue.path[0] ?? 'form'), message: issue.message }));
+    fail('VALIDATION_FAILED', issues[0].message, { issues });
+  }
+  const data = parsed.data;
+  await repo.updateFinding(findingId, {
+    response_status: 'Employer Submitted', response_text: data.response_text, employer_signature_kind: data.signature_kind, employer_signature_data: data.signature_data,
+    employer_signed_by: actor.user.fullName, employer_signed_at: new Date(), response_review_note: null,
+  });
+  await recomputeStatus(reportId, actor);
+  await log(actor, report, 'updated', `Employer answered a finding of CAPAR ${String(report.report_number)}`);
+  await notifyAuditorUser(report, { title: 'The employer has answered a finding', message: `${actor.user.fullName} submitted the fix for a finding in ${String(report.report_number)}. Approve or decline it.` });
+  return repo.findFinding(findingId);
+}
+
+export async function reviewFinding(actor: Actor, reportId: number, findingId: number, input: unknown) {
+  assertPermission(actor.user, 'capar.update');
+  const { report, role } = await loadScoped(actor.user, reportId);
+  if (role !== 'auditor' && role !== 'admin') fail('FORBIDDEN', 'Only the auditor reviews the employer answers');
+  if (role === 'auditor' && !isOwner(actor.user, report)) fail('FORBIDDEN', 'This CAPAR report was written by another auditor');
+  if (!RESPONDABLE.includes(String(report.status))) fail('INVALID_STATE', 'This report is closed or has not been sent yet.');
+  const finding = await loadFinding(reportId, findingId);
+  if (finding.response_status !== 'Employer Submitted') fail('INVALID_STATE', 'There is no answer from the employer to review on this finding.');
+  const data = reviewSchema.parse(input ?? {});
+  const note = (data.note ?? '').trim();
+  if (data.decision === 'decline' && note.length < 3) fail('VALIDATION_FAILED', 'Say what is still missing', { issues: [{ field: 'note', message: 'Say what is still missing' }] });
+  await repo.updateFinding(findingId, {
+    response_status: data.decision === 'approve' ? 'Approved' : 'Declined', response_reviewed_by: actor.user.fullName, response_reviewed_at: new Date(), response_review_note: note || null,
+  });
+  await recomputeStatus(reportId, actor);
+  const closed = (await repo.findReport(reportId))?.status === 'Approved';
+  if (!closed) {
+    await notifyEmployerUsers(report, data.decision === 'approve'
+      ? { title: 'A finding was approved', message: `The auditor approved your answer on a finding in ${String(report.report_number)}.` }
+      : { title: 'A finding was declined', message: `The auditor declined your answer on a finding in ${String(report.report_number)}: ${note}` });
+  }
+  return repo.findFinding(findingId);
+}
+
 
 export async function removeFindingFile(actor: Actor, reportId: number, linkId: number) {
   assertPermission(actor.user, 'capar.update');
@@ -465,17 +642,20 @@ export async function setBranding(actor: Actor, reportId: number, kind: 'logo' |
 
 /* ───────────────────────────── submit / review ───────────────────────────── */
 
-export async function submitReport(actor: Actor, id: number) {
+export async function submitReport(actor: Actor, id: number, input: unknown) {
   assertPermission(actor.user, 'capar.update');
   const { report, role } = await loadScoped(actor.user, id);
   mustEdit(actor.user, role, report);
   if (!SUBMITTABLE.includes(String(report.status))) fail('INVALID_STATE', 'This report has already been submitted. Your changes are saved as you make them.');
+  const signed = submitSchema.safeParse(input ?? {});
+  if (!signed.success) fail('VALIDATION_FAILED', 'Sign the report before you submit it', { issues: [{ field: 'signature', message: 'Draw or type your signature' }] });
 
   const findings = await repo.listFindings(id);
+  const picked = await reportGroupIds(id);
   const problems: { field: string; message: string }[] = [];
   if (!report.audit_date) problems.push({ field: 'audit_date', message: 'Enter the audit date' });
-  if (!report.verifier_id) problems.push({ field: 'verifier_id', message: 'Choose the verifier who will review this report' });
-  if (!findings.length) problems.push({ field: 'findings', message: 'Add at least one finding (or a "No Violation" row) before submitting' });
+  if (!picked.length && !report.others_selected) problems.push({ field: 'groups', message: 'Tick at least one category on the left to report' });
+  if (!findings.length) problems.push({ field: 'findings', message: 'Add at least one finding (or a "No issue" row) before submitting' });
   findings.forEach((finding, index) => {
     if (finding.outcome === 'Violation' && !String(finding.finding ?? '').trim()) {
       problems.push({ field: `finding.${finding.id}`, message: `Finding ${index + 1} has no description` });
@@ -486,19 +666,23 @@ export async function submitReport(actor: Actor, id: number) {
   const resubmission = report.status === 'Returned';
   await repo.updateReport(id, {
     status: 'Submitted', submitted_at: new Date(), reviewed_at: null, updated_by: actor.user.id,
+    signature_kind: signed.data.signature_kind, signature_data: signed.data.signature_data, signed_at: new Date(),
     revision_count: resubmission ? Number(report.revision_count ?? 0) + 1 : Number(report.revision_count ?? 0),
   });
   await repo.insertEvent({ report_id: id, action: 'Submitted', comments: null, actor_id: actor.user.id, actor_name: actor.user.fullName });
-  await log(actor, report, 'submitted', `CAPAR ${String(report.report_number)} submitted for verification`);
+  await log(actor, report, 'submitted', `CAPAR ${String(report.report_number)} submitted to the employer`);
 
-  await notifyUser({
-    userId: Number(report.verifier_id),
-    title: 'CAPAR report awaiting your review',
-    message: `${String(report.title)} (${String(report.report_number)}) was submitted by ${String(report.auditor_name)}.`,
-    type: 'action_required', category: 'REPORT', priority: 'high',
-    actionUrl: `/verifier/capar/${id}`, actionLabel: 'Review report', entityType: 'capar_report', entityId: id,
-    channels: ['in_app'],
-  }).catch(() => undefined);
+  const employerUsers = await query<RowDataPacket>('SELECT DISTINCT user_id FROM employer_users WHERE employer_id = ?', [Number(report.employer_id)]);
+  for (const row of employerUsers) {
+    await notifyUser({
+      userId: Number(row.user_id),
+      title: 'A CAPAR report is waiting for your response',
+      message: `${String(report.auditor_name)} has submitted ${String(report.title)} (${String(report.report_number)}). Please review the findings and respond.`,
+      type: 'action_required', category: 'REPORT', priority: 'high',
+      actionUrl: `/employer/capar/${id}`, actionLabel: 'Open the report', entityType: 'capar_report', entityId: id,
+      channels: ['in_app', 'email'],
+    }).catch(() => undefined);
+  }
   return repo.findReport(id);
 }
 
@@ -637,6 +821,10 @@ export async function lookup(user: AuthUser, type: string, params: { q?: string;
   if (type === 'myaudits') {
     if (role === 'auditor' && !user.auditorId) return [];
     const rows = await repo.lookupMyAudits(role === 'auditor' ? Number(user.auditorId) : null);
+    const packs = rows.length
+      ? await query<RowDataPacket>(`SELECT DISTINCT employer_id FROM evidence_submissions WHERE employer_id IN (${[...new Set(rows.map((row) => Number(row.employer_id)))].map(() => '?').join(',')})`, [...new Set(rows.map((row) => Number(row.employer_id)))])
+      : [];
+    const packed = new Set(packs.map((pack) => Number(pack.employer_id)));
     return rows.map((row) => ({
       value: String(row.id),
       label: `${row.company_name}${row.unit_name ? ` - ${row.unit_name}` : ''}`,
@@ -648,6 +836,7 @@ export async function lookup(user: AuthUser, type: string, params: { q?: string;
       verifierId: row.verifier_id ? Number(row.verifier_id) : null,
       verifier: row.verifier_name ? String(row.verifier_name) : null,
       status: String(row.status),
+      packSubmitted: packed.has(Number(row.employer_id)),
     }));
   }
   if (type === 'units' && params.employerId) {

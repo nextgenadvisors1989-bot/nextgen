@@ -8,20 +8,26 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/input';
+import { useToast } from '@/components/ui/toast';
+import { api, fieldErrors } from '@/lib/utils/api-client';
 import { FindingEditor } from '@/components/capar/finding-editor';
+import { RESPONSE_LABEL, RESPONSE_TONE } from '@/components/capar/finding-response';
 import type { CaparCategory, CaparChecklistSection, CaparFinding } from '@/types/capar';
 
 interface RowItem { id: number; name: string; group_name: string | null }
 interface Section { id: number; name: string; items: RowItem[] }
 
 /** The checklist the auditor may work through, plus any row already recorded against a document that is no longer offered. */
-function buildSections(checklist: CaparChecklistSection[], findings: CaparFinding[]): Section[] {
-  const sections: Section[] = checklist.map((section) => ({ id: section.id, name: section.name, items: [...section.items] }));
-  findings.filter((finding) => finding.evidence_item_id).forEach((finding) => {
-    const sectionId = Number(finding.evidence_section_id ?? 0);
+function buildSections(checklist: CaparChecklistSection[], findings: CaparFinding[], pickedIds: number[], onlyRecorded: boolean): Section[] {
+  const recorded = new Set(findings.map((finding) => Number(finding.evidence_item_id)));
+  const sections: Section[] = checklist.filter((group) => pickedIds.includes(group.id)).map((group) => ({ id: group.id, name: group.name, items: group.items.filter((item) => !onlyRecorded || recorded.has(item.id)) })).filter((group) => !onlyRecorded || group.items.length > 0);
+  findings.filter((finding) => finding.evidence_item_id && pickedIds.includes(Number(finding.evidence_group_id))).forEach((finding) => {
+    const sectionId = Number(finding.evidence_group_id ?? 0);
     let section = sections.find((entry) => entry.id === sectionId);
     if (!section) {
-      section = { id: sectionId, name: finding.evidence_section_name ?? 'Checklist', items: [] };
+      section = { id: sectionId, name: finding.evidence_group_name ?? 'Checklist', items: [] };
       sections.push(section);
     }
     if (!section.items.some((item) => item.id === finding.evidence_item_id)) {
@@ -31,16 +37,24 @@ function buildSections(checklist: CaparChecklistSection[], findings: CaparFindin
   return sections;
 }
 
-function chipFor(finding: CaparFinding | undefined): { text: string; tone: string } {
+function chipFor(finding: CaparFinding | undefined, sent: boolean): { text: string; tone: string } {
   if (!finding) return { text: 'Not checked', tone: 'bg-slate-100 text-slate-600' };
+  // Once the report is sent, an issue shows where the employer's answer stands.
+  if (sent && finding.outcome === 'Violation') return { text: RESPONSE_LABEL[finding.response_status] ?? finding.response_status, tone: RESPONSE_TONE[finding.response_status] ?? 'bg-slate-100 text-slate-600' };
   if (finding.item_status === 'Not findings' || finding.outcome === 'No Violation') return { text: 'No issue', tone: 'bg-emerald-50 text-emerald-700' };
   if (finding.item_status === 'Verified') return { text: 'Issue found', tone: 'bg-red-50 text-red-700' };
   return { text: 'Draft', tone: 'bg-amber-50 text-amber-700' };
 }
 
-export function CaparChecklist({ reportId, checklist, findings, categories, canEdit, onChanged, onRemove, renderRow }: {
+export function CaparChecklist({ reportId, checklist, pickedIds, findings, categories, canEdit, sent, canReview, onChanged, onRemove, renderRow }: {
+  /** The report has been sent to the employer. */
+  sent: boolean;
+  /** The auditor (or an administrator) can approve or decline the employer's answers. */
+  canReview: boolean;
   reportId: number;
   checklist: CaparChecklistSection[];
+  /** The categories ticked for this report. */
+  pickedIds: number[];
   findings: CaparFinding[];
   categories: CaparCategory[];
   canEdit: boolean;
@@ -51,13 +65,24 @@ export function CaparChecklist({ reportId, checklist, findings, categories, canE
 }) {
   const [search, setSearch] = useState('');
   const [openSections, setOpenSections] = useState<Set<number>>(new Set());
+  const { success, error: errorToast } = useToast();
   const [active, setActive] = useState<{ item: RowItem; section: Section; preview?: boolean } | null>(null);
+  const [declining, setDeclining] = useState<CaparFinding | null>(null);
+  const [declineNote, setDeclineNote] = useState('');
+  const [declineError, setDeclineError] = useState('');
+  const [working, setWorking] = useState(false);
 
-  const sections = useMemo(() => buildSections(checklist, findings), [checklist, findings]);
+  const sections = useMemo(() => buildSections(checklist, findings, pickedIds, !canEdit), [checklist, findings, pickedIds, canEdit]);
   const byItem = useMemo(() => new Map(findings.filter((finding) => finding.evidence_item_id).map((finding) => [Number(finding.evidence_item_id), finding])), [findings]);
   const needle = search.trim().toLowerCase();
 
-  if (!sections.length) return null;
+  if (!sections.length) {
+    return (
+      <section aria-label="Documents to check" className="rounded-xl border border-dashed border-line bg-white p-6 text-center text-sm text-ink-muted">
+        {canEdit ? 'Tick the categories you are auditing on the left. Their documents appear here.' : 'No category has been reported yet.'}
+      </section>
+    );
+  }
 
   const toggleSection = (id: number) => setOpenSections((current) => {
     const next = new Set(current);
@@ -69,6 +94,20 @@ export function CaparChecklist({ reportId, checklist, findings, categories, canE
   const checked = all.filter((item) => byItem.has(item.id)).length;
   const issues = all.filter((item) => byItem.get(item.id)?.outcome === 'Violation').length;
   const activeFinding = active ? byItem.get(active.item.id) : undefined;
+
+  async function review(finding: CaparFinding, decision: 'approve' | 'decline', note = '') {
+    setWorking(true);
+    const result = await api.post(`/api/capar/${reportId}/findings/${finding.id}/review`, { decision, note });
+    setWorking(false);
+    if (!result.ok) {
+      if (decision === 'decline') setDeclineError(fieldErrors(result).note ?? result.message);
+      errorToast('Could not save', result.message);
+      return;
+    }
+    success(decision === 'approve' ? 'Approved' : 'Declined');
+    setDeclining(null); setDeclineNote(''); setDeclineError('');
+    onChanged();
+  }
 
   return (
     <section className="space-y-3" aria-label="Checklist">
@@ -115,7 +154,8 @@ export function CaparChecklist({ reportId, checklist, findings, categories, canE
             {open && (
               <ul className="divide-y divide-line border-t border-line">
                 {items.map((item) => {
-                  const chip = chipFor(byItem.get(item.id));
+                  const chip = chipFor(byItem.get(item.id), sent);
+                  const rowFinding = byItem.get(item.id);
                   return (
                     <li key={item.id} className="flex items-center hover:bg-surface-muted">
                       <button
@@ -129,7 +169,13 @@ export function CaparChecklist({ reportId, checklist, findings, categories, canE
                       {byItem.has(item.id) && (
                         <span className="flex shrink-0 items-center gap-3 pr-4 text-xs font-semibold">
                           <button type="button" onClick={() => setActive({ item, section, preview: true })} className="text-brand-600 hover:underline">Preview</button>
-                          {canEdit && <button type="button" onClick={() => onRemove(byItem.get(item.id)!)} className="text-red-600 hover:underline">Delete</button>}
+                          {canEdit && !sent && <button type="button" onClick={() => onRemove(byItem.get(item.id)!)} className="text-red-600 hover:underline">Delete</button>}
+                          {canReview && rowFinding?.response_status === 'Employer Submitted' && (
+                            <>
+                              <button type="button" disabled={working} onClick={() => void review(rowFinding, 'approve')} className="rounded-md bg-emerald-600 px-2.5 py-1 text-white hover:bg-emerald-700">Approve</button>
+                              <button type="button" onClick={() => { setDeclineNote(''); setDeclineError(''); setDeclining(rowFinding); }} className="rounded-md border border-red-300 px-2.5 py-1 text-red-700 hover:bg-red-50">Decline</button>
+                            </>
+                          )}
                         </span>
                       )}
                     </li>
@@ -165,6 +211,16 @@ export function CaparChecklist({ reportId, checklist, findings, categories, canE
             <p className="text-sm text-ink-muted">Nothing was recorded for this document.</p>
           )
         )}
+      </Modal>
+      <Modal
+        open={Boolean(declining)}
+        onClose={() => setDeclining(null)}
+        title="Decline this answer"
+        description="Say what is still missing. The employer is told and can answer again."
+        size="md"
+        footer={<div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setDeclining(null)}>Cancel</Button><Button variant="danger" loading={working} disabled={declineNote.trim().length < 3} onClick={() => declining && void review(declining, 'decline', declineNote)}>Decline</Button></div>}
+      >
+        <Textarea label="What is still missing?" required rows={4} value={declineNote} onChange={(event) => setDeclineNote(event.target.value)} error={declineError} />
       </Modal>
     </section>
   );

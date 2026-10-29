@@ -15,9 +15,9 @@ import { Button, LinkButton } from '@/components/ui/button';
 import { useList } from '@/lib/utils/use-list';
 import { formatDate } from '@/lib/utils/dates';
 import { CaparCreateModal } from '@/components/capar/capar-create-modal';
-import { CAPAR_STATUS_TONE, type CaparListRow, type CaparPanel } from '@/types/capar';
+import { CAPAR_STATUS_LABEL, CAPAR_STATUS_TONE, type CaparListRow, type CaparPanel } from '@/types/capar';
 
-const STATUS_OPTIONS = ['Draft', 'Submitted', 'Under Review', 'Returned', 'Approved'].map((value) => ({ value, label: value }));
+const STATUS_OPTIONS = ['Draft', 'Submitted', 'Under Review', 'Returned', 'Approved'].map((value) => ({ value, label: CAPAR_STATUS_LABEL[value] ?? value }));
 
 export function CaparRegister({ panel, canCreate = false }: { panel: CaparPanel; canCreate?: boolean }) {
   const list = useList<CaparListRow>({
@@ -88,7 +88,7 @@ export function CaparRegister({ panel, canCreate = false }: { panel: CaparPanel;
     {
       key: 'status',
       header: 'Status',
-      render: (row) => <Badge tone={CAPAR_STATUS_TONE[row.status] ?? 'slate'}>{row.status}</Badge>,
+      render: (row) => <Badge tone={CAPAR_STATUS_TONE[row.status] ?? 'slate'}>{CAPAR_STATUS_LABEL[row.status] ?? row.status}</Badge>,
     },
     {
       key: 'actions',
@@ -99,7 +99,10 @@ export function CaparRegister({ panel, canCreate = false }: { panel: CaparPanel;
           <LinkButton href={`/${panel}/capar/${row.id}`} size="sm" variant="outline">
             {panel === 'verifier' && ['Submitted', 'Under Review'].includes(row.status) ? 'Review' : 'Open'}
           </LinkButton>
-          {(row.status === 'Approved' || panel !== 'employer') && (
+          {row.status !== 'Draft' && row.violation_count > 0 && panel !== 'verifier' && (
+            <LinkButton href={`/${panel}/capar/${row.id}?chat=1`} size="sm" variant="outline">Messages</LinkButton>
+          )}
+          {(row.status !== 'Draft' || panel !== 'employer') && (
             <a className="btn-icon" title="Download PDF" aria-label={`Download ${row.report_number}`} href={`/api/pdf/capar/${row.id}`} target="_blank" rel="noreferrer">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
                 <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16" />
@@ -114,11 +117,11 @@ export function CaparRegister({ panel, canCreate = false }: { panel: CaparPanel;
   return (
     <>
       <div className={`mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 ${panel === 'employer' ? 'xl:grid-cols-2' : panel === 'verifier' ? 'xl:grid-cols-4' : 'xl:grid-cols-5'}`}>
-        <StatCard label="Reports" value={stats.total ?? 0} hint={panel === 'employer' ? 'Approved for your company' : 'In your view'} tone="brand" />
+        <StatCard label="Reports" value={stats.total ?? 0} hint={panel === 'employer' ? 'Sent to your company' : 'In your view'} tone="brand" />
         {panel !== 'employer' && panel !== 'verifier' && <StatCard label="Drafts" value={stats.Draft ?? 0} hint="Still being written" tone="slate" />}
         {panel !== 'employer' && <StatCard label="Awaiting review" value={awaiting} hint="With the verifier" tone="violet" />}
         {panel !== 'employer' && <StatCard label="Returned" value={stats.Returned ?? 0} hint="Need correction" tone="amber" />}
-        <StatCard label="Approved" value={stats.Approved ?? 0} hint="Verified and final" tone="emerald" />
+        <StatCard label="Closed" value={stats.Approved ?? 0} hint="Every finding approved" tone="emerald" />
       </div>
 
       <Card padded={false}>

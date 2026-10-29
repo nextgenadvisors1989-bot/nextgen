@@ -24,13 +24,16 @@ import { api, apiFetch, fieldErrors } from '@/lib/utils/api-client';
 import { formatDate, formatDateTime } from '@/lib/utils/dates';
 import { FindingModal } from '@/components/capar/finding-modal';
 import { CaparChecklist } from '@/components/capar/capar-checklist';
-import { CAPAR_STATUS_TONE, type CaparCategory, type CaparDetail, type CaparFinding, type CaparPanel } from '@/types/capar';
+import { FindingResponse } from '@/components/capar/finding-response';
+import { CaparConversation } from '@/components/capar/capar-conversation';
+import { SignatureDialog, type SignaturePayload } from '@/components/capar/signature-dialog';
+import { CAPAR_STATUS_LABEL, CAPAR_STATUS_TONE, type CaparCategory, type CaparDetail, type CaparFinding, type CaparPanel } from '@/types/capar';
 
 type Draft = Record<string, string>;
 
 const HEADER_FIELDS = [
   'title', 'facility_name', 'facility_address', 'representative_name', 'representative_title', 'audit_date', 'audit_firm',
-  'auditor_print_name', 'standard_reference', 'verifier_id', 'summary_notes', 'closing_meeting_date', 'closing_statement',
+  'auditor_print_name', 'standard_reference', 'audit_purpose', 'buyer_standards', 'summary_notes', 'closing_meeting_date', 'closing_statement',
   'facility_signatory', 'facility_signed_date',
 ] as const;
 
@@ -47,12 +50,13 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
   const [draft, setDraft] = useState<Draft>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const [verifiers, setVerifiers] = useState<{ value: string; label: string }[]>([]);
   const [findingModal, setFindingModal] = useState<{ open: boolean; finding: CaparFinding | null; categoryId: number | null }>({ open: false, finding: null, categoryId: null });
   const [removing, setRemoving] = useState<CaparFinding | null>(null);
   const [confirm, setConfirm] = useState<null | 'submit' | 'delete' | 'reopen' | 'approve'>(null);
   const [returnOpen, setReturnOpen] = useState(false);
   const [returnComments, setReturnComments] = useState('');
+  const [othersNote, setOthersNote] = useState('');
+  const [chatOpen, setChatOpen] = useState(false);
   const [working, setWorking] = useState(false);
 
   const load = useCallback(async () => {
@@ -64,17 +68,14 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
     setLoadError(null);
     setDetail(result.data);
     setDraft(draftOf(result.data.report));
+    setOthersNote(result.data.report.others_note ?? '');
   }, [reportId]);
 
   useEffect(() => { void load(); }, [load]);
+  // The list links here with ?chat=1 to open the conversation straight away.
+  useEffect(() => { if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('chat') === '1') setChatOpen(true); }, []);
 
   const canEdit = detail?.can.edit ?? false;
-  useEffect(() => {
-    if (!canEdit) return;
-    void api.get<{ value: string; label: string }[]>('/api/capar/lookups?type=verifiers').then((result) => {
-      if (result.ok && Array.isArray(result.data)) setVerifiers(result.data);
-    });
-  }, [canEdit]);
 
   const original = useMemo(() => (detail ? draftOf(detail.report) : {}), [detail]);
   const dirtyKeys = useMemo(() => HEADER_FIELDS.filter((key) => (draft[key] ?? '') !== (original[key] ?? '')), [draft, original]);
@@ -115,6 +116,42 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
   const violations = detail.findings.filter((finding) => finding.outcome === 'Violation');
   const verifiedCount = detail.findings.filter((finding) => finding.verification_status !== 'Pending').length;
   const isAuditorView = panel === 'auditor' || panel === 'admin';
+  const reportGroups = detail.groups ?? [];
+  const pickedIds = reportGroups.filter((group) => group.selected).map((group) => group.id);
+
+  async function toggleGroup(id: number) {
+    const next = pickedIds.includes(id) ? pickedIds.filter((entry) => entry !== id) : [...pickedIds, id];
+    setDetail((current) => (current ? { ...current, groups: current.groups.map((group) => (group.id === id ? { ...group, selected: next.includes(id) } : group)) } : current));
+    const result = await api.patch(`/api/capar/${reportId}`, { group_ids: next });
+    if (!result.ok) errorToast('Could not save the categories', result.message);
+    await load();
+  }
+
+  const othersOn = Boolean(Number(report.others_selected));
+  // What needs this person: the employer's issues still to answer, or the answers waiting for the auditor.
+  const waiting = detail.findings.filter((finding) => finding.outcome === 'Violation' && (panel === 'employer' ? ['Pending', 'Declined'].includes(finding.response_status) : finding.response_status === 'Employer Submitted')).length;
+
+  async function toggleOthers() {
+    const result = await api.patch(`/api/capar/${reportId}`, { others_selected: !othersOn });
+    if (!result.ok) errorToast('Could not save', result.message);
+    await load();
+  }
+
+  async function saveOthersNote() {
+    if ((report.others_note ?? '') === othersNote.trim()) return;
+    const result = await api.patch(`/api/capar/${reportId}`, { others_note: othersNote.trim() || null });
+    if (!result.ok) errorToast('Could not save', result.message);
+    await load();
+  }
+
+  async function submitSigned(signature: SignaturePayload) {
+    setWorking(true);
+    const result = await api.post(`/api/capar/${reportId}/submit`, signature);
+    setWorking(false);
+    setConfirm(null);
+    if (result.ok) { success('Report signed and sent to the employer'); await load(); }
+    else { setErrors(fieldErrors(result)); errorToast('Cannot submit yet', result.message); }
+  }
 
   async function saveDetails() {
     setSaving(true);
@@ -160,14 +197,48 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
   }
 
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start">
+      <aside className="rounded-xl border border-line bg-white p-4 lg:sticky lg:top-24 lg:z-10" aria-label="Categories">
+        <h2 className="text-sm font-semibold text-ink">Categories audited</h2>
+        <p className="mt-1 text-xs text-ink-muted">{canEdit ? 'Tick what you are auditing. Only ticked categories are in the report.' : 'The categories covered by this report.'}</p>
+        <ul className="mt-3 space-y-1">
+          {reportGroups.map((group) => (
+            <li key={group.id}>
+              <label className={`flex items-start gap-2.5 rounded-lg px-2 py-2 text-sm ${canEdit ? 'cursor-pointer hover:bg-surface-muted' : ''}`}>
+                <input type="checkbox" className="mt-0.5 h-4 w-4 rounded border-line" checked={group.selected} disabled={!canEdit} onChange={() => void toggleGroup(group.id)} />
+                <span className={group.selected ? 'font-medium text-ink' : 'text-ink-soft'}>{group.name}</span>
+              </label>
+            </li>
+          ))}
+          <li>
+            <label className={`flex items-start gap-2.5 rounded-lg px-2 py-2 text-sm ${canEdit ? 'cursor-pointer hover:bg-surface-muted' : ''}`}>
+              <input type="checkbox" className="mt-0.5 h-4 w-4 rounded border-line" checked={othersOn} disabled={!canEdit} onChange={() => void toggleOthers()} />
+              <span className={othersOn ? 'font-medium text-ink' : 'text-ink-soft'}>Others</span>
+            </label>
+            {othersOn && (canEdit ? (
+              <input
+                value={othersNote}
+                onChange={(event) => setOthersNote(event.target.value)}
+                onBlur={() => void saveOthersNote()}
+                placeholder="Write what you are auditing"
+                maxLength={255}
+                aria-label="Others: what is being audited"
+                className="focus-ring ml-6 mt-1 w-[calc(100%-1.5rem)] rounded-lg border border-line bg-white px-2.5 py-1.5 text-sm text-ink placeholder:text-slate-400"
+              />
+            ) : report.others_note ? <p className="ml-6 mt-1 text-xs text-ink-muted">{report.others_note}</p> : null)}
+          </li>
+        </ul>
+        {canEdit && <p className="mt-3 text-xs text-ink-muted">{pickedIds.length + (othersOn ? 1 : 0)} of {reportGroups.length + 1} ticked</p>}
+      </aside>
+
+      <div className="min-w-0 space-y-6">
       {/* ── header ── */}
       <Card>
         <CardBody>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge tone={CAPAR_STATUS_TONE[report.status] ?? 'slate'}>{report.status}</Badge>
+                <Badge tone={CAPAR_STATUS_TONE[report.status] ?? 'slate'}>{CAPAR_STATUS_LABEL[report.status] ?? report.status}</Badge>
                 <span className="font-mono text-xs text-ink-muted">{report.report_number}</span>
                 {report.revision_count > 0 && <Badge tone="slate">Revision {report.revision_count}</Badge>}
               </div>
@@ -178,18 +249,24 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              {report.status !== 'Draft' && detail.findings.some((finding) => finding.outcome === 'Violation') && (
+                <Button size="sm" onClick={() => setChatOpen(true)}>
+                  Messages &amp; answers
+                  {waiting > 0 && <span className="ml-2 rounded-full bg-white/25 px-1.5 text-xs font-semibold">{waiting}</span>}
+                </Button>
+              )}
               {can.download && (
                 <a className="btn btn-outline btn-sm" href={`/api/pdf/capar/${report.id}`} target="_blank" rel="noreferrer">Generate &amp; download report</a>
               )}
               {can.delete && <Button size="sm" variant="outline" onClick={() => setConfirm('delete')}>Delete draft</Button>}
               {can.reopen && <Button size="sm" variant="outline" onClick={() => setConfirm('reopen')}>Reopen for correction</Button>}
-              {can.submit && <Button size="sm" onClick={() => setConfirm('submit')}>Submit for verification</Button>}
+              {can.submit && <Button size="sm" onClick={() => setConfirm('submit')}>Sign &amp; submit</Button>}
             </div>
           </div>
 
           <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-line pt-4 text-sm sm:grid-cols-4">
             <Meta label="Auditor" value={report.auditor_name} />
-            <Meta label="Verifier" value={report.verifier_name ?? 'Not chosen yet'} />
+            <Meta label="Audit" value={report.audit_type_name ? report.audit_type_name.replace(/ - .*| \(.*/, '') : '-'} />
             <Meta label="Audit date" value={report.audit_date ? formatDate(report.audit_date) : '-'} />
             <Meta label="Findings" value={`${violations.length} violation${violations.length === 1 ? '' : 's'} of ${detail.findings.length} row${detail.findings.length === 1 ? '' : 's'}`} />
           </dl>
@@ -224,7 +301,9 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
               {locked.has('audit_firm') ? <Fixed label="Audit firm" value={report.audit_firm ?? '-'} /> : <Input label="Audit firm" value={draft.audit_firm} onChange={(e) => set('audit_firm')(e.target.value)} />}
               {locked.has('auditor_print_name') ? <Fixed label="Auditor name (as printed)" value={report.auditor_print_name ?? report.auditor_name} /> : <Input label="Auditor name (as printed)" value={draft.auditor_print_name} onChange={(e) => set('auditor_print_name')(e.target.value)} />}
               <Input label="Standard / reference" value={draft.standard_reference} onChange={(e) => set('standard_reference')(e.target.value)} placeholder="e.g. H&M MR Standards" />
-              {locked.has('verifier_id') ? <Fixed label="Verifier" value={report.verifier_name ?? '-'} /> : <Select label="Verifier" required options={verifiers} value={draft.verifier_id} onChange={set('verifier_id')} placeholder="Who reviews this report" searchable error={errors.verifier_id} />}
+              <div className="md:col-span-2"><Fixed label="Audit or assessment" value={report.audit_type_name ?? '-'} /></div>
+              {(report.audit_type_name ?? '').startsWith('International Buyer') && <div className="md:col-span-2"><Input label="Buyer standards" value={draft.buyer_standards} onChange={(e) => set('buyer_standards')(e.target.value)} placeholder="e.g. BSCI, SEDEX, SA8000" /></div>}
+              <div className="md:col-span-2"><Textarea label="Purpose of the audit" rows={2} value={draft.audit_purpose} onChange={(e) => set('audit_purpose')(e.target.value)} placeholder="Why is this audit being done?" error={errors.audit_purpose} /></div>
               <div className="md:col-span-2"><Textarea label="Summary notes (optional)" rows={2} value={draft.summary_notes} onChange={(e) => set('summary_notes')(e.target.value)} /></div>
             </div>
           ) : (
@@ -235,6 +314,9 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
               <Meta label="Facility representative" value={[report.representative_name, report.representative_title].filter(Boolean).join(', ') || '-'} />
               <Meta label="Audit firm" value={report.audit_firm ?? '-'} />
               <Meta label="Auditor" value={report.auditor_print_name ?? report.auditor_name} />
+              <Meta label="Audit or assessment" value={report.audit_type_name ?? '-'} />
+              {report.buyer_standards && <Meta label="Buyer standards" value={report.buyer_standards} />}
+              {report.audit_purpose && <Meta label="Purpose of the audit" value={report.audit_purpose} wide />}
               <Meta label="Standard / reference" value={report.standard_reference ?? '-'} />
               {report.summary_notes && <Meta label="Summary" value={report.summary_notes} wide />}
             </dl>
@@ -254,9 +336,12 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
       <CaparChecklist
         reportId={reportId}
         checklist={detail.checklist ?? []}
+        pickedIds={pickedIds}
         findings={detail.findings}
         categories={detail.categories}
         canEdit={canEdit}
+        sent={report.status !== 'Draft'}
+        canReview={can.review}
         onChanged={load}
         onRemove={(finding) => setRemoving(finding)}
         renderRow={(finding) => (
@@ -269,11 +354,13 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
             onEdit={() => undefined}
             onRemove={() => undefined}
             onChanged={load}
+            response={report.status !== 'Draft' ? { role: panel, can: { respond: can.respond, review: can.review, message: can.message }, employerName: undefined } : null}
           />
         )}
       />
 
       {/* ── findings typed in under a category ── */}
+      {(othersOn || detail.findings.some((finding) => !finding.evidence_item_id)) && (
       <section className="space-y-4" aria-label="Other findings">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -317,6 +404,7 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
                       onEdit={() => setFindingModal({ open: true, finding, categoryId: finding.category_id })}
                       onRemove={() => setRemoving(finding)}
                       onChanged={load}
+                      response={report.status !== 'Draft' ? { role: panel, can: { respond: can.respond, review: can.review, message: can.message }, employerName: undefined } : null}
                     />
                   ))}
                 </ul>
@@ -329,6 +417,7 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
           <Card><CardBody><EmptyState title="No findings recorded" subtitle="Every category printed as No Violation." /></CardBody></Card>
         )}
       </section>
+      )}
 
       {/* ── closing meeting and sign-off ── */}
       {(canEdit || report.closing_statement || report.closing_meeting_date || report.facility_signatory) && (
@@ -427,22 +516,26 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
           if (result.ok) { success('Finding removed'); await load(); } else errorToast('Could not remove it', result.message);
         }}
       />
-      <ConfirmDialog
+      <CaparConversation
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        reportId={reportId}
+        reportNumber={report.report_number}
+        role={panel}
+        findings={detail.findings}
+        can={{ respond: can.respond, review: can.review, message: can.message }}
+        onChanged={load}
+      />
+
+      <SignatureDialog
         open={confirm === 'submit'}
         onClose={() => setConfirm(null)}
-        variant="primary"
-        title="Submit for verification?"
-        message="The verifier is notified. You cannot change the report while it is being reviewed, unless it is returned to you."
-        confirmLabel="Submit"
+        title="Sign and submit the report"
+        description="The employer is told straight away and can then answer each finding. Your signature goes at the end of the report."
+        confirmLabel="Sign & submit"
         loading={working}
-        onConfirm={async () => {
-          setWorking(true);
-          const result = await api.post(`/api/capar/${reportId}/submit`, {});
-          setWorking(false);
-          setConfirm(null);
-          if (result.ok) { success('Submitted for verification'); await load(); }
-          else { setErrors(fieldErrors(result)); errorToast('Cannot submit yet', result.message); }
-        }}
+        defaultName={report.auditor_print_name ?? report.auditor_name}
+        onSign={(signature) => void submitSigned(signature)}
       />
       <ConfirmDialog
         open={confirm === 'delete'}
@@ -502,8 +595,9 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
       </Modal>
 
       {isAuditorView && panel === 'admin' && (
-        <p className="text-xs text-ink-muted"><Link href="/admin/capar/categories" className="text-brand-600 hover:underline">Manage the categories</Link> findings are grouped under.</p>
+        <p className="text-xs text-ink-muted"><Link href="/admin/capar/management" className="text-brand-600 hover:underline">CAPAR Management</Link> places each document under a category.</p>
       )}
+      </div>
     </div>
   );
 }
@@ -554,7 +648,9 @@ function BrandingControl({ label, url, onUpload, onClear }: { label: string; url
   );
 }
 
-function FindingCard({ finding, index, canEdit, canVerify, reportId, onEdit, onRemove, onChanged }: {
+function FindingCard({ finding, index, canEdit, canVerify, reportId, onEdit, onRemove, onChanged, response }: {
+  /** Set once the report has been sent: the employer's answer and the reply thread are shown under the finding. */
+  response?: { role: string; can: { respond: boolean; review: boolean; message: boolean }; employerName?: string } | null;
   finding: CaparFinding;
   index: number;
   canEdit: boolean;
@@ -567,7 +663,6 @@ function FindingCard({ finding, index, canEdit, canVerify, reportId, onEdit, onR
   const photos = finding.files.filter((file) => file.kind === 'Photo');
   const evidence = finding.files.filter((file) => file.kind === 'Evidence');
   const violation = finding.outcome === 'Violation';
-  const verdictTone = finding.verification_status === 'Eligible' ? 'success' : finding.verification_status === 'Not Eligible' ? 'danger' : 'warning';
 
   return (
     <li className="p-4">
@@ -580,7 +675,6 @@ function FindingCard({ finding, index, canEdit, canVerify, reportId, onEdit, onR
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <Badge tone={finding.item_status === 'Verified' ? 'success' : finding.item_status === 'Not findings' ? 'info' : 'warning'}>{finding.item_status}</Badge>
             <Badge tone={violation ? 'danger' : 'success'}>{finding.outcome}</Badge>
-            <Badge tone={verdictTone}>{finding.verification_status === 'Pending' ? 'Not verified' : finding.verification_status}</Badge>
             {finding.resource_id && (
               <a
                 href={finding.resource_file_id ? `/api/files/${finding.resource_file_id}/download` : finding.resource_external_url ?? '#'}
@@ -684,6 +778,9 @@ function FindingCard({ finding, index, canEdit, canVerify, reportId, onEdit, onR
             </p>
           )}
         </div>
+      )}
+      {response && violation && (
+        <FindingResponse reportId={reportId} finding={finding} role={response.role} can={response.can} employerName={response.employerName} onChanged={onChanged} />
       )}
     </li>
   );

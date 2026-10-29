@@ -15,7 +15,7 @@ import { query, queryOne, type RowDataPacket } from '@/lib/db/mysql';
 import { companyBranding, drawLetterhead, fileIdFromUrl, loadImage } from '@/lib/pdf/branding';
 import { BORDER, categoryBar, headerGrid, labelled, textHeight } from '@/lib/pdf/blocks';
 import { formatDate } from '@/lib/utils/dates';
-import { checklistForAuditor } from '@/services/capar-checklist.service';
+import { checklistGroups, reportGroupIds } from '@/services/capar-checklist.service';
 import {
   COLORS, CONTENT_WIDTH, MARGIN, createPdf, ensureSpace, renderPdf, setFont, spacer, stampFooters, table, type Doc,
 } from '@/lib/pdf/base';
@@ -26,7 +26,9 @@ export interface CaparPdfFinding extends Record<string, unknown> {
   minimum_requirement: string | null; local_law: string | null; finding: string | null; root_cause: string | null;
   action_plan: string | null; timeline_date: string | null; timeline_note: string | null; action_status: string;
   closed_on: string | null; verification_status: string; verification_remark: string | null; files: CaparPdfFile[];
-  evidence_item_name?: string | null; evidence_section_id?: number | null; evidence_section_name?: string | null;
+  evidence_item_name?: string | null; evidence_item_id?: number | null; evidence_section_id?: number | null; evidence_section_name?: string | null; evidence_group_id?: number | null; evidence_group_name?: string | null;
+  response_status?: string; response_text?: string | null; response_review_note?: string | null; response_reviewed_by?: string | null;
+  employer_signature_kind?: string | null; employer_signature_data?: string | null; employer_signed_by?: string | null; employer_signed_at?: string | null;
   item_status?: string; compliance_note?: string | null; recommendation?: string | null; assessment?: string | null; signed_by?: string | null; signed_at?: string | null;
 }
 
@@ -45,13 +47,6 @@ async function drawFinding(doc: Doc, number: number, finding: CaparPdfFinding, i
   setFont(doc, 8, { bold: true });
   doc.fillColor(violation ? COLORS.danger : COLORS.success).text(violation ? 'VIOLATION' : 'NO VIOLATION', x + width - 76, top + 1, { width: 76, align: 'right', lineBreak: false });
   doc.y = top + titleHeight + 5;
-
-  if (!final) {
-    const tag = finding.verification_status === 'Pending' ? 'Not yet verified' : finding.verification_status === 'Eligible' ? 'Eligible' : `Not eligible${finding.verification_remark ? `: ${finding.verification_remark}` : ''}`;
-    setFont(doc, 8, { bold: true });
-    doc.fillColor(COLORS.muted).text(`Verification: ${tag}`, x, doc.y, { width });
-    doc.y += 4;
-  }
 
   if (finding.minimum_requirement) labelled(doc, 'Minimum requirement', finding.minimum_requirement, x, width);
   if (finding.finding) labelled(doc, violation ? 'Finding' : 'Remarks', finding.finding, x, width);
@@ -108,6 +103,10 @@ async function drawFinding(doc: Doc, number: number, finding: CaparPdfFinding, i
   if (evidence.length) labelled(doc, 'Compliance evidence attached', evidence.map((file) => file.original_name).join(', '), x, width);
   if (finding.recommendation) labelled(doc, 'Recommendations', finding.recommendation, x, width);
   if (finding.assessment) labelled(doc, 'Verification / Assessment', finding.assessment, x, width);
+  if (finding.response_text) labelled(doc, 'Employer response', `${finding.response_text}${finding.employer_signed_by ? `\n(Signed by ${finding.employer_signed_by}${finding.employer_signed_at ? ` on ${formatDate(String(finding.employer_signed_at))}` : ''})` : ''}`, x, width);
+  if (violation && finding.response_status && finding.response_status !== 'Pending') {
+    labelled(doc, 'Status', `${finding.response_status}${finding.response_reviewed_by ? ` (reviewed by ${finding.response_reviewed_by})` : ''}${finding.response_review_note ? `: ${finding.response_review_note}` : ''}`, x, width);
+  }
   if (finding.signed_by) {
     ensureSpace(doc, 14);
     setFont(doc, 8);
@@ -151,12 +150,19 @@ export async function generateCaparPdf(input: CaparPdfInput): Promise<Buffer> {
   const { report, categories } = input;
   const final = report.status === 'Approved';
   // An approved report prints what the verifier accepted; anything earlier prints every row, tagged.
-  const findings = final ? input.findings.filter((finding) => finding.verification_status === 'Eligible') : input.findings;
+  const findings = input.findings;
 
   const branding = await companyBranding(report.logo_file_id ? Number(report.logo_file_id) : null);
   // The report's own letterhead wins; otherwise the one saved in Company Settings, if any.
   const letterheadImage = (await loadImage(report.letterhead_file_id ? Number(report.letterhead_file_id) : null)) ?? branding.letterhead;
-  const signature = report.auditor_signature_path ? await loadImage(fileIdFromUrl(String(report.auditor_signature_path))) : null;
+  const drawn = report.signature_kind === 'drawn' && report.signature_data ? Buffer.from(String(report.signature_data).replace(/^data:image\/\w+;base64,/, ''), 'base64') : null;
+  const signature = drawn ?? (report.auditor_signature_path ? await loadImage(fileIdFromUrl(String(report.auditor_signature_path))) : null);
+  const typedSignature = report.signature_kind === 'typed' && report.signature_data ? String(report.signature_data).slice(0, 80) : null;
+  // The employer signs each answer; the report carries the latest of those signatures for the facility.
+  const signedRows = input.findings.filter((finding) => finding.employer_signature_data && finding.employer_signature_kind);
+  const employerSign = signedRows.length ? signedRows[signedRows.length - 1] : null;
+  const employerDrawn = employerSign?.employer_signature_kind === 'drawn' ? Buffer.from(String(employerSign.employer_signature_data).replace(/^data:image\/\w+;base64,/, ''), 'base64') : null;
+  const employerTyped = employerSign?.employer_signature_kind === 'typed' ? String(employerSign.employer_signature_data).slice(0, 80) : null;
 
   const images = new Map<number, Buffer>();
   for (const finding of findings) {
@@ -180,7 +186,7 @@ export async function generateCaparPdf(input: CaparPdfInput): Promise<Buffer> {
   doc.y += 4;
   setFont(doc, 8.5);
   doc.fillColor(COLORS.muted).text(
-    `${String(report.report_number)}${report.standard_reference ? `  |  ${String(report.standard_reference)}` : ''}${final ? '' : `  |  ${String(report.status).toUpperCase()}, NOT FINAL`}`,
+    `${String(report.report_number)}${report.standard_reference ? `  |  ${String(report.standard_reference)}` : ''}${final ? '  |  CLOSED' : `  |  ${({ Draft: 'DRAFT', Submitted: 'PENDING WITH THE EMPLOYER', 'Under Review': 'EMPLOYER HAS ANSWERED', Returned: 'RETURNED' } as Record<string, string>)[String(report.status)] ?? String(report.status).toUpperCase()}`}`,
     MARGIN, doc.y, { width: CONTENT_WIDTH, align: 'center' }
   );
   doc.y += 12;
@@ -193,6 +199,8 @@ export async function generateCaparPdf(input: CaparPdfInput): Promise<Buffer> {
     { label: 'Facility representative / title', value: [report.representative_name, report.representative_title].filter(Boolean).join(' - ') || '-' },
     { label: 'Auditor', value: String(report.auditor_print_name || report.auditor_name || '') },
     { label: 'Firm', value: String(report.audit_firm || branding.name || '') },
+    ...(report.audit_type_name ? [{ label: 'Audit / assessment', value: String(report.audit_type_name) }, { label: 'Buyer standards', value: String(report.buyer_standards || '-') }] : []),
+    ...(report.audit_purpose ? [{ label: 'Purpose of the audit', value: String(report.audit_purpose) }, { label: 'Categories reported', value: [...(input.checklist ?? []).map((group) => group.name), ...(report.others_selected ? [`Others${report.others_note ? `: ${report.others_note}` : ''}`] : [])].join(', ') || '-' }] : []),
   ]);
 
   /* ── 3. summary by category ── */
@@ -280,10 +288,17 @@ export async function generateCaparPdf(input: CaparPdfInput): Promise<Buffer> {
   const facilityDate = report.facility_signed_date ? formatDate(String(report.facility_signed_date)) : closingDate;
   if (signature) {
     try { doc.image(signature, MARGIN + 8, y - 4, { fit: [120, 34] }); } catch { /* unsigned */ }
+  } else if (typedSignature) {
+    doc.save().font('Helvetica-Oblique').fontSize(18).fillColor(COLORS.ink).text(typedSignature, MARGIN + 8, y + 8, { width: half - 32, lineBreak: false }).restore();
+  }
+  if (employerDrawn) {
+    try { doc.image(employerDrawn, MARGIN + half + 8, y - 4, { fit: [120, 34] }); } catch { /* unsigned */ }
+  } else if (employerTyped) {
+    doc.save().font('Helvetica-Oblique').fontSize(18).fillColor(COLORS.ink).text(employerTyped, MARGIN + half + 8, y + 8, { width: half - 32, lineBreak: false }).restore();
   }
   [
     { x: MARGIN, role: 'Auditor', name: String(report.auditor_print_name || report.auditor_name || ''), date: closingDate },
-    { x: MARGIN + half, role: 'Facility representative', name: String(report.facility_signatory || report.representative_name || ''), date: facilityDate },
+    { x: MARGIN + half, role: 'Facility representative', name: String(employerSign?.employer_signed_by || report.facility_signatory || report.representative_name || ''), date: employerSign?.employer_signed_at ? formatDate(String(employerSign.employer_signed_at)) : facilityDate },
   ].forEach((block) => {
     doc.save().strokeColor(COLORS.muted).lineWidth(0.6).moveTo(block.x + 8, y + 34).lineTo(block.x + half - 24, y + 34).stroke().restore();
     setFont(doc, 8, { bold: true });
@@ -302,27 +317,34 @@ export async function generateCaparPdf(input: CaparPdfInput): Promise<Buffer> {
   return renderPdf(doc);
 }
 
-/** Reads the report, its findings and their files for the PDF. */
+/** Reads the report, its findings and their files for the PDF: only the categories ticked for the report are included. */
 export async function loadCaparPdfInput(reportId: number): Promise<CaparPdfInput | null> {
   const report = await queryOne<RowDataPacket>(
-    `SELECT r.*, e.company_name AS employer_name, a.name AS auditor_name, a.signature_path AS auditor_signature_path
+    `SELECT r.*, e.company_name AS employer_name, a.name AS auditor_name, a.signature_path AS auditor_signature_path, atp.name AS audit_type_name
        FROM capar_reports r
        JOIN employers e ON e.id = r.employer_id
        JOIN auditors a ON a.id = r.auditor_id
+       LEFT JOIN audit_types atp ON atp.id = r.audit_type_id
       WHERE r.id = ? AND r.deleted_at IS NULL`,
     [reportId]
   );
   if (!report) return null;
-  const findings = await query<RowDataPacket>(
-    `SELECT f.*, c.name AS category_name, ei.name AS evidence_item_name, ei.section_id AS evidence_section_id, es.name AS evidence_section_name
+  const all = await query<RowDataPacket>(
+    `SELECT f.*, c.name AS category_name, ei.name AS evidence_item_name, ei.section_id AS evidence_section_id, es.name AS evidence_section_name,
+            eg.id AS evidence_group_id, eg.name AS evidence_group_name
        FROM capar_findings f
        LEFT JOIN capar_categories c ON c.id = f.category_id
        LEFT JOIN evidence_items ei ON ei.id = f.evidence_item_id
        LEFT JOIN evidence_sections es ON es.id = ei.section_id
+       LEFT JOIN capar_groups eg ON eg.id = COALESCE(ei.capar_group_id, (SELECT g0.id FROM capar_groups g0 WHERE g0.status = 'active' ORDER BY g0.sort_order, g0.id LIMIT 1))
       WHERE f.report_id = ? AND f.deleted_at IS NULL
-      ORDER BY COALESCE(es.sort_order, 999998), COALESCE(c.sort_order, 999999), f.category_id, ei.sort_order, f.sort_order, f.id`,
+      ORDER BY COALESCE(eg.sort_order, 999998), COALESCE(c.sort_order, 999999), f.category_id, ei.sort_order, f.sort_order, f.id`,
     [reportId]
   );
+  // The categories ticked for this report, each with its documents. Findings under other categories are not reported; free-typed rows always are.
+  const picked = new Set(await reportGroupIds(reportId));
+  const checklist = (await checklistGroups()).filter((group) => picked.has(group.id));
+  const findings = all.filter((finding) => (finding.evidence_item_id ? picked.has(Number(finding.evidence_group_id)) : Boolean(report.others_selected)));
   const ids = findings.map((finding) => Number(finding.id));
   const files = ids.length
     ? await query<RowDataPacket>(
@@ -333,14 +355,6 @@ export async function loadCaparPdfInput(reportId: number): Promise<CaparPdfInput
       )
     : [];
   const categories = await query<RowDataPacket>('SELECT id, name FROM capar_categories WHERE deleted_at IS NULL AND status = \'active\' ORDER BY sort_order, name');
-  // The documents the administrator gave this auditor (CAPAR Management), plus any a row was recorded against.
-  const checklist = await checklistForAuditor(Number(report.auditor_id));
-  for (const finding of findings) {
-    if (!finding.evidence_item_id) continue;
-    let section = checklist.find((entry) => entry.id === Number(finding.evidence_section_id));
-    if (!section) { section = { id: Number(finding.evidence_section_id), name: String(finding.evidence_section_name ?? 'Checklist'), items: [] }; checklist.push(section); }
-    if (!section.items.some((item) => item.id === Number(finding.evidence_item_id))) section.items.push({ id: Number(finding.evidence_item_id), group_name: null, name: String(finding.evidence_item_name ?? 'Checklist item') });
-  }
   return {
     report,
     checklist,

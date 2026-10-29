@@ -428,7 +428,7 @@ async function payslipBelongsToEmployee(payslipId: number | null, employeeId: nu
 async function caparBelongsToEmployer(reportId: number | null, employerId: number | null): Promise<boolean> {
   if (!reportId || !employerId) return false;
   const row = await queryOne<{ id: number } & RowDataPacket>(
-    "SELECT id FROM capar_reports WHERE id = ? AND employer_id = ? AND status = 'Approved' AND deleted_at IS NULL LIMIT 1",
+    "SELECT id FROM capar_reports WHERE id = ? AND employer_id = ? AND status <> 'Draft' AND deleted_at IS NULL LIMIT 1",
     [reportId, employerId]
   );
   return Boolean(row);

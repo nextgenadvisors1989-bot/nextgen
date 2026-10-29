@@ -15,7 +15,7 @@ export default async function AuditorCaparReportPage({ params }: { params: Promi
     <div className="space-y-6">
       <PageHeader
         title="CAPAR Report"
-        description="Check each document, record what you found, then submit the report to the verifier. You can keep correcting it after submitting."
+        description="Tick the categories you are auditing, record what you found, then sign and submit the report to the employer. You can keep correcting it after submitting."
         breadcrumbs={[{ label: 'Dashboard', href: '/auditor/dashboard' }, { label: 'CAPAR Reports', href: '/auditor/capar' }, { label: 'Report' }]}
       />
       <CaparWorkspace reportId={id} panel="auditor" />

@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
 import { useToast } from '@/components/ui/toast';
@@ -20,8 +20,10 @@ import { formatDate } from '@/lib/utils/dates';
 
 interface Option { value: string; label: string; hint?: string }
 interface MyAudit extends Option {
-  employerId: number; company: string; unit: string | null; auditDate: string | null; verifierId: number | null; verifier: string | null; status: string;
+  employerId: number; company: string; unit: string | null; auditDate: string | null; verifierId: number | null; verifier: string | null; status: string; packSubmitted: boolean;
 }
+
+const STANDARDS = ['BSCI', 'SEDEX', 'FEMA', 'Oeko Tex', 'GRS', 'GOTS', 'OCS', 'RCS', 'WRAP', 'SLCP', 'Higg FEM', 'Higg FSLM', 'SA8000', 'ISO Standards', 'ZDHC'];
 
 async function lookup<T = Option>(type: string, extra = ''): Promise<T[]> {
   const result = await api.get<T[]>(`/api/capar/lookups?type=${type}${extra}`);
@@ -37,12 +39,17 @@ export function CaparCreateModal({ open, onClose, panel }: { open: boolean; onCl
   const [assignments, setAssignments] = useState<Option[]>([]);
   const [audits, setAudits] = useState<MyAudit[] | null>(null);
   const [verifiers, setVerifiers] = useState<Option[]>([]);
-  const [form, setForm] = useState({ employer_id: '', unit_id: '', assignment_id: '', verifier_id: '', audit_date: '', title: '' });
+  const [auditTypes, setAuditTypes] = useState<Option[]>([]);
+  const [standards, setStandards] = useState<string[]>([]);
+  const [form, setForm] = useState({ employer_id: '', unit_id: '', assignment_id: '', verifier_id: '', audit_date: '', title: '', audit_type_id: '', audit_purpose: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    void api.get<{ id: number; name: string; status: string }[]>('/api/compliance-register/types').then((result) => {
+      if (result.ok && Array.isArray(result.data)) setAuditTypes(result.data.filter((type) => type.status === 'active').map((type) => ({ value: String(type.id), label: type.name })));
+    });
     if (isAuditor) { void lookup<MyAudit>('myaudits').then(setAudits); return; }
     void lookup('employers').then(setEmployers);
     void lookup('verifiers').then(setVerifiers);
@@ -61,12 +68,13 @@ export function CaparCreateModal({ open, onClose, panel }: { open: boolean; onCl
 
   const set = (field: keyof typeof form) => (value: string) => setForm((current) => ({ ...current, [field]: value }));
   const chosen = isAuditor ? audits?.find((audit) => audit.value === form.assignment_id) ?? null : null;
+  const buyerType = (auditTypes.find((type) => type.value === form.audit_type_id)?.label ?? '').startsWith('International Buyer');
 
   async function create() {
     setSaving(true);
     setErrors({});
     const body = isAuditor
-      ? { assignment_id: form.assignment_id || undefined, title: form.title || null }
+      ? { assignment_id: form.assignment_id || undefined, title: form.title || null, audit_type_id: form.audit_type_id || undefined, buyer_standards: buyerType ? standards.join(', ') : null, audit_purpose: form.audit_purpose || null }
       : {
           employer_id: form.employer_id || undefined,
           unit_id: form.unit_id || null,
@@ -74,6 +82,9 @@ export function CaparCreateModal({ open, onClose, panel }: { open: boolean; onCl
           verifier_id: form.verifier_id || null,
           audit_date: form.audit_date || null,
           title: form.title || null,
+          audit_type_id: form.audit_type_id || null,
+          buyer_standards: buyerType ? standards.join(', ') : null,
+          audit_purpose: form.audit_purpose || null,
         };
     const result = await api.post<{ id: number }>('/api/capar', body);
     setSaving(false);
@@ -82,7 +93,7 @@ export function CaparCreateModal({ open, onClose, panel }: { open: boolean; onCl
       errorToast('Could not start the report', result.message);
       return;
     }
-    success('CAPAR report started', 'Check the documents, then submit it for verification.');
+    success('CAPAR report started', 'Tick the categories you are auditing, then record the findings.');
     onClose();
     router.push(`/${panel}/capar/${result.data?.id}`);
   }
@@ -97,7 +108,7 @@ export function CaparCreateModal({ open, onClose, panel }: { open: boolean; onCl
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={create} loading={saving} disabled={isAuditor ? !form.assignment_id : !form.employer_id}>Start report</Button>
+          <Button onClick={create} loading={saving} disabled={isAuditor ? !form.assignment_id || !form.audit_type_id || form.audit_purpose.trim().length < 5 : !form.employer_id}>Start report</Button>
         </div>
       }
     >
@@ -124,8 +135,29 @@ export function CaparCreateModal({ open, onClose, panel }: { open: boolean; onCl
                   <Fact label="Company" value={chosen.company} />
                   <Fact label="Unit / facility" value={chosen.unit ?? 'All units'} />
                   <Fact label="Audit date" value={chosen.auditDate ? formatDate(chosen.auditDate) : 'Not set'} />
-                  <Fact label="Verifier" value={chosen.verifier ?? 'Not assigned yet'} />
                 </dl>
+              )}
+              {chosen && !chosen.packSubmitted && (
+                <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">This company has not submitted its Audit Documents yet. You can start the report; ask the employer to submit them from the employer portal when you can.</p>
+              )}
+              {form.assignment_id && (
+                <>
+                  <Select label="Which audit or assessment is this?" required searchable options={auditTypes} value={form.audit_type_id} onChange={set('audit_type_id')} placeholder="Choose from the list" error={errors.audit_type_id} />
+                  {buyerType && (
+                    <fieldset>
+                      <legend className="label">Buyer standards being audited</legend>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
+                        {STANDARDS.map((name) => (
+                          <label key={name} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+                            <input type="checkbox" className="h-4 w-4 rounded border-line" checked={standards.includes(name)} onChange={() => setStandards((current) => (current.includes(name) ? current.filter((entry) => entry !== name) : [...current, name]))} />
+                            {name}
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  )}
+                  <Textarea label="Why is this audit being done?" required rows={3} value={form.audit_purpose} onChange={(event) => set('audit_purpose')(event.target.value)} placeholder="e.g. Buyer audit before the new season order, statutory check, customer request" error={errors.audit_purpose} />
+                </>
               )}
               <Input label="Report title (optional)" value={form.title} onChange={(event) => set('title')(event.target.value)} placeholder="Left blank, it is named after the facility and audit date" error={errors.title} />
             </>
@@ -139,7 +171,7 @@ export function CaparCreateModal({ open, onClose, panel }: { open: boolean; onCl
           <Select label="Unit / facility" options={units} value={form.unit_id} onChange={set('unit_id')} placeholder={form.employer_id ? 'All units' : 'Choose the employer first'} clearable disabled={!units.length} />
           <Select label="Audit assignment" helper="Optional: links the report to a scheduled audit and copies its verifier." options={assignments} value={form.assignment_id} onChange={set('assignment_id')} placeholder="Not linked" clearable disabled={!assignments.length} />
           <DatePicker label="Audit date" value={form.audit_date} onChange={set('audit_date')} error={errors.audit_date} />
-          <Select label="Verifier" options={verifiers} value={form.verifier_id} onChange={set('verifier_id')} placeholder="Choose who reviews it" searchable clearable />
+          <Select label="Audit or assessment" options={auditTypes} value={form.audit_type_id} onChange={set('audit_type_id')} placeholder="Choose from the list" searchable clearable />
           <div className="sm:col-span-2">
             <Input label="Report title" value={form.title} onChange={(event) => set('title')(event.target.value)} placeholder="Left blank, it is named after the facility and audit date" error={errors.title} />
           </div>

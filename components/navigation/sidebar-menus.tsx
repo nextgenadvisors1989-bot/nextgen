@@ -84,6 +84,7 @@ export function adminMenu(counts: { employees?: number; employers?: number; pend
         {
           label: 'Acts & Compliance', icon: icon('gavel'),
           children: [
+            { label: 'Audit and Assessment', href: '/admin/compliance/register' },
             { label: 'Acts', href: '/admin/compliance/acts' },
             { label: 'Rules', href: '/admin/compliance/rules' },
             { label: 'Regulations', href: '/admin/compliance/regulations' },
@@ -196,6 +197,7 @@ export function auditorMenu(counts: { openAudits?: number; isWater?: boolean } =
           ],
         },
         { label: 'Audit Documents', href: '/auditor/audit-documents', icon: icon('folder') },
+        { label: 'Audit and Assessment', href: '/auditor/compliance', icon: icon('gavel') },
         { label: 'CAPAR Reports', href: '/auditor/capar', icon: icon('shield') },
         ...(counts.isWater ? [{ label: 'Groundwater NOC', href: '/auditor/water-noc', icon: icon('alert') }] : []),
         {

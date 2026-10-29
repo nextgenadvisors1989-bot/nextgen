@@ -30,6 +30,10 @@ export const caparCreateSchema = z.object({
   employer_id: z.coerce.number().int().positive('Select the employer').optional(),
   unit_id: id,
   assignment_id: id,
+  /** The audit being reported (Audit and Assessment list), the buyer standards when it is International Buyer Compliance, and why. */
+  audit_type_id: id,
+  buyer_standards: text(500),
+  audit_purpose: text(4000),
   /** Only an administrator may write a report on behalf of another auditor. */
   auditor_id: id,
   verifier_id: id,
@@ -46,6 +50,14 @@ export const caparCreateSchema = z.object({
 
 export const caparUpdateSchema = z.object({
   verifier_id: id,
+  audit_type_id: id,
+  buyer_standards: text(500),
+  audit_purpose: text(4000),
+  /** The categories ticked for the report; only these are reported. */
+  group_ids: z.array(z.coerce.number().int().positive()).max(20).optional(),
+  /** "Others": findings written by hand, with a note saying what is being audited. */
+  others_selected: z.boolean().optional(),
+  others_note: text(255),
   title: z.preprocess((v) => (typeof v === 'string' ? v.trim() : v), z.string().min(3, 'Give the report a title').max(255)).optional(),
   facility_name: z.preprocess((v) => (typeof v === 'string' ? v.trim() : v), z.string().min(2, 'Enter the facility name').max(255)).optional(),
   facility_address: text(2000),
@@ -60,6 +72,12 @@ export const caparUpdateSchema = z.object({
   closing_statement: text(2000),
   facility_signatory: text(200),
   facility_signed_date: date,
+});
+
+/** The auditor's signature when a report is submitted: drawn (a PNG data URL) or typed (the name). */
+export const submitSchema = z.object({
+  signature_kind: z.enum(['drawn', 'typed']),
+  signature_data: z.string().min(2, 'Sign the report').max(400000),
 });
 
 export const findingSchema = z.object({
