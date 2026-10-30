@@ -26,6 +26,7 @@ import { FindingModal } from '@/components/capar/finding-modal';
 import { CaparChecklist } from '@/components/capar/capar-checklist';
 import { FindingResponse } from '@/components/capar/finding-response';
 import { CaparConversation } from '@/components/capar/capar-conversation';
+import { StandardsPicker } from '@/components/capar/standards-picker';
 import { SignatureDialog, type SignaturePayload } from '@/components/capar/signature-dialog';
 import { CAPAR_STATUS_LABEL, CAPAR_STATUS_TONE, type CaparCategory, type CaparDetail, type CaparFinding, type CaparPanel } from '@/types/capar';
 
@@ -302,7 +303,7 @@ export function CaparWorkspace({ reportId, panel }: { reportId: number; panel: C
               {locked.has('auditor_print_name') ? <Fixed label="Auditor name (as printed)" value={report.auditor_print_name ?? report.auditor_name} /> : <Input label="Auditor name (as printed)" value={draft.auditor_print_name} onChange={(e) => set('auditor_print_name')(e.target.value)} />}
               <Input label="Standard / reference" value={draft.standard_reference} onChange={(e) => set('standard_reference')(e.target.value)} placeholder="e.g. H&M MR Standards" />
               <div className="md:col-span-2"><Fixed label="Audit or assessment" value={report.audit_type_name ?? '-'} /></div>
-              {(report.audit_type_name ?? '').startsWith('International Buyer') && <div className="md:col-span-2"><Input label="Buyer standards" value={draft.buyer_standards} onChange={(e) => set('buyer_standards')(e.target.value)} placeholder="e.g. BSCI, SEDEX, SA8000" /></div>}
+              {(report.audit_type_name ?? '').startsWith('International Buyer') && <div className="md:col-span-2"><StandardsPicker value={draft.buyer_standards} onChange={set('buyer_standards')} /></div>}
               <div className="md:col-span-2"><Textarea label="Purpose of the audit" rows={2} value={draft.audit_purpose} onChange={(e) => set('audit_purpose')(e.target.value)} placeholder="Why is this audit being done?" error={errors.audit_purpose} /></div>
               <div className="md:col-span-2"><Textarea label="Summary notes (optional)" rows={2} value={draft.summary_notes} onChange={(e) => set('summary_notes')(e.target.value)} /></div>
             </div>
@@ -697,6 +698,7 @@ function FindingCard({ finding, index, canEdit, canVerify, reportId, onEdit, onR
 
       <div className="mt-4 grid grid-cols-1 gap-x-8 gap-y-4 lg:grid-cols-2">
         <div className="space-y-3 text-sm">
+          <Field label="Location in the factory" value={finding.location} />
           <Field label="Minimum requirement" value={finding.minimum_requirement} />
           {finding.local_law && (
             <details className="group">

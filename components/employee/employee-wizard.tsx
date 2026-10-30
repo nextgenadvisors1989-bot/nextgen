@@ -10,7 +10,7 @@ import { Button, LinkButton } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { useToast } from '@/components/ui/toast';
 import { RecordGrid, RELATIONSHIP_OPTIONS, GENDER_OPTIONS, RECOMMENDATION_OPTIONS, type GridField } from './record-grid';
-import { api, fieldErrors } from '@/lib/utils/api-client';
+import { api, apiFetch, fieldErrors } from '@/lib/utils/api-client';
 import { formatCurrency } from '@/lib/utils/formatting';
 import { EMPLOYEE_WIZARD_STEPS, type Employee } from '@/types/employee';
 import {
@@ -89,6 +89,8 @@ export function EmployeeWizard({
   const router = useRouter();
   const { success, error: errorToast } = useToast();
   const [step, setStep] = useState(0);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
   const [form, setForm] = useState<FormState>(() => ({
     ...seedForm(employee),
     ...(lockedEmployerId ? { employer_id: String(lockedEmployerId) } : {}),
@@ -248,6 +250,24 @@ export function EmployeeWizard({
     return output;
   }
 
+  /** Saves the chosen photo and signature in the vault and points the employee record at them. */
+  async function uploadMedia(employeeId: number): Promise<boolean> {
+    const links: Record<string, string> = {};
+    for (const [field, file, category] of [['photo', photoFile, 'Employee photo'], ['signature', signatureFile, 'Employee signature']] as const) {
+      if (!file) continue;
+      const body = new FormData();
+      body.append('files', file); body.append('entityType', 'EMPLOYEE'); body.append('entityId', String(employeeId)); body.append('category', category);
+      const uploaded = await apiFetch('/api/files/upload', { method: 'POST', body });
+      const url = (uploaded.raw as { files?: { url?: string }[] } | undefined)?.files?.[0]?.url;
+      if (!uploaded.ok || !url) { errorToast(`Could not upload the ${field}`, uploaded.message); return false; }
+      links[field] = url;
+    }
+    if (!Object.keys(links).length) return true;
+    const linked = await api.patch(`${basePath}/employees/${employeeId}`, links);
+    if (!linked.ok) { errorToast('Could not save the photo and signature', linked.message); return false; }
+    return true;
+  }
+
   async function submit() {
     // Validate every step that has a gate before sending.
     for (const index of [0, 2, 5, 13]) {
@@ -275,6 +295,7 @@ export function EmployeeWizard({
 
     if (mode === 'create') {
       const created = result.raw as { employeeId: number; employeeNumber: string; credentials?: typeof credentials; warnings?: string[] };
+      await uploadMedia(created.employeeId);
       if (created.credentials) {
         setCredentials(created.credentials);
         return;
@@ -282,6 +303,7 @@ export function EmployeeWizard({
       success('Employee registered', `${form.name} (${created.employeeNumber}) has been added.`);
       router.push(`${redirectBase}/${created.employeeId}`);
     } else {
+      if (employee?.id) await uploadMedia(employee.id);
       success('Employee updated', `${form.name}'s record has been updated.`);
       router.refresh();
     }
@@ -329,6 +351,10 @@ export function EmployeeWizard({
           <CardBody className="space-y-5">
             {step === 0 && (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:col-span-2 xl:col-span-3">
+                  <MediaPick label="Employee photo" helper="A clear passport-size photo (JPG or PNG)." file={photoFile} current={employee?.photo ?? null} onPick={setPhotoFile} camera />
+                  <MediaPick label="Employee signature" helper="The signature on white paper, photographed or scanned." file={signatureFile} current={(employee as unknown as { signature?: string | null } | undefined)?.signature ?? null} onPick={setSignatureFile} />
+                </div>
                 <Input label="Full Name" requiredMark value={form.name} onChange={set('name')} error={errors.name} placeholder="e.g. Murugan Selvam" />
                 <Input label="Father / Husband Name" value={form.father_name} onChange={set('father_name')} error={errors.father_name} />
                 <Input label="Mother Name" value={form.mother_name} onChange={set('mother_name')} error={errors.mother_name} />
@@ -762,3 +788,28 @@ function Credential({ label, value }: { label: string; value: string }) {
 }
 
 export type { GridField };
+
+/** A picture picker with a preview (the file chosen now, or the one already saved). */
+function MediaPick({ label, helper, file, current, onPick, camera }: { label: string; helper: string; file: File | null; current: string | null; onPick: (file: File | null) => void; camera?: boolean }) {
+  const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+  const shown = preview ?? current;
+  return (
+    <div>
+      <span className="label">{label}</span>
+      <div className="flex items-center gap-4 rounded-lg border border-line p-3">
+        <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-muted text-xs text-ink-muted">
+          {shown ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={shown} alt={label} className="h-full w-full object-cover" />
+          ) : 'None'}
+        </span>
+        <div className="min-w-0 space-y-1">
+          <input type="file" accept="image/*" {...(camera ? { capture: 'user' as const } : {})} aria-label={label} onChange={(event) => onPick(event.target.files?.[0] ?? null)} className="block w-full text-sm" />
+          <p className="text-xs text-ink-muted">{helper}</p>
+          {file && <button type="button" onClick={() => onPick(null)} className="text-xs font-semibold text-red-600 hover:underline">Remove the chosen file</button>}
+        </div>
+      </div>
+    </div>
+  );
+}

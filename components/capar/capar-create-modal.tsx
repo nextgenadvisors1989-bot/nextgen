@@ -17,13 +17,12 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { useToast } from '@/components/ui/toast';
 import { api, fieldErrors } from '@/lib/utils/api-client';
 import { formatDate } from '@/lib/utils/dates';
+import { StandardsPicker, splitStandards } from '@/components/capar/standards-picker';
 
 interface Option { value: string; label: string; hint?: string }
 interface MyAudit extends Option {
   employerId: number; company: string; unit: string | null; auditDate: string | null; verifierId: number | null; verifier: string | null; status: string; packSubmitted: boolean;
 }
-
-const STANDARDS = ['BSCI', 'SEDEX', 'FEMA', 'Oeko Tex', 'GRS', 'GOTS', 'OCS', 'RCS', 'WRAP', 'SLCP', 'Higg FEM', 'Higg FSLM', 'SA8000', 'ISO Standards', 'ZDHC'];
 
 async function lookup<T = Option>(type: string, extra = ''): Promise<T[]> {
   const result = await api.get<T[]>(`/api/capar/lookups?type=${type}${extra}`);
@@ -143,19 +142,7 @@ export function CaparCreateModal({ open, onClose, panel }: { open: boolean; onCl
               {form.assignment_id && (
                 <>
                   <Select label="Which audit or assessment is this?" required searchable options={auditTypes} value={form.audit_type_id} onChange={set('audit_type_id')} placeholder="Choose from the list" error={errors.audit_type_id} />
-                  {buyerType && (
-                    <fieldset>
-                      <legend className="label">Buyer standards being audited</legend>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
-                        {STANDARDS.map((name) => (
-                          <label key={name} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
-                            <input type="checkbox" className="h-4 w-4 rounded border-line" checked={standards.includes(name)} onChange={() => setStandards((current) => (current.includes(name) ? current.filter((entry) => entry !== name) : [...current, name]))} />
-                            {name}
-                          </label>
-                        ))}
-                      </div>
-                    </fieldset>
-                  )}
+                  {buyerType && <StandardsPicker label="Buyer standards being audited" value={standards.join(', ')} onChange={(value) => setStandards(splitStandards(value))} />}
                   <Textarea label="Why is this audit being done?" required rows={3} value={form.audit_purpose} onChange={(event) => set('audit_purpose')(event.target.value)} placeholder="e.g. Buyer audit before the new season order, statutory check, customer request" error={errors.audit_purpose} />
                 </>
               )}

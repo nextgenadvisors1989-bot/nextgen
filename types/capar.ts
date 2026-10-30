@@ -52,6 +52,7 @@ export interface CaparFinding {
   report_id: number;
   category_id: number | null;
   category_name: string | null;
+  location: string | null;
   evidence_item_id: number | null;
   evidence_item_name: string | null;
   evidence_section_id: number | null;

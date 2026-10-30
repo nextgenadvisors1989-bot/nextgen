@@ -1,20 +1,20 @@
 /**
- * One dispatcher for Act & Compliance by audit type. An administrator changes it; an auditor only reads (the service enforces this).
+ * One dispatcher for Audit and Assessment, and Act & Compliance. An administrator changes it; an auditor only reads (the service enforces this).
  *
- *   GET    /api/compliance-register/types                       the audit types with their counts
+ *   GET    /api/compliance-register/types                       the audit types (Audit and Assessment)
  *   POST   /api/compliance-register/types                       { name }
- *   GET    /api/compliance-register/types/:id                   the rows (Act / Chapter / Section ...) with their register documents
  *   PUT    /api/compliance-register/types/:id                   { name, status? }
  *   DELETE /api/compliance-register/types/:id
- *   POST   /api/compliance-register/types/:id/rows              { act_name, chapter, section, sub_section, amendments, explain_text }
+ *   GET    /api/compliance-register/rows                        the Act & Compliance table with the records of every row
+ *   POST   /api/compliance-register/rows                        { act_name, chapter, section, sub_section, amendments, explain_text }
  *   PUT    /api/compliance-register/rows/:id
  *   DELETE /api/compliance-register/rows/:id
- *   POST   /api/compliance-register/rows/:id/documents          multipart: kind (Forms | Returns | Statement/Declaration), title?, files (Word)
- *   DELETE /api/compliance-register/documents/:id
- *   GET    /api/compliance-register/documents                   every Word file in the register
+ *   POST   /api/compliance-register/rows/:id/records            JSON or multipart: kind, title, content, optional Word file
+ *   PUT    /api/compliance-register/records/:id                 { title, content }
+ *   DELETE /api/compliance-register/records/:id
  */
 import { requireApiPanel } from '@/lib/auth/permission-check';
-import { clientIp, fail, handleRouteError, notFound, ok } from '@/lib/utils/api-response';
+import { clientIp, fail, handleRouteError, notFound } from '@/lib/utils/api-response';
 import { readUploads, numericId, one } from '@/lib/api/capar-route';
 import * as register from '@/services/compliance-register.service';
 
@@ -32,24 +32,27 @@ export async function handleComplianceRegister(request: Request, segments: strin
     if (a === 'types') {
       if (!b && method === 'GET') return one(await register.listTypes(actor));
       if (!b && method === 'POST') return one(await register.createType(actor, await body()), { status: 201, message: 'Audit type added' });
-      if (id && !c && method === 'GET') return one(await register.getType(actor, id));
       if (id && !c && method === 'PUT') return one(await register.updateType(actor, id, await body()), { message: 'Saved' });
       if (id && !c && method === 'DELETE') return one(await register.deleteType(actor, id), { message: 'Removed' });
-      if (id && c === 'rows' && method === 'POST') return one(await register.createRow(actor, id, await body()), { status: 201, message: 'Saved' });
     }
-    if (a === 'rows' && id) {
-      if (!c && method === 'PUT') return one(await register.updateRow(actor, id, await body()), { message: 'Saved' });
-      if (!c && method === 'DELETE') return one(await register.deleteRow(actor, id), { message: 'Row removed' });
-      if (c === 'documents' && method === 'POST') {
-        let form: FormData;
-        try { form = await request.formData(); } catch { return fail('Send the file as multipart/form-data', 400, { code: 'VALIDATION_FAILED' }); }
-        const result = await register.addDocuments(actor, id, form.get('kind'), form.get('title'), await readUploads(form));
-        return one(result, { status: 201, message: result.files === 1 ? 'Document added' : `${result.files} documents added` });
+    if (a === 'rows') {
+      if (!b && method === 'GET') return one(await register.listRows(actor));
+      if (!b && method === 'POST') return one(await register.createRow(actor, await body()), { status: 201, message: 'Saved' });
+      if (id && !c && method === 'PUT') return one(await register.updateRow(actor, id, await body()), { message: 'Saved' });
+      if (id && !c && method === 'DELETE') return one(await register.deleteRow(actor, id), { message: 'Row removed' });
+      if (id && c === 'records' && method === 'POST') {
+        if ((request.headers.get('content-type') ?? '').includes('multipart/form-data')) {
+          let form: FormData;
+          try { form = await request.formData(); } catch { return fail('Send the record as multipart/form-data', 400, { code: 'VALIDATION_FAILED' }); }
+          return one(await register.addRecord(actor, id, form.get('kind'), { title: form.get('title'), content: form.get('content') }, await readUploads(form)), { status: 201, message: 'Saved' });
+        }
+        const json = (await body()) as { kind?: unknown; title?: unknown; content?: unknown };
+        return one(await register.addRecord(actor, id, json.kind, { title: json.title, content: json.content }), { status: 201, message: 'Saved' });
       }
     }
-    if (a === 'documents') {
-      if (!b && method === 'GET') return one(await register.listDocuments(actor));
-      if (id && method === 'DELETE') return one(await register.deleteDocument(actor, id), { message: 'Document removed' });
+    if (a === 'records' && id) {
+      if (method === 'PUT') return one(await register.updateRecord(actor, id, await body()), { message: 'Saved' });
+      if (method === 'DELETE') return one(await register.deleteDocument(actor, id), { message: 'Removed' });
     }
     return notFound('Resource');
   } catch (error) {

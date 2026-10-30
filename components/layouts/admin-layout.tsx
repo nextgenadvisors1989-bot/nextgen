@@ -17,7 +17,7 @@ export function AdminLayout({ user, children, notifications, unreadCount, counts
     <PanelShell
       user={user}
       sections={adminMenu(counts)}
-      panelLabel="Admin Panel"
+      panelLabel="Admin"
       notifications={notifications}
       unreadCount={unreadCount}
       title="Administration"

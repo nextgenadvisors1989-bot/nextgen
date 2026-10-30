@@ -4,9 +4,10 @@
  * Photos and evidence on one finding: the files already saved, plus the ones chosen but not yet uploaded. Photos show as
  * thumbnails (the non-compliance image the auditor took on site); evidence shows as a file list.
  */
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatBytes } from '@/lib/utils/formatting';
 import type { CaparFile } from '@/types/capar';
+import { CameraCapture } from '@/components/capar/camera-capture';
 
 export function AttachmentPicker({ kind, label, helper, existing, queued, onQueue, onUnqueue, onRemoveExisting, disabled }: {
   kind: 'Photo' | 'Evidence';
@@ -20,7 +21,11 @@ export function AttachmentPicker({ kind, label, helper, existing, queued, onQueu
   disabled?: boolean;
 }) {
   const input = useRef<HTMLInputElement>(null);
-  const accept = kind === 'Photo' ? 'image/jpeg,image/png,image/webp' : '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png';
+  // Photos and documents both go in here: any picture or office document.
+  const accept = 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.ppt,.pptx';
+  const phone = useRef<HTMLInputElement>(null);
+  const [camera, setCamera] = useState(false);
+  const onPhone = () => typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   // Object URLs for the queued images are created once per file list and released with it.
   const previews = useMemo(() => queued.map((file) => (file.type.startsWith('image/') ? URL.createObjectURL(file) : null)), [queued]);
@@ -34,11 +39,31 @@ export function AttachmentPicker({ kind, label, helper, existing, queued, onQueu
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="label !mb-0">{label}</span>
         {!disabled && (
-          <button type="button" onClick={() => input.current?.click()} className="text-xs font-semibold text-brand-600 hover:underline">
-            + {kind === 'Photo' ? 'Add photo' : 'Add file'}
-          </button>
+          <span className="flex items-center gap-3">
+            {kind === 'Photo' && (
+              <button type="button" onClick={() => (onPhone() ? phone.current?.click() : setCamera(true))} className="text-xs font-semibold text-brand-600 hover:underline">
+                Take photo
+              </button>
+            )}
+            <button type="button" onClick={() => input.current?.click()} className="text-xs font-semibold text-brand-600 hover:underline">
+              + Add file
+            </button>
+          </span>
         )}
       </div>
+      <input
+        ref={phone}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(event) => {
+          const chosen = Array.from(event.target.files ?? []);
+          if (chosen.length) onQueue(chosen);
+          event.target.value = '';
+        }}
+      />
+      <CameraCapture open={camera} onClose={() => setCamera(false)} onCapture={(file) => onQueue([file])} />
       <input
         ref={input}
         type="file"
@@ -59,14 +84,18 @@ export function AttachmentPicker({ kind, label, helper, existing, queued, onQueu
           onClick={() => input.current?.click()}
           className="flex w-full items-center justify-center rounded-lg border border-dashed border-line px-3 py-5 text-sm text-ink-muted transition-colors hover:border-brand-300 hover:bg-surface-muted disabled:cursor-default disabled:hover:bg-transparent"
         >
-          {disabled ? 'None attached' : kind === 'Photo' ? 'Click to add the non-compliance photo' : 'Click to attach the evidence'}
+          {disabled ? 'None attached' : kind === 'Photo' ? 'Click to add a photo or any document' : 'Click to attach the evidence'}
         </button>
       ) : kind === 'Photo' ? (
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {saved.map((file) => (
             <li key={file.link_id} className="group relative overflow-hidden rounded-lg border border-line bg-surface-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={file.url} alt={file.caption ?? file.original_name} className="h-24 w-full object-cover" />
+              {/^image\//.test(file.mime_type ?? '') ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={file.url} alt={file.caption ?? file.original_name} className="h-24 w-full object-cover" />
+              ) : (
+                <a href={file.url} target="_blank" rel="noreferrer" className="flex h-24 items-center justify-center px-2 text-center text-xs text-brand-600 hover:underline">{file.original_name}</a>
+              )}
               {!disabled && <RemoveButton onClick={() => onRemoveExisting(file)} label={`Remove ${file.original_name}`} />}
             </li>
           ))}

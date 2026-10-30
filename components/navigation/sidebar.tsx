@@ -71,7 +71,7 @@ export interface SidebarProps {
 }
 
 /** Fixed 260px sidebar; slides in from the left on mobile. */
-export function Sidebar({ sections, panelLabel, appName = 'ComplianceOS', onNavigate, footer }: SidebarProps) {
+export function Sidebar({ sections, panelLabel, appName = 'NextGen Socio & Enviro Advisors', onNavigate, footer }: SidebarProps) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState<string[]>(() =>
     sections.flatMap((section) =>
@@ -95,11 +95,14 @@ export function Sidebar({ sections, panelLabel, appName = 'ComplianceOS', onNavi
 
   return (
     <aside className="flex h-full w-[260px] shrink-0 flex-col bg-sidebar text-sidebar-text">
-      <div className="flex h-16 items-center gap-2.5 border-b border-white/10 px-5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 font-bold text-white">C</span>
+      <div className="flex h-16 items-center gap-3 border-b border-white/10 px-4">
+        <span className="flex h-11 w-[88px] shrink-0 items-center justify-center rounded-lg bg-white px-1.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/logo.png" alt={appName} className="max-h-full max-w-full object-contain" />
+        </span>
         <span className="min-w-0">
-          <span className="block truncate text-sm font-semibold leading-tight">{appName}</span>
-          <span className="block truncate text-[11px] uppercase tracking-wide text-slate-400">{panelLabel}</span>
+          <span className="block truncate text-base font-semibold leading-tight">{panelLabel}</span>
+          <span className="block truncate text-[11px] tracking-wide text-slate-400">NextGen Socio &amp; Enviro</span>
         </span>
       </div>
 

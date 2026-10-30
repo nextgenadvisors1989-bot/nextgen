@@ -16,7 +16,7 @@ export function EmployerLayout({ user, children, notifications, unreadCount, cou
     <PanelShell
       user={user}
       sections={employerMenu(counts)}
-      panelLabel="Employer Panel"
+      panelLabel="Employer"
       notifications={notifications}
       unreadCount={unreadCount}
       title="Employer Workspace"

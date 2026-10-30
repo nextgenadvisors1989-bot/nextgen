@@ -231,7 +231,7 @@ export async function nextFindingOrder(reportId: number) {
 }
 
 const FINDING_FIELDS = [
-  'category_id', 'evidence_item_id', 'outcome', 'item_status', 'act_rule', 'act_id', 'provision_id', 'compliance_note', 'recommendation', 'assessment', 'signed_by', 'signed_at', 'resource_id', 'minimum_requirement', 'local_law', 'finding', 'root_cause',
+  'category_id', 'location', 'evidence_item_id', 'outcome', 'item_status', 'act_rule', 'act_id', 'provision_id', 'compliance_note', 'recommendation', 'assessment', 'signed_by', 'signed_at', 'resource_id', 'minimum_requirement', 'local_law', 'finding', 'root_cause',
   'action_plan', 'timeline_date', 'timeline_note', 'action_status', 'closed_on', 'verification_status', 'verification_remark',
   'verified_by', 'verified_at', 'sort_order',
   'response_status', 'response_text', 'employer_signature_kind', 'employer_signature_data', 'employer_signed_by', 'employer_signed_at',

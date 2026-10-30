@@ -24,6 +24,7 @@ export interface CaparPdfFile { file_id: number; kind: string; caption: string |
 export interface CaparPdfFinding extends Record<string, unknown> {
   id: number; category_id: number | null; category_name: string | null; outcome: string; act_rule: string | null;
   minimum_requirement: string | null; local_law: string | null; finding: string | null; root_cause: string | null;
+  location?: string | null;
   action_plan: string | null; timeline_date: string | null; timeline_note: string | null; action_status: string;
   closed_on: string | null; verification_status: string; verification_remark: string | null; files: CaparPdfFile[];
   evidence_item_name?: string | null; evidence_item_id?: number | null; evidence_section_id?: number | null; evidence_section_name?: string | null; evidence_group_id?: number | null; evidence_group_name?: string | null;
@@ -48,11 +49,15 @@ async function drawFinding(doc: Doc, number: number, finding: CaparPdfFinding, i
   doc.fillColor(violation ? COLORS.danger : COLORS.success).text(violation ? 'VIOLATION' : 'NO VIOLATION', x + width - 76, top + 1, { width: 76, align: 'right', lineBreak: false });
   doc.y = top + titleHeight + 5;
 
+  if (finding.location) labelled(doc, 'Location in the factory', finding.location, x, width);
   if (finding.minimum_requirement) labelled(doc, 'Minimum requirement', finding.minimum_requirement, x, width);
   if (finding.finding) labelled(doc, violation ? 'Finding' : 'Remarks', finding.finding, x, width);
   if (finding.local_law) labelled(doc, 'Local law', finding.local_law, x, width);
 
-  const photos = finding.files.filter((file) => file.kind === 'Photo' && images.has(file.file_id));
+  const isImage = (name: string) => /\.(jpe?g|png|webp)$/i.test(name);
+  const photos = finding.files.filter((file) => file.kind === 'Photo' && isImage(file.original_name) && images.has(file.file_id));
+  const documents = finding.files.filter((file) => file.kind === 'Photo' && !isImage(file.original_name));
+  if (documents.length) labelled(doc, 'Attached documents', documents.map((file) => file.original_name).join(', '), x, width);
   if (photos.length) {
     ensureSpace(doc, 112);
     const y = doc.y;
@@ -166,7 +171,7 @@ export async function generateCaparPdf(input: CaparPdfInput): Promise<Buffer> {
 
   const images = new Map<number, Buffer>();
   for (const finding of findings) {
-    for (const file of finding.files.filter((item) => item.kind === 'Photo').slice(0, 4)) {
+    for (const file of finding.files.filter((item) => item.kind === 'Photo' && /\.(jpe?g|png|webp)$/i.test(item.original_name)).slice(0, 4)) {
       const bytes = await loadImage(file.file_id);
       if (bytes) images.set(file.file_id, bytes);
     }

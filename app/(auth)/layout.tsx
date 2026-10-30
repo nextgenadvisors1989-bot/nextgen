@@ -35,7 +35,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </ul>
         </div>
 
-        <p className="text-xs text-slate-500">© {new Date().getFullYear()} ComplianceOS Technologies Pvt Ltd</p>
+        <p className="text-xs text-slate-500">© {new Date().getFullYear()} NextGen Socio and Enviro Advisors</p>
       </aside>
 
       <main className="flex w-full items-center justify-center bg-surface-canvas px-4 py-10 lg:w-1/2">

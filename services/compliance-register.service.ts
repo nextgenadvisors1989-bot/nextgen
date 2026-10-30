@@ -1,9 +1,11 @@
 /**
- * Act & Compliance by audit type.
+ * Audit and Assessment, and Act & Compliance.
  *
- * The audit types the firm offers (Labour Law, Fire Safety, HIRA ...). For each, the administrator types rows of Act / Chapter / Section /
- * Sub Section / Amendments / Explain and keeps the Legal Compliance Register of that row: Forms, Returns and Statements / Declarations as
- * Word files. An auditor can read all of it and download the files; only an administrator changes anything.
+ *   Audit and Assessment   the audit types the firm offers (Labour Law, Fire Safety, HIRA ...). A type opens its own form (not built yet).
+ *   Act & Compliance       one table of Act / Chapter / Section / Sub Section / Amendments / Explain. Each row has a Legal Compliance
+ *                          Register of Forms, Returns and Statements / Declarations, written by hand (and, if wanted, with a Word file).
+ *
+ * An administrator changes all of it; an auditor reads it.
  */
 import { z } from 'zod';
 import { execute, insert, query, queryOne, type RowDataPacket } from '@/lib/db/mysql';
@@ -25,11 +27,11 @@ export function registerRoleOf(user: AuthUser): RegisterRole {
   const slugs = user.roles.map((role) => role.slug);
   if (slugs.includes('super_admin') || slugs.includes('admin')) return 'admin';
   if (slugs.includes('auditor')) return 'auditor';
-  return fail('FORBIDDEN', 'Your account cannot open Act & Compliance');
+  return fail('FORBIDDEN', 'Your account cannot open this page');
 }
 
 function mustAdmin(actor: RegisterActor) {
-  if (actor.role !== 'admin') fail('FORBIDDEN', 'Only an administrator can change Act & Compliance');
+  if (actor.role !== 'admin') fail('FORBIDDEN', 'Only an administrator can change this');
 }
 
 const text = (max: number) => z.string().trim().max(max).optional().nullable().transform((value) => (value ? value : null));
@@ -42,43 +44,8 @@ const rowSchema = z.object({
 
 export async function listTypes(actor: RegisterActor) {
   const rows = await query<RowDataPacket>(
-    `SELECT t.id, t.name, t.sort_order, t.status,
-            (SELECT COUNT(*) FROM audit_type_rows r WHERE r.audit_type_id = t.id AND r.deleted_at IS NULL) AS row_count,
-            (SELECT COUNT(*) FROM audit_type_row_docs d JOIN audit_type_rows r ON r.id = d.row_id AND r.deleted_at IS NULL WHERE r.audit_type_id = t.id AND d.deleted_at IS NULL AND d.kind = 'Forms') AS forms,
-            (SELECT COUNT(*) FROM audit_type_row_docs d JOIN audit_type_rows r ON r.id = d.row_id AND r.deleted_at IS NULL WHERE r.audit_type_id = t.id AND d.deleted_at IS NULL AND d.kind = 'Returns') AS returns_count,
-            (SELECT COUNT(*) FROM audit_type_row_docs d JOIN audit_type_rows r ON r.id = d.row_id AND r.deleted_at IS NULL WHERE r.audit_type_id = t.id AND d.deleted_at IS NULL AND d.kind = 'Statement/Declaration') AS statements
-       FROM audit_types t
-      WHERE t.deleted_at IS NULL ${actor.role === 'admin' ? '' : "AND t.status = 'active'"}
-      ORDER BY t.sort_order, t.id`);
-  return rows.map((r) => ({
-    id: n(r.id), name: String(r.name), status: String(r.status), rows: n(r.row_count), forms: n(r.forms), returns: n(r.returns_count), statements: n(r.statements),
-  }));
-}
-
-export async function getType(actor: RegisterActor, id: number) {
-  const type = await queryOne<RowDataPacket>('SELECT id, name, status FROM audit_types WHERE id = ? AND deleted_at IS NULL', [id]);
-  if (!type || (actor.role !== 'admin' && type.status !== 'active')) fail('NOT_FOUND', 'Audit type not found');
-  const rows = await query<RowDataPacket>(
-    `SELECT id, act_id, act_name, chapter, section, sub_section, amendments, explain_text, sort_order
-       FROM audit_type_rows WHERE audit_type_id = ? AND deleted_at IS NULL ORDER BY sort_order, id`, [id]);
-  const docs = rows.length
-    ? await query<RowDataPacket>(
-        `SELECT d.id, d.row_id, d.kind, d.title, d.file_id, d.created_at, f.original_name, f.size_bytes
-           FROM audit_type_row_docs d JOIN files f ON f.id = d.file_id AND f.deleted_at IS NULL
-          WHERE d.deleted_at IS NULL AND d.row_id IN (${rows.map(() => '?').join(',')}) ORDER BY d.id`, rows.map((r) => n(r.id)))
-    : [];
-  const acts = await query<RowDataPacket>("SELECT id, COALESCE(NULLIF(short_name, ''), act_name) AS name, act_year FROM compliance_acts WHERE deleted_at IS NULL ORDER BY act_name");
-  return {
-    type: { id: n(type.id), name: String(type.name), status: String(type.status) },
-    acts: acts.map((a) => (a.act_year && !String(a.name).includes(String(a.act_year)) ? `${a.name} ${a.act_year}` : String(a.name))),
-    rows: rows.map((r) => ({
-      id: n(r.id), act_name: r.act_name ? String(r.act_name) : '', chapter: r.chapter ? String(r.chapter) : '', section: r.section ? String(r.section) : '',
-      sub_section: r.sub_section ? String(r.sub_section) : '', amendments: r.amendments ? String(r.amendments) : '', explain_text: r.explain_text ? String(r.explain_text) : '',
-      docs: docs.filter((d) => n(d.row_id) === n(r.id)).map((d) => ({
-        id: n(d.id), kind: String(d.kind) as Kind, title: String(d.title), file_id: n(d.file_id), name: String(d.original_name), size: n(d.size_bytes), created_at: d.created_at,
-      })),
-    })),
-  };
+    `SELECT id, name, sort_order, status FROM audit_types WHERE deleted_at IS NULL ${actor.role === 'admin' ? '' : "AND status = 'active'"} ORDER BY sort_order, id`);
+  return rows.map((r) => ({ id: n(r.id), name: String(r.name), status: String(r.status) }));
 }
 
 export async function createType(actor: RegisterActor, input: unknown) {
@@ -104,7 +71,31 @@ export async function deleteType(actor: RegisterActor, id: number) {
   return { id };
 }
 
-/* ───────────────────────────── rows (Act / Chapter / Section ...) ───────────────────────────── */
+/* ───────────────────────────── Act & Compliance rows ───────────────────────────── */
+
+export async function listRows(actor: RegisterActor) {
+  void actor;
+  const rows = await query<RowDataPacket>(
+    `SELECT id, act_name, chapter, section, sub_section, amendments, explain_text FROM audit_type_rows WHERE deleted_at IS NULL ORDER BY sort_order, id`);
+  const docs = rows.length
+    ? await query<RowDataPacket>(
+        `SELECT d.id, d.row_id, d.kind, d.title, d.content, d.file_id, d.created_at, f.original_name, f.size_bytes
+           FROM audit_type_row_docs d LEFT JOIN files f ON f.id = d.file_id AND f.deleted_at IS NULL
+          WHERE d.deleted_at IS NULL AND d.row_id IN (${rows.map(() => '?').join(',')}) ORDER BY d.id`, rows.map((r) => n(r.id)))
+    : [];
+  const acts = await query<RowDataPacket>("SELECT COALESCE(NULLIF(short_name, ''), act_name) AS name, act_year FROM compliance_acts WHERE deleted_at IS NULL ORDER BY act_name");
+  return {
+    acts: acts.map((a) => (a.act_year && !String(a.name).includes(String(a.act_year)) ? `${a.name} ${a.act_year}` : String(a.name))),
+    rows: rows.map((r) => ({
+      id: n(r.id), act_name: r.act_name ? String(r.act_name) : '', chapter: r.chapter ? String(r.chapter) : '', section: r.section ? String(r.section) : '',
+      sub_section: r.sub_section ? String(r.sub_section) : '', amendments: r.amendments ? String(r.amendments) : '', explain_text: r.explain_text ? String(r.explain_text) : '',
+      records: docs.filter((d) => n(d.row_id) === n(r.id)).map((d) => ({
+        id: n(d.id), kind: String(d.kind) as Kind, title: String(d.title), content: d.content ? String(d.content) : '',
+        file_id: d.file_id ? n(d.file_id) : null, file_name: d.original_name ? String(d.original_name) : null, size: n(d.size_bytes),
+      })),
+    })),
+  };
+}
 
 async function actIdFor(name: string | null): Promise<number | null> {
   if (!name) return null;
@@ -113,22 +104,22 @@ async function actIdFor(name: string | null): Promise<number | null> {
   return row ? n(row.id) : null;
 }
 
-export async function createRow(actor: RegisterActor, typeId: number, input: unknown) {
+export async function createRow(actor: RegisterActor, input: unknown) {
   mustAdmin(actor);
   const data = rowSchema.parse(input);
-  if (!(await queryOne<RowDataPacket>('SELECT id FROM audit_types WHERE id = ? AND deleted_at IS NULL', [typeId]))) fail('NOT_FOUND', 'Audit type not found');
-  if (!Object.values(data).some(Boolean)) fail('VALIDATION_FAILED', 'Fill in at least the Act', [{ field: 'act_name', message: 'Enter the Act' }]);
-  const next = await queryOne<RowDataPacket>('SELECT COALESCE(MAX(sort_order), 0) + 10 AS next FROM audit_type_rows WHERE audit_type_id = ?', [typeId]);
+  if (!data.act_name) fail('VALIDATION_FAILED', 'Enter the Act', [{ field: 'act_name', message: 'Enter the Act' }]);
+  const next = await queryOne<RowDataPacket>('SELECT COALESCE(MAX(sort_order), 0) + 10 AS next FROM audit_type_rows');
   const id = await insert(
     `INSERT INTO audit_type_rows (audit_type_id, act_id, act_name, chapter, section, sub_section, amendments, explain_text, sort_order, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [typeId, await actIdFor(data.act_name), data.act_name, data.chapter, data.section, data.sub_section, data.amendments, data.explain_text, n(next?.next), actor.user.id]);
+     VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [await actIdFor(data.act_name), data.act_name, data.chapter, data.section, data.sub_section, data.amendments, data.explain_text, n(next?.next), actor.user.id]);
   return { id };
 }
 
 export async function updateRow(actor: RegisterActor, rowId: number, input: unknown) {
   mustAdmin(actor);
   const data = rowSchema.parse(input);
+  if (!data.act_name) fail('VALIDATION_FAILED', 'Enter the Act', [{ field: 'act_name', message: 'Enter the Act' }]);
   if (!(await queryOne<RowDataPacket>('SELECT id FROM audit_type_rows WHERE id = ? AND deleted_at IS NULL', [rowId]))) fail('NOT_FOUND', 'Row not found');
   await execute(
     `UPDATE audit_type_rows SET act_id = ?, act_name = ?, chapter = ?, section = ?, sub_section = ?, amendments = ?, explain_text = ? WHERE id = ?`,
@@ -142,47 +133,49 @@ export async function deleteRow(actor: RegisterActor, rowId: number) {
   return { id: rowId };
 }
 
-/* ───────────────────────────── register documents (Word files) ───────────────────────────── */
+/* ───────────────────────────── the Legal Compliance Register of a row ───────────────────────────── */
 
-const WORD = /\.(docx?|DOCX?)$/;
+const WORD = /\.(docx?)$/i;
+const recordSchema = z.object({
+  title: z.string().trim().min(2, 'Give it a name').max(255),
+  content: z.string().trim().max(60000).optional().nullable().transform((value) => (value ? value : null)),
+});
 
-export async function addDocuments(actor: RegisterActor, rowId: number, kindInput: unknown, titleInput: unknown, uploads: UploadInput[]) {
+export async function addRecord(actor: RegisterActor, rowId: number, kindInput: unknown, input: unknown, uploads: UploadInput[] = []) {
   mustAdmin(actor);
   const kind = REGISTER_KINDS.find((value) => value === kindInput);
   if (!kind) fail('VALIDATION_FAILED', 'Choose Forms, Returns or Statement / Declaration', [{ field: 'kind', message: 'Choose one' }]);
   if (!(await queryOne<RowDataPacket>('SELECT id FROM audit_type_rows WHERE id = ? AND deleted_at IS NULL', [rowId]))) fail('NOT_FOUND', 'Row not found');
-  if (!uploads.length) fail('VALIDATION_FAILED', 'Choose a Word file', [{ field: 'files', message: 'Choose a Word file' }]);
+  const data = recordSchema.parse(input);
+  if (!data.content && !uploads.length) fail('VALIDATION_FAILED', 'Type the details, or attach a Word file', [{ field: 'content', message: 'Type the details' }]);
   const notWord = uploads.find((upload) => !WORD.test(upload.originalName));
-  if (notWord) fail('VALIDATION_FAILED', `"${notWord.originalName}" is not a Word file. Upload .doc or .docx files.`, [{ field: 'files', message: 'Only Word files (.doc, .docx)' }]);
-  const title = typeof titleInput === 'string' ? titleInput.trim().slice(0, 255) : '';
-  const saved = await saveUploads(uploads, { entityType: 'COMPLIANCE_DOCUMENT', entityId: rowId, category: `Legal register: ${kind}`, accessLevel: 'auditor' }, { user: actor.user, ip: actor.ip ?? null });
-  for (const file of saved) {
-    await insert('INSERT INTO audit_type_row_docs (row_id, kind, title, file_id, created_by) VALUES (?, ?, ?, ?, ?)',
-      [rowId, kind, (title && uploads.length === 1 ? title : String(file.original_name).replace(/\.docx?$/i, '')).slice(0, 255), file.id, actor.user.id]);
+  if (notWord) fail('VALIDATION_FAILED', `"${notWord.originalName}" is not a Word file. Attach a .doc or .docx file.`, [{ field: 'files', message: 'Only Word files (.doc, .docx)' }]);
+  let fileId: number | null = null;
+  if (uploads.length) {
+    const saved = await saveUploads(uploads.slice(0, 1), { entityType: 'COMPLIANCE_DOCUMENT', entityId: rowId, category: `Legal register: ${kind}`, accessLevel: 'auditor' }, { user: actor.user, ip: actor.ip ?? null });
+    fileId = saved[0].id;
   }
-  return { files: saved.length };
+  const id = await insert('INSERT INTO audit_type_row_docs (row_id, kind, title, content, file_id, created_by) VALUES (?, ?, ?, ?, ?, ?)', [rowId, kind, data.title, data.content, fileId, actor.user.id]);
+  return { id };
+}
+
+export async function updateRecord(actor: RegisterActor, docId: number, input: unknown) {
+  mustAdmin(actor);
+  const data = recordSchema.parse(input);
+  const doc = await queryOne<RowDataPacket>('SELECT id, file_id FROM audit_type_row_docs WHERE id = ? AND deleted_at IS NULL', [docId]);
+  if (!doc) fail('NOT_FOUND', 'Record not found');
+  if (!data.content && !doc!.file_id) fail('VALIDATION_FAILED', 'Type the details', [{ field: 'content', message: 'Type the details' }]);
+  await execute('UPDATE audit_type_row_docs SET title = ?, content = ?, updated_at = NOW() WHERE id = ?', [data.title, data.content, docId]);
+  return { id: docId };
 }
 
 export async function deleteDocument(actor: RegisterActor, docId: number) {
   mustAdmin(actor);
   const doc = await queryOne<RowDataPacket>('SELECT id, file_id FROM audit_type_row_docs WHERE id = ? AND deleted_at IS NULL', [docId]);
-  if (!doc) fail('NOT_FOUND', 'Document not found');
+  if (!doc) fail('NOT_FOUND', 'Record not found');
   await execute('UPDATE audit_type_row_docs SET deleted_at = NOW() WHERE id = ?', [docId]);
-  try { await archiveFile(n(doc!.file_id), { user: actor.user, ip: actor.ip ?? null }); } catch { /* the register row is gone; an already archived file is fine */ }
+  if (doc!.file_id) {
+    try { await archiveFile(n(doc!.file_id), { user: actor.user, ip: actor.ip ?? null }); } catch { /* an already archived file is fine */ }
+  }
   return { id: docId };
-}
-
-/** Every Word file in the register, for the "all documents" list. */
-export async function listDocuments(actor: RegisterActor) {
-  const rows = await query<RowDataPacket>(
-    `SELECT d.id, d.kind, d.title, d.file_id, f.original_name, f.size_bytes, d.created_at, t.id AS type_id, t.name AS type_name, r.act_name
-       FROM audit_type_row_docs d
-       JOIN audit_type_rows r ON r.id = d.row_id AND r.deleted_at IS NULL
-       JOIN audit_types t ON t.id = r.audit_type_id AND t.deleted_at IS NULL ${actor.role === 'admin' ? '' : "AND t.status = 'active'"}
-       JOIN files f ON f.id = d.file_id AND f.deleted_at IS NULL
-      WHERE d.deleted_at IS NULL ORDER BY t.sort_order, r.sort_order, d.kind, d.id`);
-  return rows.map((d) => ({
-    id: n(d.id), kind: String(d.kind), title: String(d.title), file_id: n(d.file_id), name: String(d.original_name), size: n(d.size_bytes),
-    type_id: n(d.type_id), type_name: String(d.type_name), act_name: d.act_name ? String(d.act_name) : '',
-  }));
 }

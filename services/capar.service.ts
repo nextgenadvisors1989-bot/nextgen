@@ -457,9 +457,6 @@ export async function attachFiles(actor: Actor, reportId: number, findingId: num
   mustEdit(actor.user, role, report);
   await loadFinding(reportId, findingId);
   const kind = (CAPAR_FILE_KINDS as readonly string[]).includes(kindInput) ? kindInput : 'Photo';
-  if (kind === 'Photo' && files.some((file) => !/^image\//i.test(file.mimeType))) {
-    fail('VALIDATION_FAILED', 'A non-compliance photo must be an image (JPG or PNG)');
-  }
   const saved = await saveUploads(
     files,
     { entityType: 'CAPAR', entityId: reportId, category: kind === 'Photo' ? 'CAPAR photo' : 'CAPAR evidence', accessLevel: 'private', description: caption },

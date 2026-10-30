@@ -82,6 +82,8 @@ export const submitSchema = z.object({
 
 export const findingSchema = z.object({
   category_id: id,
+  /** Where in the factory the issue was seen. */
+  location: text(255),
   evidence_item_id: id,
   outcome: z.enum(FINDING_OUTCOMES).optional(),
   item_status: z.enum(ITEM_STATUSES).optional(),

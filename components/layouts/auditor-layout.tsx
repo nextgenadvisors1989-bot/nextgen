@@ -16,7 +16,7 @@ export function AuditorLayout({ user, children, notifications, unreadCount, coun
     <PanelShell
       user={user}
       sections={auditorMenu(counts)}
-      panelLabel="Auditor Panel"
+      panelLabel="Auditor"
       notifications={notifications}
       unreadCount={unreadCount}
       title="Auditor Workspace"

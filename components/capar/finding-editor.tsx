@@ -23,8 +23,11 @@ import { LookupPicker, type Option } from '@/components/capar/lookup-picker';
 import { AttachmentPicker } from '@/components/capar/capar-attachments';
 import type { CaparCategory, CaparFile, CaparFinding } from '@/types/capar';
 
+const LOCATIONS = ['Production floor', 'Boiler house', 'ETP / effluent area', 'Canteen', 'Store / warehouse', 'Dormitory', 'Fire pump room', 'DG / electrical room', 'Main gate / security', 'HR / admin office', 'Whole factory'];
+
 interface FormState {
   category_id: string;
+  location: string;
   result: 'ok' | 'issue' | null;
   act_rule: string;
   provision: { id: number; label: string } | null;
@@ -48,6 +51,7 @@ export interface EditorItem { id: number; name: string; sectionName: string }
 function initial(finding: CaparFinding | null, categoryId: number | null): FormState {
   return {
     category_id: String(finding?.category_id ?? categoryId ?? ''),
+    location: finding?.location ?? '',
     result: !finding ? null : finding.item_status === 'Not findings' || finding.outcome === 'No Violation' ? 'ok' : 'issue',
     act_rule: finding?.act_rule ?? '',
     provision: finding?.provision_id ? { id: finding.provision_id, label: finding.act_rule ?? `Provision #${finding.provision_id}` } : null,
@@ -140,6 +144,7 @@ export function FindingEditor({ reportId, categories, finding, item, defaultCate
     const itemStatus = form.result === 'ok' ? 'Not findings' : mode === 'final' ? 'Verified' : 'Incomplete';
     const payload = {
       category_id: item ? null : form.category_id || null,
+      location: form.location.trim() || null,
       evidence_item_id: item ? item.id : finding?.evidence_item_id ?? null,
       outcome: issue ? 'Violation' : 'No Violation',
       item_status: itemStatus,
@@ -254,6 +259,31 @@ export function FindingEditor({ reportId, categories, finding, item, defaultCate
 
           <Step n={3} title="Statement and image">
             <Textarea label="Statement / Findings" required rows={3} value={form.finding} onChange={(event) => set('finding', event.target.value)} placeholder="It was noted during the document review that ..." error={errors.finding} />
+            <div>
+              <span className="label">Location inside the factory</span>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <select
+                  aria-label="Location inside the factory"
+                  value={LOCATIONS.includes(form.location) ? form.location : form.location ? 'Others' : ''}
+                  onChange={(event) => set('location', event.target.value === 'Others' ? ' ' : event.target.value)}
+                  className="focus-ring h-10 w-full rounded-lg border border-line bg-white px-3 text-sm text-ink"
+                >
+                  <option value="">Choose where it was seen</option>
+                  {LOCATIONS.map((place) => <option key={place} value={place}>{place}</option>)}
+                  <option value="Others">Others (write it)</option>
+                </select>
+                {form.location !== '' && !LOCATIONS.includes(form.location) && (
+                  <input
+                    aria-label="Other location"
+                    value={form.location.trim() === '' ? '' : form.location}
+                    onChange={(event) => set('location', event.target.value === '' ? ' ' : event.target.value)}
+                    placeholder="Write the location"
+                    maxLength={255}
+                    className="focus-ring h-10 w-full rounded-lg border border-line bg-white px-3 text-sm text-ink placeholder:text-slate-400"
+                  />
+                )}
+              </div>
+            </div>
             <AttachmentPicker
               kind="Photo"
               label="Image upload (photo of the issue)"

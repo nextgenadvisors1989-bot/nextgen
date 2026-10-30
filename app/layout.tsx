@@ -4,19 +4,19 @@ import './globals.css';
 export const metadata: Metadata = {
   icons: { icon: '/brand/favicon.png', shortcut: '/brand/favicon.png', apple: '/brand/favicon.png' },
   title: {
-    default: 'ComplianceOS — Compliance, Audit, HR & Payroll Platform',
-    template: '%s | ComplianceOS',
+    default: 'NextGen Socio & Enviro Advisors — Audit, Compliance, HR & Payroll Platform',
+    template: '%s | NextGen Socio & Enviro Advisors',
   },
   description:
-    'Enterprise platform for statutory compliance, safety audits, HR, payroll and workforce management. Manage employers, auditors, audits, compliance registers, attendance and payroll end to end.',
+    'NextGen Socio and Enviro Advisors: one platform for statutory compliance, safety and environmental audits, CAPAR reports, HR and payroll. www.nextgenseadvisors.com',
   keywords: [
     'compliance management software', 'safety audit software', 'statutory compliance India',
     'HR payroll platform', 'audit management system', 'contract labour compliance',
   ],
-  authors: [{ name: 'ComplianceOS Technologies' }],
+  authors: [{ name: 'NextGen Socio and Enviro Advisors' }],
   openGraph: {
-    title: 'ComplianceOS — Compliance, Audit, HR & Payroll Platform',
-    description: 'One platform for audits, compliance, HR and payroll.',
+    title: 'NextGen Socio & Enviro Advisors — Audit, Compliance, HR & Payroll Platform',
+    description: 'One Legal Culture: audits, legal compliance, HR and payroll in one place. www.nextgenseadvisors.com',
     type: 'website',
   },
 };

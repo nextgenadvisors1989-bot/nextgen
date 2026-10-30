@@ -1,13 +1,13 @@
 /** Application-wide constants shared by UI, services, validators and PDFs. */
 
-export const APP_NAME = process.env.APP_NAME ?? 'ComplianceOS';
+export const APP_NAME = process.env.APP_NAME ?? 'NextGen Socio and Enviro Advisors';
 export const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
 
 export const COMPANY_LEGAL = {
-  name: 'ComplianceOS Technologies Private Limited',
-  address: '4th Floor, Anna Salai, Chennai 600002, Tamil Nadu, India',
-  email: 'support@complianceos.example',
-  phone: '+91 44 4000 0000',
+  name: 'NextGen Socio and Enviro Advisors',
+  address: 'No: 3/46, Erumaippatti Village, Naranamangalam Postal, Ramanathapuram District, Tamilnadu, India',
+  email: 'info@nextgenseadvisors.com',
+  phone: '+91 94884 65966',
   gstin: '33AABCC1234D1Z5',
   cin: 'U72900TN2019PTC123456',
 };

@@ -177,6 +177,7 @@ export const employeeCreateSchema = z.object({
   date_of_birth: nullableDate,
   languages_known: nullableString(255),
   photo: nullableString(1000),
+  signature: nullableString(1000),
   aadhaar_number: aadhaar,
   pan_number: pan,
 
