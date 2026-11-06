@@ -68,7 +68,9 @@ function bullet(doc: Doc, x: number, y: number, color: string): void {
 
 export async function generatePremiumQuotation(id: number, scope: BillingScope): Promise<Buffer> {
   const [q, s] = await Promise.all([getQuotation(id, scope), seller()]);
-  const doc = createPdf({ title: `Quotation ${String(q.quotation_number)}`, subject: String(q.client_name), author: s.name });
+  // A Billing statement names the auditor and shows only the price of each service: no subject, scope, inclusions, notes, terms or acceptance block.
+  const billing = q.doc_type === 'Billing';
+  const doc = createPdf({ title: `${billing ? 'Billing' : 'Quotation'} ${String(q.quotation_number)}`, subject: String(q.client_name), author: s.name });
   const H = doc.page.height;
   const limit = () => H - FOOTER - 6;
   let y = 24;
@@ -93,9 +95,11 @@ export async function generatePremiumQuotation(id: number, scope: BillingScope):
   // quotation title box and its facts
   const rx = M + W - rightW;
   fillRect(doc, rx, 24, rightW, 38, NAVY);
-  text(doc, 'SERVICE PRICE\nQUOTATION', rx, 28.5, rightW, { size: 11.5, bold: true, color: '#FFFFFF', align: 'center', lineGap: 0.5 });
-  const facts: [string, string][] = [['Quotation No.', String(q.quotation_number)], ['Date', formatDate(q.quote_date)], ['Valid Upto', q.valid_until ? formatDate(q.valid_until) : '-'],
-    ['Service Period', t(q.service_period, 'Monthly / Renewable')], ['Currency', 'Indian Rupees (INR)']];
+  text(doc, billing ? 'BILLING\nSTATEMENT' : 'SERVICE PRICE\nQUOTATION', rx, 28.5, rightW, { size: 11.5, bold: true, color: '#FFFFFF', align: 'center', lineGap: 0.5 });
+  const facts: [string, string][] = billing
+    ? [['Billing No.', String(q.quotation_number)], ['Date', formatDate(q.quote_date)], ['Auditor', t(q.auditor_name)], ['Currency', 'Indian Rupees (INR)']]
+    : [['Quotation No.', String(q.quotation_number)], ['Date', formatDate(q.quote_date)], ['Valid Upto', q.valid_until ? formatDate(q.valid_until) : '-'],
+      ['Service Period', t(q.service_period, 'Monthly / Renewable')], ['Currency', 'Indian Rupees (INR)']];
   let fy = 68;
   for (const [label, value] of facts) {
     text(doc, label, rx + 4, fy, 66, { size: 6.6, color: INK });
@@ -108,46 +112,51 @@ export async function generatePremiumQuotation(id: number, scope: BillingScope):
 
   /* ───────── client and subject panels ───────── */
   const half = (W - 10) / 2;
-  const rows: [string, string][] = [['Company / Organisation', t(q.client_name)], ['Address', t(q.client_address)], ['Contact Person', t(q.client_contact)], ['Designation', t(q.contact_designation)],
+  const panelW = billing ? W : half;
+  const rows: [string, string][] = billing
+    ? [['Company / Organisation', t(q.client_name)], ['Address', t(q.client_address)], ['Contact Person', t(q.client_contact)], ['Auditor', t(q.auditor_name)]]
+    : [['Company / Organisation', t(q.client_name)], ['Address', t(q.client_address)], ['Contact Person', t(q.client_contact)], ['Designation', t(q.contact_designation)],
     ['Employee Strength', q.employee_strength ? `${n(q.employee_strength)} Employees` : '-'], ['No. of Shifts', q.shifts ? `${n(q.shifts)} Shift${n(q.shifts) === 1 ? '' : 's'}` : '-'], ['Industry / Sector', t(q.industry ?? q.client_profile)]];
   let leftH = 5;
-  rows.forEach(([, value]) => { leftH += Math.max(9.8, heightOf(doc, value, half - 96, 6.8) + 2); });
+  rows.forEach(([, value]) => { leftH += Math.max(9.8, heightOf(doc, value, panelW - 96, 6.8) + 2); });
   const subject = t(q.subject, DEFAULT_SUBJECT);
   const objective = t(q.directive, DEFAULT_OBJECTIVE);
-  const rightH = heightOf(doc, subject, half - 16, 6.8) + heightOf(doc, objective, half - 28, 6.8) + 26;
+  const rightH = billing ? 0 : heightOf(doc, subject, half - 16, 6.8) + heightOf(doc, objective, half - 28, 6.8) + 26;
   const panelH = Math.max(leftH, rightH);
-  titleBar(doc, M, y, half, 'QUOTATION SUBMITTED TO', NAVY, 'building');
-  frame(doc, M, y + TB, half, panelH);
+  titleBar(doc, M, y, panelW, billing ? 'BILLED TO' : 'QUOTATION SUBMITTED TO', NAVY, 'building');
+  frame(doc, M, y + TB, panelW, panelH);
   let ly = y + TB + 4;
   for (const [label, value] of rows) {
     text(doc, label, M + 8, ly, 80, { size: 6.8, color: MUTED });
-    const end = text(doc, `:  ${value}`, M + 88, ly, half - 96, { size: 6.8, bold: label === 'Company / Organisation', color: INK });
+    const end = text(doc, `:  ${value}`, M + 88, ly, panelW - 96, { size: 6.8, bold: label === 'Company / Organisation', color: INK });
     ly = Math.max(end, ly + 9.8) + 1.2;
   }
-  const rxp = M + half + 10;
-  titleBar(doc, rxp, y, half, 'SUBJECT', GREEN, 'target');
-  frame(doc, rxp, y + TB, half, panelH);
-  let ry = text(doc, subject, rxp + 8, y + TB + 5, half - 16, { size: 6.8, color: INK });
-  const boxY = ry + 5;
-  const boxH = heightOf(doc, objective, half - 28, 6.8) + 8;
-  fillRect(doc, rxp + 8, boxY, half - 16, boxH, '#EEF7F0', '#B9DCC2');
-  text(doc, objective, rxp + 14, boxY + 4, half - 28, { size: 6.8, color: INK });
+  if (!billing) {
+    const rxp = M + half + 10;
+    titleBar(doc, rxp, y, half, 'SUBJECT', GREEN, 'target');
+    frame(doc, rxp, y + TB, half, panelH);
+    const ry = text(doc, subject, rxp + 8, y + TB + 5, half - 16, { size: 6.8, color: INK });
+    const boxY = ry + 5;
+    const boxH = heightOf(doc, objective, half - 28, 6.8) + 8;
+    fillRect(doc, rxp + 8, boxY, half - 16, boxH, '#EEF7F0', '#B9DCC2');
+    text(doc, objective, rxp + 14, boxY + 4, half - 28, { size: 6.8, color: INK });
+  }
   y += TB + panelH + 5;
 
   /* ───────── itemised fee table ───────── */
-  const cols = [28, 150, 205, 50, W - 433];
+  const cols = billing ? [28, W - 28 - 170, 0, 0, 170] : [28, 150, 205, 50, W - 433];
   const colX = cols.reduce<number[]>((acc, w, i) => { acc.push(i === 0 ? M : acc[i - 1] + cols[i - 1]); return acc; }, []);
   const tableHead = (top: number) => {
-    let hy = titleBar(doc, M, top, W, 'MONTHLY PROFESSIONAL SERVICE PRICE SUMMARY', NAVY, undefined, 'center');
+    let hy = titleBar(doc, M, top, W, billing ? 'SERVICE PRICE' : 'MONTHLY PROFESSIONAL SERVICE PRICE SUMMARY', NAVY, undefined, 'center');
     fillRect(doc, M, hy, W, 19, PALE);
     frame(doc, M, hy, W, 19);
-    const labels = ['SL. NO.', 'SERVICE CATEGORY', 'SCOPE COVERED (SUMMARY)', 'FREQUENCY', 'MONTHLY PROFESSIONAL FEE (₹)'];
-    labels.forEach((label, i) => text(doc, label, colX[i] + 3, hy + (i === 4 ? 2.5 : 6.5), cols[i] - 6, { size: 6.2, bold: true, color: NAVY, align: i === 1 || i === 2 ? 'left' : 'center', lineGap: 0 }));
+    const labels = ['SL. NO.', 'SERVICE CATEGORY', 'SCOPE COVERED (SUMMARY)', 'FREQUENCY', billing ? 'FEE (₹)' : 'MONTHLY PROFESSIONAL FEE (₹)'];
+    labels.forEach((label, i) => cols[i] > 0 && text(doc, label, colX[i] + 3, hy + (i === 4 ? 2.5 : 6.5), cols[i] - 6, { size: 6.2, bold: true, color: NAVY, align: i === 1 || i === 2 ? 'left' : 'center', lineGap: 0 }));
     return hy + 19;
   };
   y = tableHead(y);
   q.items.forEach((item, index) => {
-    const scopeH = heightOf(doc, t(item.scope, ''), cols[2] - 10, 6.5);
+    const scopeH = billing ? 0 : heightOf(doc, t(item.scope, ''), cols[2] - 10, 6.5);
     const catH = heightOf(doc, String(item.category).toUpperCase(), cols[1] - 30, 6.6, true);
     const rowH = Math.max(17.5, scopeH + 6, catH + 6);
     if (y + rowH > limit() - 22) {
@@ -161,8 +170,10 @@ export async function generatePremiumQuotation(id: number, scope: BillingScope):
     fillRect(doc, colX[1] + 5, y + rowH / 2 - 7, 14, 14, '#E4ECF8');
     drawIcon(doc, serviceIcon(String(item.category)), colX[1] + 12, y + rowH / 2, 9, BLUE, 1.7);
     text(doc, String(item.category).toUpperCase(), colX[1] + 23, y + rowH / 2 - catH / 2, cols[1] - 28, { size: 6.6, bold: true, color: NAVY });
-    text(doc, t(item.scope, ''), colX[2] + 5, y + rowH / 2 - scopeH / 2, cols[2] - 10, { size: 6.5, color: INK });
-    text(doc, String(item.frequency), colX[3], y + rowH / 2 - 4, cols[3], { size: 6.6, color: INK, align: 'center' });
+    if (!billing) {
+      text(doc, t(item.scope, ''), colX[2] + 5, y + rowH / 2 - scopeH / 2, cols[2] - 10, { size: 6.5, color: INK });
+      text(doc, String(item.frequency), colX[3], y + rowH / 2 - 4, cols[3], { size: 6.6, color: INK, align: 'center' });
+    }
     text(doc, inr(item.fee), colX[4], y + rowH / 2 - 4.5, cols[4], { size: 8, bold: true, color: NAVY, align: 'center' });
     y += rowH;
   });
@@ -170,23 +181,23 @@ export async function generatePremiumQuotation(id: number, scope: BillingScope):
   if (y + 24 > limit()) { doc.addPage(); y = 24; }
   fillRect(doc, M, y, W, 20, '#E4ECF8');
   frame(doc, M, y, W, 20);
-  text(doc, 'TOTAL PROFESSIONAL SERVICE FEE (PER MONTH)', M, y + 6.5, colX[4] - M, { size: 8, bold: true, color: NAVY, align: 'center' });
+  text(doc, billing ? 'TOTAL FEE' : 'TOTAL PROFESSIONAL SERVICE FEE (PER MONTH)', M, y + 6.5, colX[4] - M, { size: 8, bold: true, color: NAVY, align: 'center' });
   fillRect(doc, colX[4], y, cols[4], 20, '#FFFFFF', LINE);
   text(doc, `₹ ${inr(q.subtotal)}`, colX[4], y + 4.5, cols[4], { size: 11, bold: true, color: NAVY, align: 'center' });
   y += 20 + 5;
 
   /* ───────── price summary and inclusions ───────── */
-  const elements = q.framework_elements.length ? q.framework_elements : DEFAULT_QUOTATION_ELEMENTS;
-  const leftW = W * 0.41;
+  const elements = billing ? [] : q.framework_elements.length ? q.framework_elements : DEFAULT_QUOTATION_ELEMENTS;
+  const leftW = billing ? W : W * 0.41;
   const rightX = M + leftW + 10;
   const rightWidth = W - leftW - 10;
   let inclH = 6;
   elements.forEach((el) => { inclH += Math.max(9, heightOf(doc, el, rightWidth - 28, 6.4) + 2); });
-  const sumH = Math.max(inclH, 60);
+  const sumH = billing ? 60 : Math.max(inclH, 60);
   if (y + TB + sumH > limit()) { doc.addPage(); y = 24; }
   titleBar(doc, M, y, leftW, 'PRICE SUMMARY', NAVY);
   frame(doc, M, y + TB, leftW, sumH);
-  const summary: [string, string, boolean][] = [['Professional Service Fee (Per Month)', `₹ ${inr2(q.subtotal)}`, false], [`GST @ ${n(q.gst_percent)}%`, `₹ ${inr2(q.gst_amount)}`, false], ['TOTAL MONTHLY PAYABLE AMOUNT', `₹ ${inr2(q.total)}`, true]];
+  const summary: [string, string, boolean][] = [[billing ? 'Fee' : 'Professional Service Fee (Per Month)', `₹ ${inr2(q.subtotal)}`, false], [`GST @ ${n(q.gst_percent)}%`, `₹ ${inr2(q.gst_amount)}`, false], [billing ? 'TOTAL PAYABLE AMOUNT' : 'TOTAL MONTHLY PAYABLE AMOUNT', `₹ ${inr2(q.total)}`, true]];
   let sy = y + TB + 4;
   for (const [label, value, strong] of summary) {
     if (strong) fillRect(doc, M + 1, sy - 2, leftW - 2, 19, '#E2F3E6');
@@ -196,8 +207,8 @@ export async function generatePremiumQuotation(id: number, scope: BillingScope):
   }
   text(doc, `(${numberToWords(n(q.total), { currency: true })})`, M + 8, sy + 2, leftW - 16, { size: 6.4, color: MUTED });
 
-  titleBar(doc, rightX, y, rightWidth, 'WHAT IS INCLUDED IN MONTHLY SERVICE', GREEN);
-  frame(doc, rightX, y + TB, rightWidth, sumH);
+  if (!billing) titleBar(doc, rightX, y, rightWidth, 'WHAT IS INCLUDED IN MONTHLY SERVICE', GREEN);
+  if (!billing) frame(doc, rightX, y + TB, rightWidth, sumH);
   let iy = y + TB + 5;
   for (const el of elements) {
     badge(doc, 'check', rightX + 11, iy + 3.6, 4.2, GREEN);
@@ -206,6 +217,7 @@ export async function generatePremiumQuotation(id: number, scope: BillingScope):
   }
   y += TB + sumH + 5;
 
+  if (!billing) {
   /* ───────── notes and payment terms ───────── */
   const notes = String(q.notes ?? '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const noteList = notes.length ? notes : DEFAULT_QUOTATION_NOTES;
@@ -260,6 +272,7 @@ export async function generatePremiumQuotation(id: number, scope: BillingScope):
   signLine(bx + 16 + (colW - 24) / 2, y + 48, (colW - 24) / 2, 'Designation');
   signLine(bx + 8, y + 58, (colW - 24) / 2, 'Mobile / Email');
   signLine(bx + 16 + (colW - 24) / 2, y + 58, (colW - 24) / 2, 'Date');
+  }
 
   /* ───────── contact bar on every page ───────── */
   const range = doc.bufferedPageRange();

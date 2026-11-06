@@ -23,6 +23,7 @@ export interface DynamicForm {
   slug: string;
   description: string | null;
   form_type: string;
+  output_style?: string;
   version: number;
   layout_columns: number;
   requires_signature: boolean;

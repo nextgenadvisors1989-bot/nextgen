@@ -12,6 +12,8 @@ import { Modal, ConfirmDialog } from '@/components/ui/modal';
 import { Card, CardBody } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { api, apiFetch, fieldErrors } from '@/lib/utils/api-client';
+import { parseCsv } from '@/lib/utils/csv';
+import { toCsv } from '@/lib/utils/csv-table';
 
 const KINDS = [['Forms', 'Forms'], ['Returns', 'Returns'], ['Statement/Declaration', 'Statement / Declaration']] as const;
 type Kind = (typeof KINDS)[number][0];
@@ -19,6 +21,7 @@ type Kind = (typeof KINDS)[number][0];
 interface RecordItem { id: number; kind: Kind; title: string; content: string; file_id: number | null; file_name: string | null }
 interface Row { id: number; act_name: string; chapter: string; section: string; sub_section: string; amendments: string; explain_text: string; records: RecordItem[] }
 interface Data { acts: string[]; rows: Row[] }
+const CSV_HEAD = ['Act', 'Chapter', 'Section', 'Sub-section', 'Amendments', 'Explanation'] as const;
 const EMPTY = { act_name: '', chapter: '', section: '', sub_section: '', amendments: '', explain_text: '' };
 type Form = typeof EMPTY;
 
@@ -31,6 +34,7 @@ export function ActCompliance({ mode }: { mode: 'admin' | 'auditor' }) {
   const [form, setForm] = useState<Form>(EMPTY);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [removing, setRemoving] = useState<Row | null>(null);
   const [register, setRegister] = useState<{ rowId: number; kind: Kind } | null>(null);
 
@@ -69,6 +73,33 @@ export function ActCompliance({ mode }: { mode: 'admin' | 'auditor' }) {
   const needle = search.trim().toLowerCase();
   const rows = (data?.rows ?? []).filter((row) => !needle || `${row.act_name} ${row.chapter} ${row.section} ${row.sub_section} ${row.explain_text}`.toLowerCase().includes(needle));
   const activeRow = data?.rows.find((row) => row.id === register?.rowId) ?? null;
+  /** Downloads the rows now listed (after the search) as a spreadsheet file. */
+  function exportCsv() {
+    const lines = [[...CSV_HEAD], ...rows.map((row) => [row.act_name, row.chapter, row.section, row.sub_section, row.amendments, row.explain_text])];
+    const url = URL.createObjectURL(new Blob(['﻿', toCsv(lines)], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url; link.download = 'act-and-compliance.csv'; link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /** Adds one row per line of a CSV with the same columns as the export; a header line is skipped. */
+  async function importCsv(file: File | undefined) {
+    if (!file) return;
+    setImporting(true);
+    const lines = parseCsv(await file.text());
+    if (lines[0]?.[0]?.trim().toLowerCase() === 'act') lines.shift();
+    let added = 0; let skipped = 0;
+    for (const [act_name = '', chapter = '', section = '', sub_section = '', amendments = '', explain_text = ''] of lines) {
+      if (!act_name.trim()) { skipped += 1; continue; }
+      const result = await api.post('/api/compliance-register/rows', { act_name, chapter, section, sub_section, amendments, explain_text });
+      if (result.ok) added += 1; else skipped += 1;
+    }
+    setImporting(false);
+    if (added) success(`${added} row${added === 1 ? '' : 's'} imported`, skipped ? `${skipped} line${skipped === 1 ? ' was' : 's were'} skipped (no Act name or not accepted).` : undefined);
+    else errorToast('Nothing was imported', 'Use the columns Act, Chapter, Section, Sub-section, Amendments, Explanation.');
+    await load();
+  }
+
   const set = (key: keyof Form) => (value: string) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
@@ -77,7 +108,16 @@ export function ActCompliance({ mode }: { mode: 'admin' | 'auditor' }) {
         <CardBody>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div className="w-full sm:w-96"><Input label="Search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Act, chapter, section..." /></div>
-            {admin && <Button onClick={() => open()}>Add Act &amp; Compliance</Button>}
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={exportCsv} disabled={!rows.length}>Export CSV</Button>
+              {admin && (
+                <label className={`inline-flex h-10 cursor-pointer items-center rounded-lg border border-line bg-white px-4 text-sm font-medium text-ink hover:bg-surface-muted ${importing ? 'pointer-events-none opacity-60' : ''}`}>
+                  {importing ? 'Importing...' : 'Import CSV'}
+                  <input type="file" accept=".csv,text/csv" className="sr-only" onChange={(event) => { void importCsv(event.target.files?.[0]); event.target.value = ''; }} />
+                </label>
+              )}
+              {admin && <Button onClick={() => open()}>Add Act &amp; Compliance</Button>}
+            </div>
           </div>
         </CardBody>
       </Card>

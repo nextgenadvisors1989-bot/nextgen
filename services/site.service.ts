@@ -30,6 +30,8 @@ export interface SiteBlock {
 export interface SiteInfo {
   name: string;
   phone: string;
+  phone2: string;
+  whatsapp: string;
   email: string;
   timing: string;
   address: string;
@@ -39,7 +41,7 @@ export interface SiteInfo {
 }
 
 const SETTING_KEYS = Object.keys(defaults.settings) as (keyof typeof defaults.settings)[];
-const EXTRA_KEYS = ['social_youtube'];
+const EXTRA_KEYS = ['social_youtube', 'company_phone_secondary', 'company_whatsapp'];
 
 export async function getSiteInfo(): Promise<SiteInfo> {
   const keys = [...SETTING_KEYS, ...EXTRA_KEYS];
@@ -56,6 +58,8 @@ export async function getSiteInfo(): Promise<SiteInfo> {
   return {
     name: pick('company_name'),
     phone: pick('company_phone'),
+    phone2: pick('company_phone_secondary'),
+    whatsapp: pick('company_whatsapp') || pick('company_phone'),
     email: pick('company_email'),
     timing: pick('company_timing'),
     address: pick('company_address'),

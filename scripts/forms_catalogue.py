@@ -16,6 +16,11 @@ from forms_dsl import (
 
 from forms_catalogue_extra import EXTRA_CATALOGUE  # noqa: E402
 from forms_catalogue_step3 import STEP3_CATALOGUE  # noqa: E402
+from forms_catalogue_aa_site import AA_SITE_CATALOGUE  # noqa: E402
+from forms_catalogue_aa_environment import AA_ENV_CATALOGUE  # noqa: E402
+from forms_catalogue_aa_studies import AA_STUDIES_CATALOGUE  # noqa: E402
+from forms_catalogue_aa_batch3 import AA_BATCH3_CATALOGUE  # noqa: E402
+from forms_catalogue_aa_etp import AA_ETP_CATALOGUE  # noqa: E402
 
 CHECKLISTS = json.loads((Path(__file__).parent / "fixtures" / "client-checklists.json").read_text(encoding="utf-8"))
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
@@ -527,13 +532,17 @@ def audit_requirements_listout():
 CATALOGUE = [
     *EXTRA_CATALOGUE,
     *STEP3_CATALOGUE,
+    # the complete forms built from the client's sample files (2026-11-05)
+    *AA_SITE_CATALOGUE,
+    *AA_ENV_CATALOGUE,
+    *AA_STUDIES_CATALOGUE,
+    *AA_BATCH3_CATALOGUE,
+    *AA_ETP_CATALOGUE,
     # name, builder, module_type, category, auditor type codes
     ("Total Water Management Diagnosis", water_diagnosis, "AUDIT", "Water", ["WATER"]),
     ("Water Audit - Garment Unit Questionnaire", water_garment_questionnaire, "AUDIT", "Water", ["WATER"]),
     ("Monthly Water Consumption Register", water_register, "AUDIT", "Water", ["WATER"]),
     ("ETP Functionality Assessment", etp_assessment, "ASSESSMENT", "Environment", ["ENV"]),
-    ("ETP Assessment Document List", etp_document_list, "ASSESSMENT", "Environment", ["ENV"]),
-    ("Environmental Aspects and Impacts Register", aspects_register, "RISK", "Environment", ["ENV"]),
     ("Corrective Action Plan Acknowledgement", cap_report, "AUDIT", "Environment", ["ENV", "SOCIAL"]),
     ("GHG Emissions Data Collection", ghg_collection, "STUDY", "Energy and GHG", ["GHG"]),
     ("Energy Consumption and Target Tracker", energy_tracker, "STUDY", "Energy and GHG", ["GHG"]),
@@ -542,7 +551,6 @@ CATALOGUE = [
     ("Safety Performance Calculations", safety_calculations, "ASSESSMENT", "Safety", ["SAFETY", "FIRE"]),
     ("Safety Equipment Purchase and Cost Report", safety_equipment_report, "STUDY", "Safety", ["SAFETY"]),
     ("Safety and Compliance Training Plan", safety_training_plan, "STUDY", "Safety", ["SAFETY", "SOCIAL"]),
-    ("Risk Engineering Compliance Report", risk_engineering, "RISK", "Safety", ["SAFETY", "FIRE"]),
     ("Legal Register - Tamil Nadu Factories", legal_register("Legal Register - Tamil Nadu Factories", "LRT", "Legal and other requirements under the Factories Act and Tamil Nadu Factories Rules with compliance status."), "AUDIT", "Legal", ["LEGAL"]),
     ("Legal Register - Construction", legal_register("Legal Register - Construction", "LRC", "Evaluation of compliance to legal and other requirements for a construction project."), "AUDIT", "Legal", ["LEGAL"]),
     ("Factory Profile and Legal Documents Checklist", factory_profile_checklist, "AUDIT", "Legal", ["LEGAL", "SOCIAL"]),

@@ -21,9 +21,12 @@ import { query, queryOne, type RowDataPacket } from '@/lib/db/mysql';
 import { newUuid, nextDocumentNumber } from '@/lib/utils/report-number';
 import { writeActivityLog } from '@/lib/logger/activity-log';
 import { notifyMany, notifyUser, usersWithRole } from '@/lib/notifications/notification-service';
-import { attachGeneratedFile } from '@/lib/files/file-service';
-import { generateSubmissionPdf } from '@/lib/pdf/submission-pdf';
+import { attachGeneratedFile, findFile, readFileBytes } from '@/lib/files/file-service';
+import { companyInfo, generateBlankFormPdf, generateSubmissionPdf } from '@/lib/pdf/submission-pdf';
+import { buildDocumentBlocks, imageInfo, reportCoverOf, type AttachedFile } from '@/lib/forms/form-document-model';
+import { buildFormDocx } from '@/lib/docx/form-docx';
 import { formatDate } from '@/lib/utils/dates';
+import { sanitizeRichText } from '@/lib/utils/formatting';
 import * as moduleRepo from '@/repositories/dynamic-module.repository';
 import * as repo from '@/repositories/dynamic-submission.repository';
 import { filterObject, toFormStructure } from '@/services/dynamic-module.service';
@@ -190,7 +193,7 @@ export async function startSubmission(rawPayload: unknown, actor: SubmissionActo
     throw forbidden('This module has not been assigned to you');
   }
 
-  const existing = await repo.findOpenDraft(actor.id, Number(form.id), input.assignment_id ?? null);
+  const existing = await repo.findOpenDraft(actor.id, Number(form.id), input.assignment_id ?? null, input.title ?? null);
   if (existing) {
     return { submissionId: Number(existing.id), submissionNumber: String(existing.submission_number), resumed: true, form, module };
   }
@@ -604,11 +607,12 @@ export async function saveDraft(submissionId: number, rawPayload: unknown, actor
 }
 
 function normaliseValues(structure: FormStructure, values: ValueMap): ValueMap {
-  const known = new Set(structure.fields.map((field) => String(field.field_key)));
+  const types = new Map(structure.fields.map((field) => [String(field.field_key), String(field.field_type)]));
   const out: ValueMap = {};
   for (const [key, value] of Object.entries(values ?? {})) {
-    if (!known.has(key)) continue;
-    out[key] = value;
+    if (!types.has(key)) continue;
+    // the text editor stores HTML: scripts, event handlers and javascript: links are removed before it is saved
+    out[key] = types.get(key) === 'rich_text' && typeof value === 'string' ? sanitizeRichText(value) : value;
   }
   return out;
 }
@@ -875,6 +879,34 @@ export async function deleteSubmission(submissionId: number, actor: SubmissionAc
   return { submissionId, deleted: true, submissionNumber: record.submission_number };
 }
 
+/**
+ * The files attached to a submission's answers, for the PDF and Word copies: names for all of them and the bytes of PNG / JPEG pictures
+ * (up to 4 MB each) to print in the document. Only files uploaded to this very submission are used, so an id typed into an answer
+ * can never pull in somebody else's file.
+ */
+async function attachedFilesOf(submissionId: number, structure: { fields: { field_key: string; field_type: string }[] }, values: ValueMap): Promise<Map<number, AttachedFile>> {
+  const found = new Map<number, AttachedFile>();
+  for (const field of structure.fields) {
+    if (!['file', 'image', 'multi_file'].includes(field.field_type)) continue;
+    const raw = values[field.field_key];
+    for (const id of (Array.isArray(raw) ? raw : raw ? [raw] : []).map(Number)) {
+      if (!Number.isInteger(id) || id <= 0 || found.has(id)) continue;
+      const row = await findFile(id).catch(() => null);
+      if (!row || String(row.entity_type) !== 'SUBMISSION' || Number(row.entity_id) !== submissionId) continue;
+      const entry: AttachedFile = { id, name: row.original_name };
+      if (/^image\/(png|jpe?g)$/i.test(String(row.mime_type ?? '')) && Number(row.size_bytes) <= 4 * 1024 * 1024) {
+        try {
+          const data = await readFileBytes(row);
+          const info = imageInfo(data);
+          if (info && info.width > 0 && info.height > 0) entry.image = { data, ...info };
+        } catch { /* the name is still listed */ }
+      }
+      found.set(id, entry);
+    }
+  }
+  return found;
+}
+
 export interface SubmissionPdfResult {
   buffer: Buffer;
   filename: string;
@@ -898,6 +930,7 @@ export async function submissionPdf(submissionId: number, actor: SubmissionActor
     structure: loaded.structure,
     values: repo.valuesToMap(values),
     tableRows: repo.tableRowsToMap(tableRows, tableKeys),
+    files: await attachedFilesOf(submissionId, loaded.structure, repo.valuesToMap(values)),
     generatedByName: actor.name ?? 'System',
     generatedByRole: actor.role ?? 'user',
   });
@@ -908,6 +941,76 @@ export async function submissionPdf(submissionId: number, actor: SubmissionActor
     submissionNumber: String(record.submission_number),
     version: Number(record.version),
   };
+}
+
+export interface DocumentResult { buffer: Buffer; filename: string; contentType: string }
+
+const DOCX_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const fileSafe = (value: string) => value.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 90) || 'form';
+
+/** The Word file of a filled submission: the same content as its PDF. */
+export async function submissionDocx(submissionId: number, actor: SubmissionActor): Promise<DocumentResult> {
+  const record = await repo.findSubmissionById(submissionId);
+  if (!record) throw notFound();
+  await assertSubmissionAccess(record, actor);
+  const loaded = await loadForm(Number(record.form_id));
+  const [values, tableRows] = await Promise.all([repo.readValues(submissionId), repo.readTableRows(submissionId)]);
+  const tableKeys = new Map<number, string>();
+  for (const dynamicTable of loaded.structure.tables) tableKeys.set(Number(dynamicTable.id), String(dynamicTable.table_key));
+  const company = await companyInfo(record.employer_id ? Number(record.employer_id) : null);
+  const report = String(loaded.form.output_style ?? 'standard') === 'report';
+  const answers = repo.valuesToMap(values);
+  const files = await attachedFilesOf(submissionId, loaded.structure, answers);
+  const buffer = await buildFormDocx({
+    cover: report ? reportCoverOf({ formName: String(loaded.form.name ?? 'Report'), structure: loaded.structure, values: answers, files, fallbackOrganisation: company.name }) : undefined,
+    company: company.name,
+    title: String(loaded.form.name ?? 'Submission'),
+    subtitle: record.title ? String(record.title) : undefined,
+    meta: [
+      { label: 'Submission No.', value: String(record.submission_number ?? '') },
+      { label: 'Module', value: String(loaded.module.name ?? '') },
+      { label: 'Status', value: String(record.status ?? '').replace(/_/g, ' ') },
+      { label: 'Form version', value: `v${String(loaded.form.version ?? 1)}` },
+      { label: 'Submitted by', value: String(record.submitted_by_name ?? '—') },
+      { label: 'Employer', value: String(record.company_name ?? '—') },
+      { label: 'Unit', value: String(record.unit_name ?? '—') },
+      { label: 'Auditor', value: String(record.auditor_name ?? '—') },
+    ],
+    blocks: buildDocumentBlocks({ structure: loaded.structure, values: answers, tableRows: repo.tableRowsToMap(tableRows, tableKeys), files, report }),
+    signatures: loaded.structure.requiresSignature ? ['Submitted by', 'Reviewed by', 'Authorised signatory'] : undefined,
+    footerLeft: `${String(record.submission_number ?? '')} · v${String(record.version ?? 1)}`,
+  });
+  return { buffer, filename: `${String(record.submission_number).replace(/\//g, '-')}.docx`, contentType: DOCX_TYPE };
+}
+
+/** The empty form, as a PDF or a Word file, to print or fill in on site. Same access rule as opening the form. */
+export async function formDocument(formId: number, actor: SubmissionActor, format: 'pdf' | 'docx'): Promise<DocumentResult> {
+  const loaded = await loadForm(formId);
+  if (!isReviewer(actor)) {
+    const access = await moduleRepo.moduleAccessFor(Number(loaded.module.id), actor.id, actor.role ?? null);
+    if (!access || !access.can_read) throw forbidden('This module has not been assigned to you');
+    if (String(loaded.form.status) !== 'published') throw invalidState('This form is not published yet');
+  }
+  const name = String(loaded.form.name ?? 'Form');
+  if (format === 'pdf') {
+    return { buffer: await generateBlankFormPdf({ form: loaded.form, module: loaded.module, structure: loaded.structure }), filename: `${fileSafe(name)}.pdf`, contentType: 'application/pdf' };
+  }
+  const company = await companyInfo(null);
+  const buffer = await buildFormDocx({
+    company: company.name,
+    title: name,
+    subtitle: loaded.form.description ? String(loaded.form.description) : undefined,
+    meta: [
+      { label: 'Module', value: String(loaded.module.name ?? '') },
+      { label: 'Form version', value: `v${String(loaded.form.version ?? 1)}` },
+      { label: 'Reference No.', value: '______________' },
+      { label: 'Date', value: '____ / ____ / ________' },
+    ],
+    blocks: buildDocumentBlocks({ structure: loaded.structure, blank: true }),
+    signatures: loaded.structure.requiresSignature ? ['Completed by', 'Reviewed by', 'Authorised signatory'] : undefined,
+    footerLeft: `${name} · v${String(loaded.form.version ?? 1)}`,
+  });
+  return { buffer, filename: `${fileSafe(name)}.docx`, contentType: DOCX_TYPE };
 }
 
 /** Recomputes a score without saving — the builder's live preview and the admin's score panel. */

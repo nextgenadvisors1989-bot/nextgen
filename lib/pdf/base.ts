@@ -91,9 +91,14 @@ export function line(doc: Doc, color = COLORS.line, width = 0.7): void {
   doc.y = y + 6;
 }
 
+/** A new page of the same size and orientation as the current one. */
+export function nextPage(doc: Doc): void {
+  doc.addPage({ size: doc.page.size, layout: doc.page.layout as 'portrait' | 'landscape', margins: { ...doc.page.margins } });
+}
+
 export function ensureSpace(doc: Doc, needed: number): void {
   const limit = doc.page.height - doc.page.margins.bottom;
-  if (doc.y + needed > limit) doc.addPage();
+  if (doc.y + needed > limit) nextPage(doc);
 }
 
 export interface LetterheadOptions {
@@ -263,21 +268,24 @@ export interface TableOptions {
   overflowNote?: (hidden: number) => string;
   /** Optional totals strip printed under the last row. */
   footer?: string;
+  /** Width of the table in points; the page's content width when left out (a landscape page passes its own). */
+  width?: number;
 }
 
 /** Zebra-striped table with a header that repeats after every page break. */
 export function table(doc: Doc, options: TableOptions): void {
+  const TW = options.width ?? CONTENT_WIDTH;
   const { columns, rows } = options;
   const maxRows = options.maxRows ?? rows.length;
 
   if (!rows.length) {
     setFont(doc, 8.5);
-    doc.fillColor(COLORS.muted).text(options.empty ?? 'No records to display.', MARGIN + 4, doc.y + 2, { width: CONTENT_WIDTH - 8 });
+    doc.fillColor(COLORS.muted).text(options.empty ?? 'No records to display.', MARGIN + 4, doc.y + 2, { width: TW - 8 });
     doc.y += 14;
     return;
   }
 
-  const widths = columns.map((column) => column.width * CONTENT_WIDTH);
+  const widths = columns.map((column) => column.width * TW);
   const visible = rows.slice(0, maxRows);
 
   // Header labels wrap inside their column; the band grows to the tallest label (narrow columns, long names).
@@ -289,7 +297,7 @@ export function table(doc: Doc, options: TableOptions): void {
     const height = headerHeight();
     ensureSpace(doc, height + 14);
     const y = doc.y;
-    doc.save().rect(MARGIN, y, CONTENT_WIDTH, height).fill(COLORS.headerBg).restore();
+    doc.save().rect(MARGIN, y, TW, height).fill(COLORS.headerBg).restore();
     let x = MARGIN;
     columns.forEach((column, index) => {
       setFont(doc, 7.5, { bold: true });
@@ -315,12 +323,12 @@ export function table(doc: Doc, options: TableOptions): void {
   visible.forEach((row, rowIndex) => {
     const height = cellHeight(row);
     if (doc.y + height > doc.page.height - doc.page.margins.bottom) {
-      doc.addPage();
+      nextPage(doc);
       drawHeader();
     }
     const y = doc.y;
     if (rowIndex % 2 === 1) {
-      doc.save().rect(MARGIN, y, CONTENT_WIDTH, height).fill('#fcfcfd').restore();
+      doc.save().rect(MARGIN, y, TW, height).fill('#fcfcfd').restore();
     }
     let x = MARGIN;
     columns.forEach((column, index) => {
@@ -331,14 +339,14 @@ export function table(doc: Doc, options: TableOptions): void {
       x += widths[index];
     });
     doc.save().strokeColor(COLORS.line).lineWidth(0.5)
-      .moveTo(MARGIN, y + height).lineTo(MARGIN + CONTENT_WIDTH, y + height).stroke().restore();
+      .moveTo(MARGIN, y + height).lineTo(MARGIN + TW, y + height).stroke().restore();
     doc.y = y + height;
   });
 
   if (options.footer) {
     setFont(doc, 8.5, { bold: true });
-    doc.fillColor(COLORS.brand).text(options.footer, MARGIN + CONTENT_WIDTH * 0.42, doc.y + 5, {
-      width: CONTENT_WIDTH * 0.58, align: 'right',
+    doc.fillColor(COLORS.brand).text(options.footer, MARGIN + TW * 0.42, doc.y + 5, {
+      width: TW * 0.58, align: 'right',
     });
     doc.y += 16;
   }
@@ -348,7 +356,7 @@ export function table(doc: Doc, options: TableOptions): void {
     setFont(doc, 8);
     doc.fillColor(COLORS.muted).text(
       options.overflowNote ? options.overflowNote(hidden) : `…and ${hidden} more row(s), available in the digital record.`,
-      MARGIN + 4, doc.y + 3, { width: CONTENT_WIDTH - 8 }
+      MARGIN + 4, doc.y + 3, { width: TW - 8 }
     );
     doc.y += 12;
   }
@@ -451,10 +459,11 @@ export function stampFooters(
 ): void {
   const range = doc.bufferedPageRange();
   const total = range.count;
-  const footerY = doc.page.height - MARGIN - 6;
 
   for (let index = 0; index < total; index += 1) {
     doc.switchToPage(range.start + index);
+    const footerY = doc.page.height - MARGIN - 6;
+    const CONTENT_WIDTH = doc.page.width - MARGIN * 2;
     // Footers are stamped below the text frame; dropping the bottom margin for
     // the duration stops pdfkit from treating each stamp as an overflow and
     // spawning a fresh page (which would grow the document on every pass).

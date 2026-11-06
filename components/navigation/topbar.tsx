@@ -8,6 +8,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { getCsrfToken } from '@/components/ui/file-upload';
 import { timeAgo } from '@/lib/utils/dates';
 import { NotificationAlerts } from '@/components/notifications/notification-alerts';
+import { SupportMenu } from '@/components/navigation/support-menu';
 
 export interface TopbarUser {
   id: number;
@@ -107,6 +108,7 @@ export function Topbar({ user, onMenuClick, notifications = [], unreadCount = 0,
 
       <div className="flex items-center gap-1.5">
         <NotificationAlerts />
+        <SupportMenu />
         {actions}
         <button type="button" onClick={() => setSearchOpen((value) => !value)} className="rounded-lg p-2 text-ink-soft transition-colors hover:bg-surface-muted" aria-label="Search">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

@@ -3,6 +3,7 @@
 /**
  * The quotation shortcut in the admin header: one icon opens a short form (client, services and their fees, GST, validity), and "Generate"
  * creates the quotation, opens its PDF and offers to keep editing it. It uses the same API as the full editor, so the result is an ordinary Draft quotation.
+ * A dropdown at the top chooses Quotation (everything) or Billing (the client, the auditor and the price of each service only).
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -17,6 +18,7 @@ import { fieldMap, rupees, today } from '@/components/billing/billing-ui';
 
 interface Lookups {
   employers: { id: number; name: string; gstin: string | null; contact: string | null; address: string; employees: number | null }[];
+  auditors: { id: number; name: string }[];
   services: { id: number; name: string; scope: string | null; frequency: string; default_fee: string | number; sac_code: string | null; status: string }[];
   defaults: { elements: string[]; notes: string[]; paymentTerms: string[]; validityDays: number; subject: string; directive: string };
 }
@@ -27,7 +29,7 @@ const plusDays = (days: number) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
 
-const blank = () => ({ employer_id: '', client_name: '', client_address: '', client_contact: '', contact_designation: '', employee_strength: '', shifts: '', industry: '', client_gstin: '', gst_percent: '18' });
+const blank = () => ({ doc_type: 'Quotation', auditor_id: '', employer_id: '', client_name: '', client_address: '', client_contact: '', contact_designation: '', employee_strength: '', shifts: '', industry: '', client_gstin: '', gst_percent: '18' });
 
 export function QuickQuotationButton() {
   const router = useRouter();
@@ -39,6 +41,8 @@ export function QuickQuotationButton() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ id: number; number: string; total: number } | null>(null);
+  const billing = form.doc_type === 'Billing';
+  const label = billing ? 'billing statement' : 'quotation';
 
   useEffect(() => {
     if (!open || lookups) return;
@@ -72,11 +76,13 @@ export function QuickQuotationButton() {
 
   async function generate() {
     if (!lookups) return;
+    if (billing && !form.auditor_id) { setErrors({ auditor_id: 'Choose the auditor' }); return; }
     if (chosen.length === 0) { setErrors({ items: 'Tick at least one service' }); return; }
     setBusy(true);
     setErrors({});
     const d = lookups.defaults;
     const response = await api.post<{ id: number; quotation_number: string; total: number }>('/api/admin/billing/quotations', {
+      doc_type: form.doc_type, auditor_id: billing ? Number(form.auditor_id) : null,
       employer_id: form.employer_id ? Number(form.employer_id) : null, client_name: form.client_name, client_address: form.client_address, client_contact: form.client_contact,
       contact_designation: form.contact_designation, employee_strength: form.employee_strength, shifts: form.shifts, industry: form.industry, client_gstin: form.client_gstin,
       subject: d.subject, directive: d.directive, framework_elements: d.elements, notes: d.notes.join('\n'), payment_terms: d.paymentTerms,
@@ -98,38 +104,40 @@ export function QuickQuotationButton() {
         </svg>
       </button>
 
-      <Modal open={open} onClose={close} size="xl" title={done ? 'Quotation generated' : 'Generate a quotation'}
-        description={done ? undefined : 'Pick the client and the services; the premium quotation opens as a PDF. You can refine it afterwards in Billing.'}
+      <Modal open={open} onClose={close} size="xl" title={done ? `${billing ? 'Billing statement' : 'Quotation'} generated` : `Generate a ${label}`}
+        description={done ? undefined : billing ? 'Pick the client, the auditor and the services; the statement shows only the price of each service and opens as a PDF.' : 'Pick the client and the services; the premium quotation opens as a PDF. You can refine it afterwards in Billing.'}
         footer={done ? (
           <><Button variant="ghost" onClick={() => { setDone(null); setPicked({}); setForm(blank()); }}>Create another</Button>
             <Button variant="outline" onClick={() => window.open(`/api/pdf/billing/quotation/${done.id}`, '_blank', 'noopener')}>Open the PDF again</Button>
             <Button onClick={() => { close(); router.push(`/admin/billing/quotations/${done.id}`); }}>Edit in Billing</Button></>
         ) : (
-          <><Button variant="ghost" onClick={close}>Cancel</Button><Button onClick={generate} loading={busy} disabled={!lookups}>Generate quotation</Button></>
+          <><Button variant="ghost" onClick={close}>Cancel</Button><Button onClick={generate} loading={busy} disabled={!lookups}>Generate {label}</Button></>
         )}>
         {done ? (
           <div className="space-y-2 py-2 text-sm">
-            <p className="text-ink">Quotation <strong>{done.number}</strong> was created as a draft for <strong>{rupees(done.total)}</strong> including GST, and its PDF opened in a new tab.</p>
+            <p className="text-ink">{billing ? 'Billing statement' : 'Quotation'} <strong>{done.number}</strong> was created as a draft for <strong>{rupees(done.total)}</strong> including GST, and its PDF opened in a new tab.</p>
             <p className="text-ink-muted">If the PDF did not open, your browser blocked the pop-up: use "Open the PDF again". Mark it as sent from Billing once you have sent it to the client.</p>
           </div>
         ) : !lookups ? <p className="py-6 text-center text-sm text-ink-muted">Loading...</p> : (
           <div className="space-y-5">
             <section className="grid gap-3 md:grid-cols-2">
+              <Select label="Document" value={form.doc_type} onChange={(value) => setForm((current) => ({ ...current, doc_type: value || 'Quotation' }))} options={[{ value: 'Quotation', label: 'Quotation (full details)' }, { value: 'Billing', label: 'Billing (auditor and price only)' }]} />
+              {billing ? <Select label="Auditor" required searchable value={form.auditor_id} onChange={(value) => setForm((current) => ({ ...current, auditor_id: value }))} placeholder="Choose the auditor" options={lookups.auditors.map((a) => ({ value: String(a.id), label: a.name }))} error={errors.auditor_id} /> : <div />}
               <Select label="Company on the platform (optional)" value={form.employer_id} onChange={pickEmployer} searchable clearable placeholder="A new prospect" options={lookups.employers.map((e) => ({ value: String(e.id), label: e.name }))} />
               <Input label="Client / organisation" value={form.client_name} onChange={set('client_name')} error={errors.client_name} />
               <div className="md:col-span-2"><Input label="Address" value={form.client_address} onChange={set('client_address')} error={errors.client_address} /></div>
               <Input label="Contact person" value={form.client_contact} onChange={set('client_contact')} />
-              <Input label="Designation" value={form.contact_designation} onChange={set('contact_designation')} />
-              <div className="grid grid-cols-3 gap-3 md:col-span-2">
+              {!billing && <Input label="Designation" value={form.contact_designation} onChange={set('contact_designation')} />}
+              {!billing && <div className="grid grid-cols-3 gap-3 md:col-span-2">
                 <Input label="Employees" type="number" min={0} value={form.employee_strength} onChange={set('employee_strength')} error={errors.employee_strength} />
                 <Input label="Shifts" type="number" min={0} value={form.shifts} onChange={set('shifts')} error={errors.shifts} />
                 <Input label="Industry / sector" value={form.industry} onChange={set('industry')} />
-              </div>
+              </div>}
             </section>
 
             <section>
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-ink">Services and monthly fee</h3>
+                <h3 className="text-sm font-semibold text-ink">{billing ? 'Services and fee' : 'Services and monthly fee'}</h3>
                 <button type="button" className="link text-xs" onClick={() => setPicked(chosen.length === services.length ? {} : Object.fromEntries(services.map((s) => [s.id, String(Number(s.default_fee))])))}>
                   {chosen.length === services.length ? 'Clear all' : 'Select all'}
                 </button>
@@ -141,7 +149,7 @@ export function QuickQuotationButton() {
                     <input type="checkbox" id={`qs-${s.id}`} checked={picked[s.id] !== undefined} onChange={() => toggle(s.id, s.default_fee)} className="h-4 w-4 shrink-0 accent-[#C59B27]" />
                     <label htmlFor={`qs-${s.id}`} className="min-w-0 flex-1 cursor-pointer">
                       <span className="block truncate text-[13px] font-medium text-ink">{s.name}</span>
-                      <span className="block truncate text-xs text-ink-muted">{s.scope}</span>
+                      {!billing && <span className="block truncate text-xs text-ink-muted">{s.scope}</span>}
                     </label>
                     <input aria-label={`Fee for ${s.name}`} type="number" min={0} disabled={picked[s.id] === undefined} value={picked[s.id] ?? ''} onChange={(e) => setPicked({ ...picked, [s.id]: e.target.value })}
                       className="w-28 rounded-lg border border-line px-2 py-1.5 text-right text-sm tabular-nums disabled:bg-surface-muted disabled:text-ink-muted" />
@@ -155,7 +163,7 @@ export function QuickQuotationButton() {
               <dl className="ml-auto grid grid-cols-[auto_auto] gap-x-6 gap-y-1 text-sm">
                 <dt className="text-ink-muted">Sub-total</dt><dd className="text-right tabular-nums">{rupees(totals.subtotal)}</dd>
                 <dt className="text-ink-muted">GST @ {Number(form.gst_percent) || 0}%</dt><dd className="text-right tabular-nums">{rupees(totals.gst)}</dd>
-                <dt className="font-semibold text-ink">Total monthly payable</dt><dd className="text-right font-semibold tabular-nums">{rupees(totals.total)}</dd>
+                <dt className="font-semibold text-ink">{billing ? 'Total payable' : 'Total monthly payable'}</dt><dd className="text-right font-semibold tabular-nums">{rupees(totals.total)}</dd>
               </dl>
             </section>
           </div>

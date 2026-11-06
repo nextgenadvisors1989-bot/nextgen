@@ -195,6 +195,7 @@ export const formStructureSchema = z.object({
   slug: optionalString(200),
   description: optionalString(1000),
   form_type: z.enum(asTuple(FORM_TYPES)).default('STANDARD'),
+  output_style: z.enum(['standard', 'report']).optional(),
   layout_columns: z.coerce.number().int().min(1).max(4).optional().default(1),
   requires_signature: booleanish.optional().default(false),
   requires_attachments: booleanish.optional().default(false),

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SiteIcon } from '@/components/public/icons';
 
 interface MenuLink { title: string; text: string; href: string; icon?: string; tone?: string }
@@ -79,30 +79,15 @@ const DRAWER_LINKS: [string, string][] = [
 ];
 const TOOL_LINKS: [string, string][] = [['Safety & Environmental Calculation', '/calculators'], ['Quotation Generation', '/quotation'], ['Bill Generation', '/bill-generation']];
 
-const LOGIN_PORTALS = [
-  { label: 'Client Portal', icon: 'building', tone: 'text-blue-600' },
-  { label: 'Employee / Auditor Portal', icon: 'user-check', tone: 'text-amber-600' },
-  { label: 'Admin Portal', icon: 'shield', tone: 'text-emerald-600' },
-];
-
 const NAV_BTN = 'flex items-center gap-1 text-[13px] font-bold uppercase transition-colors';
 const NAV_IDLE = 'text-slate-800 hover:text-[#C59B27]';
 
 export function SiteHeader({ phone, email }: { phone: string; email: string }) {
   const pathname = usePathname();
-  const [loginOpen, setLoginOpen] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const [accordion, setAccordion] = useState<string | null>(null);
-  const loginRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setDrawer(false); setLoginOpen(false); }, [pathname]);
-  useEffect(() => {
-    function away(event: MouseEvent) {
-      if (loginRef.current && !loginRef.current.contains(event.target as Node)) setLoginOpen(false);
-    }
-    document.addEventListener('mousedown', away);
-    return () => document.removeEventListener('mousedown', away);
-  }, []);
+  useEffect(() => { setDrawer(false); }, [pathname]);
 
   const on = (href: string) => (href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`));
   const cls = (href: string) => `${NAV_BTN} ${on(href) ? 'text-[#C59B27]' : NAV_IDLE}`;
@@ -268,31 +253,10 @@ export function SiteHeader({ phone, email }: { phone: string; email: string }) {
         </nav>
 
         <div className="hidden shrink-0 items-center gap-3 md:flex">
-          <div className="relative" ref={loginRef}>
-            <button
-              type="button"
-              onClick={() => setLoginOpen((open) => !open)}
-              aria-expanded={loginOpen}
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-md bg-[#0B2545] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#133B5C]"
-            >
-              <SiteIcon name="lock" className="h-3.5 w-3.5 text-[#C59B27]" />
-              <span>LOGIN</span>
-              <SiteIcon name="chevron" className="ml-0.5 h-3.5 w-3.5 text-slate-300" />
-            </button>
-            {loginOpen && (
-              <div className="absolute right-0 z-50 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
-                <div className="border-b border-slate-100 px-3 py-1.5 font-mono text-[10px] font-bold uppercase text-slate-400">Select Portal Gateway</div>
-                <div className="space-y-1 p-1 text-xs">
-                  {LOGIN_PORTALS.map((portal) => (
-                    <Link key={portal.label} href="/login" className="flex items-center gap-2.5 rounded-lg p-2 font-bold text-slate-800 hover:bg-slate-50">
-                      <SiteIcon name={portal.icon} className={`h-4 w-4 ${portal.tone}`} />
-                      <span>{portal.label}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <Link href="/login" className="flex items-center gap-1.5 whitespace-nowrap rounded-md bg-[#0B2545] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#133B5C]">
+            <SiteIcon name="lock" className="h-3.5 w-3.5 text-[#C59B27]" />
+            <span>LOGIN</span>
+          </Link>
           <Link href="/contact" className="hidden whitespace-nowrap rounded-md bg-[#C59B27] 2xl:inline-block px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#b0881e]">REQUEST QUOTE</Link>
         </div>
 
@@ -312,18 +276,9 @@ export function SiteHeader({ phone, email }: { phone: string; email: string }) {
                 <button type="button" onClick={() => setDrawer(false)} aria-label="Close menu" className="p-1 text-slate-400 hover:text-slate-700"><SiteIcon name="close" className="h-5 w-5" /></button>
               </div>
 
-              <div className="space-y-2">
-                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400">PORTAL LOGIN GATEWAYS</div>
-                {[
-                  ['Customer / Client Portal', 'bg-blue-50 text-blue-900'],
-                  ['Employee / Auditor Portal', 'bg-green-50 text-green-900'],
-                  ['Admin Portal', 'bg-slate-100 text-slate-900'],
-                ].map(([label, tone]) => (
-                  <Link key={label} href="/login" className={`flex w-full items-center justify-between rounded-lg p-2.5 text-xs font-bold ${tone}`}>
-                    <span>{label}</span><SiteIcon name="arrow" className="h-4 w-4" />
-                  </Link>
-                ))}
-              </div>
+              <Link href="/login" className="flex w-full items-center justify-between rounded-lg bg-[#0B2545] p-3 text-xs font-bold text-white">
+                <span>LOGIN</span><SiteIcon name="arrow" className="h-4 w-4" />
+              </Link>
 
               <div className="space-y-1 border-t border-slate-100 pt-2">
                 {DRAWER_LINKS.map(([label, href]) => (

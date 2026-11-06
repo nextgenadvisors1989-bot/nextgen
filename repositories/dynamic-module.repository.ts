@@ -38,6 +38,7 @@ export interface FormRow extends RowDataPacket {
   slug: string;
   description: string | null;
   form_type: string;
+  output_style?: string;
   version: number;
   layout_columns: number;
   requires_signature: boolean;
@@ -152,7 +153,7 @@ export interface ColumnRow extends RowDataPacket {
 const MODULE_COLUMNS = `m.id, m.name, m.slug, m.description, m.icon, m.category, m.version, m.module_type,
   m.default_tat_days, m.requires_verification, m.is_public, m.sort_order, m.status, m.created_at, m.updated_at`;
 
-const FORM_COLUMNS = `f.id, f.module_id, f.name, f.slug, f.description, f.form_type, f.version, f.layout_columns,
+const FORM_COLUMNS = `f.id, f.module_id, f.name, f.slug, f.description, f.form_type, f.output_style, f.version, f.layout_columns,
   f.requires_signature, f.requires_attachments, f.allow_draft, f.auto_number_prefix, f.status, f.created_at, f.updated_at`;
 
 function parseJson<T>(value: unknown, fallback: T): T {
@@ -598,12 +599,12 @@ export async function createForm(data: Record<string, unknown>): Promise<number>
 
 export async function updateForm(formId: number, data: Record<string, unknown>): Promise<void> {
   await query(
-    `UPDATE dynamic_forms SET name = ?, slug = ?, description = ?, form_type = ?, layout_columns = ?,
+    `UPDATE dynamic_forms SET name = ?, slug = ?, description = ?, form_type = ?, output_style = COALESCE(?, output_style), layout_columns = ?,
         requires_signature = ?, requires_attachments = ?, allow_draft = ?, auto_number_prefix = ?,
         status = ?, updated_by = ?
      WHERE id = ? AND deleted_at IS NULL`,
     [
-      data.name, data.slug, data.description ?? null, data.form_type ?? 'STANDARD', data.layout_columns ?? 1,
+      data.name, data.slug, data.description ?? null, data.form_type ?? 'STANDARD', data.output_style ?? null, data.layout_columns ?? 1,
       data.requires_signature ? 1 : 0, data.requires_attachments ? 1 : 0, data.allow_draft === false ? 0 : 1,
       data.auto_number_prefix ?? null, data.status ?? 'draft', data.user_id ?? null, formId,
     ]

@@ -118,6 +118,8 @@ export const SETTING_DEFINITIONS: Record<SettingGroup, SettingDefinition[]> = {
     { key: 'company_address', label: 'Registered address', type: 'textarea', fallback: '', section: 'Identity', isPublic: true, example: '4th Floor, Anna Salai, Chennai 600002, Tamil Nadu, India' },
     { key: 'company_email', label: 'Support email', type: 'email', fallback: '', section: 'Contact', isPublic: true, example: 'support@complianceos.example' },
     { key: 'company_phone', label: 'Support phone', type: 'text', fallback: '', section: 'Contact', isPublic: true, example: '+91 44 4000 0000' },
+    { key: 'company_phone_secondary', label: 'Secondary phone', type: 'text', fallback: '', section: 'Contact', isPublic: true, description: 'A second number shown in the Help menu of every panel and in the site footer.', example: '+91 98765 43210' },
+    { key: 'company_whatsapp', label: 'WhatsApp number', type: 'text', fallback: '', section: 'Contact', isPublic: true, description: 'With country code. The Help menu and footer open a WhatsApp chat with it. Blank uses the support phone.', example: '+91 94884 65966' },
     { key: 'company_website', label: 'Website', type: 'url', fallback: '', section: 'Contact', isPublic: true, placeholder: 'https://', example: 'https://complianceos.example' },
     { key: 'company_timing', label: 'Working hours', type: 'text', fallback: '', section: 'Contact', isPublic: true, description: 'Shown in the public site top bar.', example: 'Mon - Sat: 9:00 AM - 6:00 PM' },
     { key: 'company_tagline', label: 'Tagline', type: 'text', fallback: '', section: 'Identity', isPublic: true, description: 'One line under the logo in the public site footer.', example: 'Advice. Liaison. Compliance. Training' },

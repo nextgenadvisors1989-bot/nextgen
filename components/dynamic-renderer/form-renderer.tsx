@@ -644,8 +644,21 @@ function FieldWidget({
 
   const widget = () => {
     switch (field.field_type) {
-      case 'textarea':
       case 'rich_text':
+        return (
+          <div className={spanClass}>
+            <RichTextEditor
+              label={label}
+              value={String(value ?? '')}
+              onChange={(html) => onChange(html)}
+              helper={field.help_text ?? undefined}
+              error={error}
+              disabled={disabled}
+              minHeight={160}
+            />
+          </div>
+        );
+      case 'textarea':
         return (
           <Textarea
             {...common}
@@ -733,7 +746,7 @@ function FieldWidget({
           </div>
         );
       case 'select':
-        return <Select {...common} searchable value={value === null || value === undefined ? '' : String(value)} options={options} onChange={onChange} />;
+        return <Select {...common} searchable allowCustom value={value === null || value === undefined ? '' : String(value)} options={options} onChange={onChange} />;
       case 'radio':
         return (
           <div className={spanClass}>
@@ -874,7 +887,7 @@ function FieldWidget({
               required={state.required}
             />
             {list.length > 0 && (
-              <p className="mt-1 text-xs text-ink-muted">{list.length} file(s) attached — download from the submission record.</p>
+              <AttachedFiles ids={list} disabled={disabled} onRemove={(id) => onChange(multiple ? list.filter((x) => x !== id) : null)} />
             )}
             {error && <p className="error-text">{error}</p>}
           </div>
@@ -999,6 +1012,7 @@ function TableWidget({
                             options={(column.options ?? []).map((option) => ({ value: String(option.option_key), label: String(option.option_label) }))}
                             onChange={(next) => onChange(rowIndex, column.column_key, next)}
                             disabled={!column.is_editable}
+                            allowCustom
                             size="sm"
                           />
                         )}
@@ -1090,3 +1104,32 @@ function TableWidget({
 }
 
 export { evaluateConditions, isMultiValue, computeScore };
+
+/** The files already attached to a field: their names with a download link, and a way to take one off the form (it stays in the vault). */
+function AttachedFiles({ ids, onRemove, disabled }: { ids: number[]; onRemove: (id: number) => void; disabled?: boolean }) {
+  const [names, setNames] = useState<Record<number, string>>({});
+  const key = ids.join(',');
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      for (const id of ids) {
+        if (names[id]) continue;
+        const result = await api.get<unknown>(`/api/files/${id}`);
+        const name = (result.raw as { file?: { original_name?: string } } | undefined)?.file?.original_name;
+        if (!cancelled && name) setNames((current) => ({ ...current, [id]: name }));
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  return (
+    <ul className="mt-2 space-y-1">
+      {ids.map((id) => (
+        <li key={id} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface-muted px-3 py-1.5 text-sm">
+          <a href={`/api/files/${id}/download`} target="_blank" rel="noreferrer" className="min-w-0 truncate font-medium text-brand-600 hover:underline">{names[id] ?? `File #${id}`}</a>
+          {!disabled && <button type="button" onClick={() => onRemove(id)} className="shrink-0 text-xs font-semibold text-red-600 hover:underline">Remove</button>}
+        </li>
+      ))}
+    </ul>
+  );
+}

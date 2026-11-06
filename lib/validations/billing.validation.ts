@@ -29,6 +29,8 @@ export const quotationItemSchema = z.object({
 });
 
 export const quotationSchema = z.object({
+  doc_type: z.enum(['Quotation', 'Billing']).optional().default('Quotation'),
+  auditor_id: id,
   employer_id: id,
   client_name: z.string().trim().min(2, 'Name the client').max(255),
   client_address: text(500),
@@ -50,7 +52,8 @@ export const quotationSchema = z.object({
   valid_until: optDay,
   gst_percent: rate.default(18),
   items: z.array(quotationItemSchema).min(1, 'Add at least one service line').max(40),
-}).refine((q) => !q.valid_until || q.valid_until >= q.quote_date, { path: ['valid_until'], message: 'Valid until cannot be before the quotation date' });
+}).refine((q) => q.doc_type !== 'Billing' || q.auditor_id, { path: ['auditor_id'], message: 'Choose the auditor' })
+  .refine((q) => !q.valid_until || q.valid_until >= q.quote_date, { path: ['valid_until'], message: 'Valid until cannot be before the quotation date' });
 
 export const quotationStatusSchema = z.object({ status: z.enum(['Sent', 'Accepted', 'Rejected', 'Expired']) });
 

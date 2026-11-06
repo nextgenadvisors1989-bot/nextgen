@@ -217,6 +217,9 @@ export function SubmissionList({
               PDF
             </a>
           )}
+          {permissions.download && (
+            <a href={`/api/documents/submission/${row.id}`} className="text-xs font-medium text-ink-soft hover:underline">Word</a>
+          )}
           {permissions.remove && (
             <Button size="sm" variant="ghost" onClick={() => setPendingDelete(row)}>Delete</Button>
           )}

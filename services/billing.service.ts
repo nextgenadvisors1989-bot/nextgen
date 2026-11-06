@@ -43,12 +43,13 @@ async function companySettings(): Promise<Record<string, string>> {
 /* ───────────────────────────── lookups ───────────────────────────── */
 
 export async function lookups() {
-  const [employers, settings, services] = await Promise.all([
+  const [employers, settings, services, auditors] = await Promise.all([
     query<RowDataPacket>(
       `SELECT id, company_name, gst_number, pan_number, address_line_1, address_line_2, city, state, pincode, contact_person_name, approximate_employee_count
          FROM employers WHERE deleted_at IS NULL ORDER BY company_name`),
     companySettings(),
     listServices(false),
+    query<RowDataPacket>("SELECT id, name FROM auditors WHERE deleted_at IS NULL AND status = 'active' ORDER BY name"),
   ]);
   return {
     employers: employers.map((e) => ({
@@ -56,6 +57,7 @@ export async function lookups() {
       address: [e.address_line_1, e.address_line_2, [e.city, e.pincode].filter(Boolean).join(' - ')].filter(Boolean).join(', '), state: e.state ?? null,
       employees: e.approximate_employee_count ?? null,
     })),
+    auditors: auditors.map((a) => ({ id: Number(a.id), name: String(a.name) })),
     seller: { name: settings.company_name ?? '', stateCode: settings.company_state_code || '33', defaultSac: settings.billing_default_sac || '998311', gstin: settings.company_gstin ?? '' },
     services,
     defaults: {
@@ -97,7 +99,7 @@ export async function deleteService(id: number) {
 
 /* ───────────────────────────── quotations ───────────────────────────── */
 
-const QUOTATION_COLUMNS = `q.id, q.quotation_number, q.employer_id, q.client_name, q.client_address, q.client_contact, q.contact_designation, q.client_profile, q.employee_strength, q.shifts, q.industry, q.client_gstin, q.client_state_code,
+const QUOTATION_COLUMNS = `q.id, q.quotation_number, q.doc_type, q.auditor_id, (SELECT a.name FROM auditors a WHERE a.id = q.auditor_id) AS auditor_name, q.employer_id, q.client_name, q.client_address, q.client_contact, q.contact_designation, q.client_profile, q.employee_strength, q.shifts, q.industry, q.client_gstin, q.client_state_code,
   q.subject, q.directive, q.framework_elements, q.notes, q.payment_terms, q.quote_date, q.valid_until, q.service_period, q.gst_percent, q.subtotal, q.gst_amount, q.total, q.status, q.invoice_id, q.created_at`;
 
 export async function listQuotations(filters: { status?: string | null; search?: string | null }, scope: BillingScope) {
@@ -140,7 +142,7 @@ export async function saveQuotation(payload: unknown, userId: number, id?: numbe
   if (input.employer_id && !(await queryOne<RowDataPacket>('SELECT id FROM employers WHERE id = ? AND deleted_at IS NULL', [input.employer_id]))) invalid('employer_id', 'That company does not exist');
   const totals = quotationTotals(input.items.map((item) => item.fee), input.gst_percent);
   const stateCode = input.client_state_code ?? (input.client_gstin ? stateCodeOfGstin(input.client_gstin) : null);
-  const values = [input.employer_id, input.client_name, input.client_address, input.client_contact, input.contact_designation, input.client_profile, input.employee_strength, input.shifts, input.industry,
+  const values = [input.doc_type, input.auditor_id, input.employer_id, input.client_name, input.client_address, input.client_contact, input.contact_designation, input.client_profile, input.employee_strength, input.shifts, input.industry,
     input.client_gstin, stateCode, input.subject, input.directive, JSON.stringify(input.framework_elements), input.notes, JSON.stringify(input.payment_terms), input.quote_date, input.valid_until,
     input.service_period, input.gst_percent, totals.subtotal, totals.gst, totals.total];
 
@@ -149,7 +151,7 @@ export async function saveQuotation(payload: unknown, userId: number, id?: numbe
     if (!existing) fail('Quotation not found', 'NOT_FOUND');
     if (!['Draft', 'Sent'].includes(String(existing!.status))) fail(`A ${String(existing!.status).toLowerCase()} quotation can no longer be edited`, 'INVALID_STATE');
     await withTransaction(async (tx) => {
-      await tx.execute(`UPDATE quotations SET employer_id = ?, client_name = ?, client_address = ?, client_contact = ?, contact_designation = ?, client_profile = ?, employee_strength = ?, shifts = ?, industry = ?,
+      await tx.execute(`UPDATE quotations SET doc_type = ?, auditor_id = ?, employer_id = ?, client_name = ?, client_address = ?, client_contact = ?, contact_designation = ?, client_profile = ?, employee_strength = ?, shifts = ?, industry = ?,
         client_gstin = ?, client_state_code = ?, subject = ?, directive = ?, framework_elements = ?, notes = ?, payment_terms = ?, quote_date = ?, valid_until = ?, service_period = ?,
         gst_percent = ?, subtotal = ?, gst_amount = ?, total = ? WHERE id = ?`, [...values, id]);
       await writeQuotation(tx, id, input);
@@ -159,9 +161,9 @@ export async function saveQuotation(payload: unknown, userId: number, id?: numbe
   const number = await nextDocumentNumber('quotation', new Date(input.quote_date));
   const newId = await withTransaction(async (tx) => {
     const result = (await tx.execute(
-      `INSERT INTO quotations (uuid, quotation_number, employer_id, client_name, client_address, client_contact, contact_designation, client_profile, employee_strength, shifts, industry,
+      `INSERT INTO quotations (uuid, quotation_number, doc_type, auditor_id, employer_id, client_name, client_address, client_contact, contact_designation, client_profile, employee_strength, shifts, industry,
         client_gstin, client_state_code, subject, directive, framework_elements, notes, payment_terms, quote_date, valid_until, service_period, gst_percent, subtotal, gst_amount, total, created_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [randomUUID(), number, ...values, userId])) as { insertId: number };
     await writeQuotation(tx, result.insertId, input);
     return result.insertId;

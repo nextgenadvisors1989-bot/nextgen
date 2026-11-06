@@ -45,6 +45,7 @@ export function SubmissionRecord({
   reviewBase,
   backHref,
   backLabel,
+  onChanged,
 }: {
   workspace: SubmissionWorkspacePayload;
   mode: 'fill' | 'view';
@@ -52,6 +53,8 @@ export function SubmissionRecord({
   reviewBase?: string;
   backHref: string;
   backLabel: string;
+  /** Called after a save or submit, for a parent that keeps the workspace in its own state. */
+  onChanged?: () => void;
 }) {
   const router = useRouter();
   const { submission } = workspace;
@@ -134,6 +137,8 @@ export function SubmissionRecord({
             >
               {submission.pdf_file_id ? 'Download PDF (latest version)' : 'Generate PDF'}
             </a>
+            <span className="text-ink-muted">·</span>
+            <a href={`/api/documents/submission/${submissionId}`} className="text-sm font-medium text-brand-600 hover:underline">Download Word</a>
             {workspace.permissions.canReview && mode === 'view' && (
               <Badge tone="violet" dot>Awaiting your decision</Badge>
             )}
@@ -169,7 +174,7 @@ export function SubmissionRecord({
         tableRows={workspace.tableRows}
         permissions={workspace.permissions}
         submission={submission}
-        onSaved={() => router.refresh()}
+        onSaved={() => { router.refresh(); onChanged?.(); }}
       />
     </div>
   );

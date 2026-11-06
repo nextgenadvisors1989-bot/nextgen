@@ -51,7 +51,7 @@ function QuotationRegister() {
   const [search, setSearch] = useState('');
   const { rows, loading } = useRegister('quotations', status, search);
   const columns: Column<Row>[] = [
-    { key: 'number', header: 'Quotation', render: (r) => <Link href={`/admin/billing/quotations/${r.id}`} className="font-medium text-accent hover:underline">{String(r.quotation_number)}</Link> },
+    { key: 'number', header: 'Quotation', render: (r) => <><Link href={`/admin/billing/quotations/${r.id}`} className="font-medium text-accent hover:underline">{String(r.quotation_number)}</Link>{r.doc_type === 'Billing' && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-amber-800">Billing</span>}</> },
     { key: 'client', header: 'Client', render: (r) => <span className="text-ink">{String(r.client_name)}</span> },
     { key: 'date', header: 'Date', hideOnMobile: true, render: (r) => <span className="text-ink-soft">{formatDate(r.quote_date as string)}</span> },
     { key: 'valid', header: 'Valid until', hideOnMobile: true, render: (r) => <span className={r.is_expired ? 'text-red-600' : 'text-ink-soft'}>{formatDate(r.valid_until as string)}</span> },

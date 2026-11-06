@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { execute, insert, query, queryOne, type RowDataPacket } from '@/lib/db/mysql';
 import { saveUploads, archiveFile, type UploadInput } from '@/lib/files/file-service';
 import type { AuthUser } from '@/types/user';
+import { moduleAccessFor } from '@/repositories/dynamic-module.repository';
 
 export type RegisterRole = 'admin' | 'auditor';
 export interface RegisterActor { user: AuthUser; role: RegisterRole; ip?: string | null }
@@ -35,7 +36,12 @@ function mustAdmin(actor: RegisterActor) {
 }
 
 const text = (max: number) => z.string().trim().max(max).optional().nullable().transform((value) => (value ? value : null));
-const typeSchema = z.object({ name: z.string().trim().min(3, 'Enter the audit type').max(255), status: z.enum(['active', 'inactive']).optional() });
+const typeSchema = z.object({
+  name: z.string().trim().min(3, 'Enter the audit type').max(255),
+  status: z.enum(['active', 'inactive']).optional(),
+  form_id: z.coerce.number().int().positive().nullable().optional(),
+  form_ids: z.array(z.coerce.number().int().positive()).max(20).optional(),
+});
 const rowSchema = z.object({
   act_name: text(255), chapter: text(255), section: text(255), sub_section: text(255), amendments: text(6000), explain_text: text(8000),
 });
@@ -45,7 +51,38 @@ const rowSchema = z.object({
 export async function listTypes(actor: RegisterActor) {
   const rows = await query<RowDataPacket>(
     `SELECT id, name, sort_order, status FROM audit_types WHERE deleted_at IS NULL ${actor.role === 'admin' ? '' : "AND status = 'active'"} ORDER BY sort_order, id`);
-  return rows.map((r) => ({ id: n(r.id), name: String(r.name), status: String(r.status) }));
+  const links = await query<RowDataPacket>(
+    `SELECT atf.audit_type_id, f.id AS form_id, f.name AS form_name, f.module_id
+       FROM audit_type_forms atf JOIN dynamic_forms f ON f.id = atf.form_id AND f.deleted_at IS NULL AND f.status = 'published'
+       JOIN dynamic_modules m ON m.id = f.module_id AND m.deleted_at IS NULL
+      ORDER BY atf.sort_order, f.name`);
+  // An auditor opens a form only when its module is mapped to their auditor type (or assigned to them), the same rule the form itself applies.
+  const access = new Map<number, boolean>();
+  const canOpen = async (moduleId: number) => {
+    if (actor.role === 'admin') return true;
+    if (!access.has(moduleId)) access.set(moduleId, Boolean((await moduleAccessFor(moduleId, actor.user.id, 'auditor'))?.can_create));
+    return access.get(moduleId) as boolean;
+  };
+  const byType = new Map<number, { id: number; name: string; canOpen: boolean }[]>();
+  for (const link of links) {
+    const list = byType.get(n(link.audit_type_id)) ?? [];
+    list.push({ id: n(link.form_id), name: String(link.form_name), canOpen: await canOpen(n(link.module_id)) });
+    byType.set(n(link.audit_type_id), list);
+  }
+  return rows.map((r) => {
+    const forms = byType.get(n(r.id)) ?? [];
+    // formId, formName and canOpen describe the first form, for callers written when an entry opened a single form.
+    return { id: n(r.id), name: String(r.name), status: String(r.status), forms, formId: forms[0]?.id ?? null, formName: forms[0]?.name ?? null, canOpen: forms.some((form) => form.canOpen) };
+  });
+}
+
+/** The published dynamic forms an administrator can link an audit type to. */
+export async function listLinkableForms(actor: RegisterActor) {
+  mustAdmin(actor);
+  const rows = await query<RowDataPacket>(
+    `SELECT f.id, f.name, m.name AS module_name FROM dynamic_forms f JOIN dynamic_modules m ON m.id = f.module_id AND m.deleted_at IS NULL
+      WHERE f.deleted_at IS NULL AND f.status = 'published' ORDER BY f.name`);
+  return rows.map((r) => ({ id: n(r.id), name: String(r.name), moduleName: r.module_name ? String(r.module_name) : null }));
 }
 
 export async function createType(actor: RegisterActor, input: unknown) {
@@ -61,7 +98,19 @@ export async function updateType(actor: RegisterActor, id: number, input: unknow
   mustAdmin(actor);
   const data = typeSchema.parse(input);
   if (await queryOne<RowDataPacket>('SELECT id FROM audit_types WHERE name = ? AND id <> ?', [data.name, id])) fail('DUPLICATE', 'That audit type is already in the list');
-  await execute('UPDATE audit_types SET name = ?, status = COALESCE(?, status) WHERE id = ? AND deleted_at IS NULL', [data.name, data.status ?? null, id]);
+  // form_ids (or the older single form_id; null unlinks) replaces the entry's forms; leaving both out keeps them, so a rename alone keeps its links.
+  const wanted = data.form_ids !== undefined ? data.form_ids : data.form_id === undefined ? undefined : data.form_id ? [data.form_id] : [];
+  if (wanted) {
+    for (const formId of wanted) {
+      if (!(await queryOne<RowDataPacket>("SELECT id FROM dynamic_forms WHERE id = ? AND deleted_at IS NULL AND status = 'published'", [formId]))) fail('VALIDATION_FAILED', 'Choose a published form');
+    }
+  }
+  await execute('UPDATE audit_types SET name = ?, status = COALESCE(?, status)' + (wanted ? ', form_id = ?' : '') + ' WHERE id = ? AND deleted_at IS NULL',
+    wanted ? [data.name, data.status ?? null, wanted[0] ?? null, id] : [data.name, data.status ?? null, id]);
+  if (wanted) {
+    await execute('DELETE FROM audit_type_forms WHERE audit_type_id = ?', [id]);
+    for (const [index, formId] of [...new Set(wanted)].entries()) await execute('INSERT INTO audit_type_forms (audit_type_id, form_id, sort_order) VALUES (?, ?, ?)', [id, formId, index]);
+  }
   return { id };
 }
 

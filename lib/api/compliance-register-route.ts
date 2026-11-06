@@ -3,7 +3,8 @@
  *
  *   GET    /api/compliance-register/types                       the audit types (Audit and Assessment)
  *   POST   /api/compliance-register/types                       { name }
- *   PUT    /api/compliance-register/types/:id                   { name, status? }
+ *   PUT    /api/compliance-register/types/:id                   { name, status?, form_ids? }  (form_ids replaces the forms the entry opens; [] unlinks; form_id is the single-form form of it)
+ *   GET    /api/compliance-register/forms                       published forms an audit type can open (admin)
  *   DELETE /api/compliance-register/types/:id
  *   GET    /api/compliance-register/rows                        the Act & Compliance table with the records of every row
  *   POST   /api/compliance-register/rows                        { act_name, chapter, section, sub_section, amendments, explain_text }
@@ -35,6 +36,7 @@ export async function handleComplianceRegister(request: Request, segments: strin
       if (id && !c && method === 'PUT') return one(await register.updateType(actor, id, await body()), { message: 'Saved' });
       if (id && !c && method === 'DELETE') return one(await register.deleteType(actor, id), { message: 'Removed' });
     }
+    if (a === 'forms' && !b && method === 'GET') return one(await register.listLinkableForms(actor));
     if (a === 'rows') {
       if (!b && method === 'GET') return one(await register.listRows(actor));
       if (!b && method === 'POST') return one(await register.createRow(actor, await body()), { status: 201, message: 'Saved' });

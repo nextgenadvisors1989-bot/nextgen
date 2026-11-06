@@ -261,7 +261,7 @@ export async function findSubmissionById(submissionId: number): Promise<(Submiss
 }
 
 /** Resume support: the open draft this user already has for a form (+ assignment). */
-export async function findOpenDraft(submittedBy: number, formId: number, assignmentId?: number | null): Promise<SubmissionRow | null> {
+export async function findOpenDraft(submittedBy: number, formId: number, assignmentId?: number | null, title?: string | null): Promise<SubmissionRow | null> {
   const params: SqlValue[] = [submittedBy, formId];
   let sql = `SELECT ${SUBMISSION_COLUMNS} FROM dynamic_form_submissions s
     WHERE s.deleted_at IS NULL AND s.status = 'draft' AND s.submitted_by = ? AND s.form_id = ?`;
@@ -270,6 +270,11 @@ export async function findOpenDraft(submittedBy: number, formId: number, assignm
     params.push(assignmentId);
   } else {
     sql += ' AND s.assignment_id IS NULL';
+    // a form started for a typed company name keeps one draft per name
+    if (title) {
+      sql += ' AND s.title = ?';
+      params.push(title);
+    }
   }
   sql += ' ORDER BY s.updated_at DESC, s.id DESC LIMIT 1';
   return queryOne<SubmissionRow>(sql, params);

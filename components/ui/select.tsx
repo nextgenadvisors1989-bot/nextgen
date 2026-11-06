@@ -24,6 +24,8 @@ export interface SelectProps {
   onChange?: (value: string) => void;
   placeholder?: string;
   searchable?: boolean;
+  /** Lets the person type a value that is not in the list and use it ("+ Add ..."); implies searchable. */
+  allowCustom?: boolean;
   clearable?: boolean;
   disabled?: boolean;
   required?: boolean;
@@ -38,8 +40,9 @@ export interface SelectProps {
  */
 export function Select({
   label, error, helper, options, value, onChange, placeholder = 'Select…',
-  searchable = false, clearable = false, disabled, required, name, className, size = 'md',
+  searchable: searchableProp = false, allowCustom = false, clearable = false, disabled, required, name, className, size = 'md',
 }: SelectProps) {
+  const searchable = searchableProp || allowCustom;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -75,7 +78,11 @@ export function Select({
     return [...map.entries()];
   }, [filtered]);
 
-  const selected = options.find((option) => String(option.value) === String(value ?? ''));
+  const selected = options.find((option) => String(option.value) === String(value ?? ''))
+    ?? (allowCustom && value !== null && value !== undefined && String(value) !== '' ? { value: String(value), label: String(value) } : undefined);
+  const typed = query.trim();
+  const canAdd = allowCustom && typed.length > 0 && !options.some((option) => option.label.toLowerCase() === typed.toLowerCase());
+  const pick = (next: string) => { onChange?.(next); setOpen(false); setQuery(''); };
 
   return (
     <div className={clsx(!hasOwnWidth(className) && 'w-full', className)} ref={containerRef}>
@@ -128,13 +135,28 @@ export function Select({
                   autoFocus
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search…"
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter') return;
+                    event.preventDefault();
+                    const exact = options.find((option) => option.label.toLowerCase() === typed.toLowerCase());
+                    if (exact) pick(String(exact.value));
+                    else if (canAdd) pick(typed);
+                    else if (filtered.length === 1) pick(String(filtered[0].value));
+                  }}
+                  placeholder={allowCustom ? 'Search or type a new value…' : 'Search…'}
                   className="focus-ring h-8 w-full rounded-md border border-line px-2 text-sm"
                 />
               </div>
             )}
             <ul className="max-h-64 overflow-y-auto py-1" role="listbox">
-              {filtered.length === 0 && <li className="px-3 py-2 text-sm text-ink-muted">No matches found</li>}
+              {canAdd && (
+                <li>
+                  <button type="button" onClick={() => pick(typed)} className="w-full px-3 py-2 text-left text-sm font-medium text-brand-700 hover:bg-brand-50">
+                    + Add &ldquo;{typed}&rdquo;
+                  </button>
+                </li>
+              )}
+              {filtered.length === 0 && !canAdd && <li className="px-3 py-2 text-sm text-ink-muted">No matches found</li>}
               {grouped.map(([groupName, groupOptions]) => (
                 <li key={groupName || 'default'}>
                   {groupName && <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{groupName}</p>}

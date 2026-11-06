@@ -15,6 +15,7 @@
  *     `max_per_row` on table columns, rolled into the submission score
  */
 import { evaluateFormula, compileFormula, FormulaError } from '@/lib/utils/formula';
+import { sanitizeRichText } from '@/lib/utils/formatting';
 import type {
   ConditionalLogic, DynamicFormSection, DynamicFormField, DynamicTable, DynamicTableColumn, FieldOption,
 } from '@/types/dynamic-module';
@@ -235,6 +236,8 @@ export function coerceValue(field: StructureField, raw: unknown, values: ValueMa
     case 'select':
     case 'radio': {
       const option = optionByKey(field, raw);
+      // a drop-down lets the person type a value that is not in the list; it is kept as typed (a radio group stays strict)
+      if (!option && field.field_type === 'select') return { value: String(raw).trim().slice(0, 255) };
       if (!option) return { value: null, error: `${field.label}: "${String(raw)}" is not one of the allowed options` };
       return { value: option.option_key };
     }
@@ -272,6 +275,9 @@ export function coerceValue(field: StructureField, raw: unknown, values: ValueMa
     case 'url':
       if (!/^https?:\/\/[^\s.]+\.\S{2,}$/i.test(String(raw))) return { value: null, error: `${field.label} must be a valid URL` };
       return { value: String(raw).trim() };
+    case 'rich_text':
+      // the text editor stores HTML: scripts, event handlers and javascript: links are removed before it is saved
+      return { value: sanitizeRichText(String(raw)).trim() };
     case 'table':
       return { value: null };
     default:
@@ -336,7 +342,7 @@ export function validateField(field: StructureField, value: unknown, state: Fiel
     const count = field.field_type === 'multi_file' ? (value as unknown[]).length : 1;
     if (count > maxFiles) issues.push(`${field.label} accepts at most ${maxFiles} file(s)`);
   }
-  if (['select', 'radio', 'multi_select'].includes(field.field_type) && options.length > 0 && !isMultiple) {
+  if (['radio', 'multi_select'].includes(field.field_type) && options.length > 0 && !isMultiple) {
     if (!optionByKey(field, value)) issues.push(`${field.label} must be one of: ${options.map((o) => o.option_label).join(', ')}`);
   }
   return issues;

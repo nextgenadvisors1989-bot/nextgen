@@ -84,6 +84,18 @@ export function SiteFooter({ site }: { site: SiteInfo }) {
                   <a href={`tel:${site.phone.replace(/\s/g, '')}`}>{site.phone}</a>
                 </div>
               )}
+              {site.phone2 && (
+                <div className="flex items-center gap-2">
+                  <SiteIcon name="phone" className="h-4 w-4 shrink-0 text-[#C59B27]" />
+                  <a href={`tel:${site.phone2.replace(/\s/g, '')}`}>{site.phone2}</a>
+                </div>
+              )}
+              {site.whatsapp && (
+                <div className="flex items-center gap-2">
+                  <SiteIcon name="phone" className="h-4 w-4 shrink-0 text-[#C59B27]" />
+                  <a href={`https://wa.me/${site.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">WhatsApp us</a>
+                </div>
+              )}
               {site.email && (
                 <div className="flex items-center gap-2">
                   <SiteIcon name="mail" className="h-4 w-4 shrink-0 text-[#C59B27]" />

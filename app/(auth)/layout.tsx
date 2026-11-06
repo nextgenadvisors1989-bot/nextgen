@@ -39,7 +39,13 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <main className="flex w-full items-center justify-center bg-surface-canvas px-4 py-10 lg:w-1/2">
-        <div className="w-full max-w-md">{children}</div>
+        <div className="w-full max-w-md">
+          {children}
+          <p className="mt-8 text-center text-xs text-ink-muted">
+            By signing in you agree to our <Link href="/terms-conditions" className="font-semibold underline">Terms &amp; Conditions</Link> and{' '}
+            <Link href="/privacy-policy" className="font-semibold underline">Privacy Policy</Link>.
+          </p>
+        </div>
       </main>
     </div>
   );

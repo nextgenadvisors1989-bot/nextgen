@@ -104,8 +104,21 @@ def upload(label, **kw):
     return _field(label, "multi_file", **kw)
 
 
+def rich(label, **kw):
+    """A text editor (bold, lists, headings, tables) for a narrative section."""
+    kw.setdefault("w", 12)
+    return _field(label, "rich_text", **kw)
+
+
+def picture(label, **kw):
+    """One picture (a logo, a stamp); several files or documents go in `upload`."""
+    kw.setdefault("w", 12)
+    return _field(label, "image", **kw)
+
+
 def note(textual):
-    return {"field_key": unique("note"), "label": textual, "field_type": "paragraph", "column_width": 12, "show_in_pdf": True}
+    """A block of explanatory text. The renderer and the PDF print `default_value`; the label is only the builder's handle."""
+    return {"field_key": unique("note"), "label": textual[:120], "field_type": "paragraph", "column_width": 12, "show_in_pdf": True, "default_value": textual}
 
 
 def col(label, key=None, ctype="text", width=None, options=None, formula=None, total=False, req=False):
@@ -191,6 +204,10 @@ def signoff(extra_note=None):
     return sec("Auditor sign-off", *fields, cols=1)
 
 
-def form(name, description, prefix, sections, form_type="AUDIT", signature=False):
-    return {"name": name, "description": description, "form_type": form_type, "layout_columns": 2, "requires_signature": signature,
-            "requires_attachments": False, "allow_draft": True, "auto_number_prefix": prefix, "sections": sections}
+def form(name, description, prefix, sections, form_type="AUDIT", signature=False, report=False):
+    """`report=True` prints the filled form as a report (cover page, contents, chapters, question / answer tables)."""
+    out = {"name": name, "description": description, "form_type": form_type, "layout_columns": 2, "requires_signature": signature,
+           "requires_attachments": False, "allow_draft": True, "auto_number_prefix": prefix, "sections": sections}
+    if report:
+        out["output_style"] = "report"
+    return out
