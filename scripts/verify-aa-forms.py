@@ -4,7 +4,7 @@
 
 For each of the forms built from the client's files: the form is published and linked to its entry, the empty form downloads as a PDF and
 as a Word file that opens (a valid .docx whose text carries the form's headings, questions and table columns), a filled submission downloads
-as Word and its PDF still renders, and the access rules hold (an auditor only for forms of their own type, an employer never).
+as Word and its PDF still renders, and the access rules hold (an auditor any form an audit entry offers plus those of their own type, an employer never).
 """
 import re
 import subprocess
@@ -70,7 +70,8 @@ FORMS = {
     "Certified Compliance Report (CCR)": ("Certified Compliance Report", ["Annual production details", "Litigation details", "EC conditions", "Reason for seeking the CCR", "Approval and e-signing"]),
     "Resource Data Management (Water, Waste and Energy)": ("Energy Audit and Water Audit", ["Bore well output", "Waste stream", "Purchased from the grid", "Boiler steam", "Purified water, rain water and recycled water"]),
     "Ground Water Extraction NOC Application": ("Ground Water Extraction NOC", ["Covering letter", "Father's / husband's name", "Hours of pumping per day", "Declaration", "Number of abstraction structures"]),
-    "ETP Treatment Level Assessment": ("ETP Design and Functionality Assessment", ["Treatment levels and processes", "Sludge treatment and disposal", "Stages of reverse osmosis", "Pictures of the treatment levels", "Findings and corrective action plan"]),
+    "General Audit and Assessment Report": ("6S Project", ["Scope and method", "Compliance count", "Observations, non-conformities and recommendations", "Recommendation / corrective action", "Conclusion"]),
+    "ETP Treatment Level Assessment": ("ETP Design and Functionality Assessment",["Treatment levels and processes", "Sludge treatment and disposal", "Stages of reverse osmosis", "Pictures of the treatment levels", "Findings and corrective action plan"]),
 }
 
 admin = Session()
@@ -95,7 +96,9 @@ for name, (entry_prefix, phrases) in FORMS.items():
     sections = int(q1(f"SELECT COUNT(*) FROM dynamic_form_sections WHERE form_id = {form_id} AND deleted_at IS NULL", 0))
     fields = int(q1(f"SELECT COUNT(*) FROM dynamic_form_fields WHERE form_id = {form_id} AND deleted_at IS NULL", 0))
     check("has its sections and fields", sections >= 4 and fields >= 10, (sections, fields))
-    check("is a report-style form", q1(f"SELECT output_style FROM dynamic_forms WHERE id = {form_id}") == "report")
+    # the Ground Water NOC is an application form to hand in, so it prints as a plain form; every other form prints as a report
+    expected_style = "standard" if name == "Ground Water Extraction NOC Application" else "report"
+    check(f"prints as a {expected_style} form", q1(f"SELECT output_style FROM dynamic_forms WHERE id = {form_id}") == expected_style)
 
     st, pdf = admin.send("GET", f"/api/documents/form/{form_id}?format=pdf", raw=True)
     check("blank PDF downloads", st == 200 and pdf[:4] == b"%PDF", st)
@@ -126,14 +129,17 @@ mine = listing.get("data", [])
 openable = {f["name"] for e in mine for f in e.get("forms", []) if f.get("canOpen")}
 blocked = {f["name"] for e in mine for f in e.get("forms", []) if not f.get("canOpen")}
 print(f"   auditor can open {len(openable)} linked form(s), {len(blocked)} not assigned")
+# any auditor may do any audit on the list: no entry is "coming soon" and no linked form is closed to the auditor
+check("every active audit entry has at least one form", all(e.get("forms") for e in mine), [e["name"] for e in mine if not e.get("forms")])
+check("no linked form is closed to this auditor", not blocked, sorted(blocked)[:3])
 for name in list(openable)[:2]:
     fid = q1(f"SELECT f.id FROM dynamic_forms f WHERE f.name = '{name}' AND f.deleted_at IS NULL ORDER BY f.id LIMIT 1")
     st, blob = auditor.send("GET", f"/api/documents/form/{fid}?format=docx", raw=True)
-    check(f"auditor downloads Word of an assigned form ({name[:30]})", st == 200 and blob[:2] == b"PK", st)
-for name in list(blocked)[:2]:
-    fid = q1(f"SELECT f.id FROM dynamic_forms f WHERE f.name = '{name}' AND f.deleted_at IS NULL ORDER BY f.id LIMIT 1")
-    st, _ = auditor.send("GET", f"/api/documents/form/{fid}?format=pdf", raw=True)
-    check(f"auditor refused a form of another type ({name[:30]})", st == 403, st)
+    check(f"auditor downloads Word of a listed form ({name[:30]})", st == 200 and blob[:2] == b"PK", st)
+# a form that no audit entry offers stays closed to an auditor whose type does not include it
+fid = q1("SELECT f.id FROM dynamic_forms f WHERE f.name = 'GOTS Manufacturing - Audit Requirements' AND f.deleted_at IS NULL ORDER BY f.id LIMIT 1")
+st, _ = auditor.send("GET", f"/api/documents/form/{fid}?format=pdf", raw=True)
+check("auditor still refused a form no audit entry offers and outside their type", st == 403, st)
 
 # a filled submission
 print("\n== filled submission")

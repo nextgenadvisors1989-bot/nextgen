@@ -2,7 +2,7 @@
 
 /**
  * Audit and Assessment: the audits and assessments the firm offers. Each one opens the dynamic forms an administrator has linked to it
- * (one or several); until then a click says "coming soon". Every linked form can also be downloaded empty as a PDF or a Word file, to fill in on site.
+ * (one or several); an entry with no form is hidden from the auditors. Any auditor may open any linked form. Every linked form can also be downloaded empty as a PDF or a Word file, to fill in on site.
  * An administrator can add or remove an entry and choose the forms it opens.
  */
 import { useCallback, useEffect, useState } from 'react';
@@ -95,11 +95,8 @@ function AuditAssessmentAdmin() {
   const needle = search.trim().toLowerCase();
   const shown = (types ?? []).filter((type) => !needle || type.name.toLowerCase().includes(needle));
   const caption = (type: AuditType) => {
-    if (type.forms.length === 0) return 'Coming soon';
-    if (admin) return type.forms.length === 1 ? `Form: ${type.forms[0].name}` : `${type.forms.length} forms`;
-    const openable = type.forms.filter((form) => form.canOpen).length;
-    if (openable === 0) return 'Not assigned to you yet';
-    return openable === 1 ? 'Open the form' : `${openable} forms`;
+    if (type.forms.length === 0) return 'No form linked yet (auditors do not see it)';
+    return type.forms.length === 1 ? `Form: ${type.forms[0].name}` : `${type.forms.length} forms`;
   };
   const caption2Tone = (type: AuditType) => (type.forms.length > 0 && (admin || type.canOpen) ? 'text-emerald-700' : 'text-ink-muted');
   const visibleForms = (type: AuditType) => type.forms.filter((form) => admin || form.canOpen);
@@ -169,13 +166,8 @@ function AuditAssessmentAdmin() {
               options={forms.map((form) => ({ value: String(form.id), label: form.moduleName && form.moduleName !== form.name ? `${form.name} (${form.moduleName})` : form.name }))}
               values={formChoice}
               onChange={setFormChoice}
-              helper="Pick any published forms; leave it empty to show Coming soon. To make a new one, build it under Dynamic Modules, publish it, then link it here."
+              helper="Pick any published forms. Every auditor can open them for any company; an audit with no form is hidden from the auditors. To make a new form, build it under Dynamic Modules, publish it, then link it here."
             />
-          </div>
-        ) : opened && visibleForms(opened).length === 0 ? (
-          <div className="py-4 text-center">
-            <p className="text-lg font-semibold text-ink">{opened.forms.length > 0 ? 'Not assigned to you yet' : 'Coming soon'}</p>
-            <p className="mt-2 text-sm text-ink-muted">{opened.forms.length > 0 ? 'These forms are not part of your auditor type. Ask the administrator to assign them to you.' : 'The form for this audit is being prepared and will be available here soon.'}</p>
           </div>
         ) : null}
       </Modal>

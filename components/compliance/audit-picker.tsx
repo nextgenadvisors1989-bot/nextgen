@@ -41,11 +41,9 @@ export function AuditPicker() {
   // choosing another audit clears the form and any form already opened
   useEffect(() => { setFormId(''); setWorkspace(null); }, [typeId]);
 
-  const options = useMemo(() => (types ?? []).map((entry) => ({
-    value: String(entry.id),
-    label: entry.forms.length ? entry.name : `${entry.name} (coming soon)`,
-    group: entry.forms.some((f) => f.canOpen) ? 'Ready to fill' : entry.forms.length ? 'Not assigned to you' : 'Coming soon',
-  })).sort((a, b) => ['Ready to fill', 'Not assigned to you', 'Coming soon'].indexOf(a.group) - ['Ready to fill', 'Not assigned to you', 'Coming soon'].indexOf(b.group)), [types]);
+  // Any auditor may do any audit on the list for any company, so every audit with a form is offered in the order the administrator keeps; an audit that
+  // has no form linked yet is not shown (the administrator links forms under Audit and Assessment).
+  const options = useMemo(() => (types ?? []).filter((entry) => entry.forms.some((f) => f.canOpen)).map((entry) => ({ value: String(entry.id), label: entry.name })), [types]);
 
   const fetchWorkspace = useCallback(async (id: number) => {
     const result = await api.get<unknown>(`/api/auditor/submissions/${id}`);
@@ -115,11 +113,6 @@ export function AuditPicker() {
               )}
             </div>
           </div>
-          {type && openable.length === 0 && (
-            <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-              {type.forms.length ? 'The forms of this audit are not part of your auditor type. Ask the administrator to assign them to you.' : 'The form for this audit is being prepared and will be available here soon.'}
-            </p>
-          )}
         </CardBody>
       </Card>
 

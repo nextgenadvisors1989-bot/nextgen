@@ -12,7 +12,7 @@ export default async function AdminAuditAssessmentPage() {
     <div className="space-y-6">
       <PageHeader
         title="Audit and Assessment"
-        description="The audits and assessments we offer. Each one opens its own form; the ones still being prepared say Coming soon."
+        description="The audits and assessments we offer. Each one opens its own form(s) and any auditor can do any of them for any company; an audit with no form linked is hidden from the auditors."
         breadcrumbs={[{ label: 'Dashboard', href: '/admin/dashboard' }, { label: 'Audit and Assessment' }]}
       />
       <AuditAssessment mode="admin" />
