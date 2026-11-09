@@ -70,6 +70,8 @@ FORMS = {
     "Certified Compliance Report (CCR)": ("Certified Compliance Report", ["Annual production details", "Litigation details", "EC conditions", "Reason for seeking the CCR", "Approval and e-signing"]),
     "Resource Data Management (Water, Waste and Energy)": ("Energy Audit and Water Audit", ["Bore well output", "Waste stream", "Purchased from the grid", "Boiler steam", "Purified water, rain water and recycled water"]),
     "Ground Water Extraction NOC Application": ("Ground Water Extraction NOC", ["Covering letter", "Father's / husband's name", "Hours of pumping per day", "Declaration", "Number of abstraction structures"]),
+    # the carbon footprint sample (DOC-20260828-WA0017.pdf, 2026-11-09)
+    "Carbon Footprint Report": ("GHG / Carbon Footprint", ["Executive summary - key figures", "Mobility emissions - activity and gross emissions by source", "Emission factors of the reporting year", "Homeworking methodology", "Appendix III - GRI 302-4", "Waste by European Waste Catalogue code", "Certificates of retirement of verified carbon units"]),
     "General Audit and Assessment Report": ("6S Project", ["Scope and method", "Compliance count", "Observations, non-conformities and recommendations", "Recommendation / corrective action", "Conclusion"]),
     "ETP Treatment Level Assessment": ("ETP Design and Functionality Assessment",["Treatment levels and processes", "Sludge treatment and disposal", "Stages of reverse osmosis", "Pictures of the treatment levels", "Findings and corrective action plan"]),
 }

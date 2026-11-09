@@ -22,6 +22,7 @@ from forms_catalogue_aa_studies import AA_STUDIES_CATALOGUE  # noqa: E402
 from forms_catalogue_aa_batch3 import AA_BATCH3_CATALOGUE  # noqa: E402
 from forms_catalogue_aa_etp import AA_ETP_CATALOGUE  # noqa: E402
 from forms_catalogue_aa_general import AA_GENERAL_CATALOGUE  # noqa: E402
+from forms_catalogue_aa_carbon import AA_CARBON_CATALOGUE  # noqa: E402
 
 CHECKLISTS = json.loads((Path(__file__).parent / "fixtures" / "client-checklists.json").read_text(encoding="utf-8"))
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
@@ -540,6 +541,7 @@ CATALOGUE = [
     *AA_BATCH3_CATALOGUE,
     *AA_ETP_CATALOGUE,
     *AA_GENERAL_CATALOGUE,
+    *AA_CARBON_CATALOGUE,
     # name, builder, module_type, category, auditor type codes
     ("Total Water Management Diagnosis", water_diagnosis, "AUDIT", "Water", ["WATER"]),
     ("Water Audit - Garment Unit Questionnaire", water_garment_questionnaire, "AUDIT", "Water", ["WATER"]),

@@ -31,6 +31,7 @@ from forms_catalogue_aa_site import AA_SITE_CATALOGUE  # noqa: E402
 from forms_catalogue_aa_batch3 import AA_BATCH3_CATALOGUE  # noqa: E402
 from forms_catalogue_aa_etp import AA_ETP_CATALOGUE  # noqa: E402
 from forms_catalogue_aa_general import AA_GENERAL_CATALOGUE  # noqa: E402
+from forms_catalogue_aa_carbon import AA_CARBON_CATALOGUE  # noqa: E402
 
 EMAIL = os.environ.get("LIVE_ADMIN_EMAIL", "demo.admin@complianceos.local")
 PASSWORD = os.environ.get("LIVE_ADMIN_PASSWORD", "Admin@2026")
@@ -50,6 +51,7 @@ LINKS = {
                                           "ETP Assessment Document List", "ETP Treatment Level Assessment", "Environmental Aspects and Impacts Register"],
     "Energy Audit and Water Audit": ["Water Audit Report", "Resource Data Management (Water, Waste and Energy)"],
     "Environmental Impact Assessment": ["Environmental Impact Assessment Report"],
+    "GHG / Carbon Footprint": ["Carbon Footprint Report"],
     # Entries that had no form of their own ("coming soon" until 2026-11-06): the nearest forms the platform already has, plus the general report.
     # Every auditor can open every linked form, so these are links for convenience, not a restriction; change any of them from Audit and Assessment (admin).
     "Labour Law and Statutory Compliance": ["Legal Compliance Calendar and Documents Checklist", "Factory Profile and Legal Documents Checklist", "Legal Register - Tamil Nadu Factories",
@@ -156,7 +158,7 @@ print("Forms")
 for name in RETIRE:
     retire(name)
 installed = {}
-for name, builder, module_type, category, codes in [*AA_SITE_CATALOGUE, *AA_ENV_CATALOGUE, *AA_STUDIES_CATALOGUE, *AA_BATCH3_CATALOGUE, *AA_ETP_CATALOGUE, *AA_GENERAL_CATALOGUE]:
+for name, builder, module_type, category, codes in [*AA_SITE_CATALOGUE, *AA_ENV_CATALOGUE, *AA_STUDIES_CATALOGUE, *AA_BATCH3_CATALOGUE, *AA_ETP_CATALOGUE, *AA_GENERAL_CATALOGUE, *AA_CARBON_CATALOGUE]:
     result = install(name, builder, module_type, category)
     if result:
         installed[name] = (result[0], result[1], codes)
