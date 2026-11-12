@@ -3,7 +3,7 @@ import { requirePageUser } from '@/lib/auth/permission-check';
 import { hasPermission } from '@/lib/auth/rbac';
 import { ActsTable } from '@/components/compliance/acts-table';
 
-export const metadata: Metadata = { title: 'Compliance Acts' };
+export const metadata: Metadata = { title: 'Acts & Rules' };
 export const dynamic = 'force-dynamic';
 
 export default async function ComplianceActsPage() {
@@ -11,11 +11,11 @@ export default async function ComplianceActsPage() {
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="text-xl font-semibold text-ink">Compliance Acts</h1>
+        <h1 className="text-xl font-semibold text-ink">Acts &amp; Rules</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          The legislation the platform audits against — Central and state acts with the obligations,
-          instruments and gazette notifications that sit under them. The same register is published on the
-          public Acts &amp; Compliance page.
+          The Acts and Rules the platform audits against, Central and state. Open one and use its <em>Chapters &amp; sections</em> tab to write or read the full text (chapters, sections,
+          sub sections, amendments); its other tabs hold the obligations, regulations and Gazette notifications under it. Acts marked for the public website are published on the
+          public Acts &amp; Compliance page, and every Act with a text is in the auditors&apos; Acts library.
         </p>
       </header>
       <ActsTable

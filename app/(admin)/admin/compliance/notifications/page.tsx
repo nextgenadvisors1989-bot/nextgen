@@ -1,26 +1,10 @@
-import type { Metadata } from 'next';
-import { requirePageUser, hasPermission } from '@/lib/auth/permission-check';
-import { NotificationsTable } from '@/components/compliance/notifications-table';
+import { redirect } from 'next/navigation';
+import { requirePageUser } from '@/lib/auth/permission-check';
 
-export const metadata: Metadata = { title: 'Gazette Notifications' };
 export const dynamic = 'force-dynamic';
 
+/** The list moved to Obligations & Notices (one tab each); this address keeps old links and bookmarks working. */
 export default async function ComplianceNotificationsPage() {
-  const user = await requirePageUser();
-  return (
-    <div className="space-y-5">
-      <header>
-        <h1 className="text-xl font-semibold text-ink">Gazette Notifications</h1>
-        <p className="mt-1 text-sm text-ink-muted">
-          Notifications that change what establishments must do — wage ceilings, leave entitlements,
-          registration duties — with the action each one requires.
-        </p>
-      </header>
-      <NotificationsTable
-        canCreate={hasPermission(user.permissions, 'compliance_notification.create')}
-        canUpdate={hasPermission(user.permissions, 'compliance_notification.update')}
-        canDelete={hasPermission(user.permissions, 'compliance_notification.delete')}
-      />
-    </div>
-  );
+  await requirePageUser();
+  redirect('/admin/compliance/notices?tab=notifications');
 }

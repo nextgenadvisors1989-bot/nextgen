@@ -351,6 +351,26 @@ def parse(path):
     for c in chapters:
         out_chapters.append({"kind": "Chapter", "number": c["number"], "title": c["title"], "status": "active", "body_html": None, "amendments": [], "children": by_chapter.get(c["number"], [])})
 
+    # the words that stand above Chapter I in the printed Act (the number of the Act and its footnote, the date, the long title, the preamble) are the text of Chapter I itself
+    if out_chapters and starts:
+        blocks, notes_first = [], []
+        for page, _, text in stream[: starts[0][0]]:
+            if re.fullmatch(r"CHAPTER [IVXL]+A?", text) or text.upper() in chapter_titles or text.startswith("THE FACTORIES ACT"):
+                continue
+            m = re.fullmatch(r"(ACT NO\.? ?\d+ OF \d{4})(\d)?", text, flags=re.I)
+            if m:
+                note = notes_by_page.get(page, {}).get(int(m.group(2))) if m.group(2) else None
+                mark = "<sup>1</sup>" if note else ""
+                blocks.append(f'<p data-align="center">{html.escape(m.group(1), quote=False)}{mark}</p>')
+                if note:
+                    notes_first.append({"reference": "1", "description": note})
+            elif re.fullmatch(r"\[\d{1,2}(?:st|nd|rd|th) \w+, \d{4}\.\]", text):
+                blocks.append(f'<p data-align="right">{html.escape(text, quote=False)}</p>')
+            else:
+                blocks.append(f"<p>{to_html_text(tidy(text))}</p>")
+        out_chapters[0]["body_html"] = "".join(blocks) or None
+        out_chapters[0]["amendments"] = notes_first
+
     # schedules
     schedules = []
     for n, (j, name) in enumerate(sched_starts):

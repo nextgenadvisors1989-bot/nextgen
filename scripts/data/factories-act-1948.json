@@ -16,8 +16,13 @@
    "number": "I",
    "title": "PRELIMINARY",
    "status": "active",
-   "body_html": null,
-   "amendments": [],
+   "body_html": "<p data-align=\"center\">ACT NO. 63 OF 1948<sup>1</sup></p><p data-align=\"right\">[23rd September, 1948.]</p><p>An Act to consolidate and amend the law regulating labour in factories.</p><p>WHEREAS it is expedient to consolidate and amend the law regulating labour in factories;</p><p>It is hereby enacted as follows:—</p>",
+   "amendments": [
+    {
+     "reference": "1",
+     "description": "The Act has been extended to Dadra and Nagar Haveli by Reg. 6 of 1963, s. 2 and the First Schedule; Pondicherry by Reg. 7 of 1963, s. 3 and the First Schedule, Goa, Daman and Diu by Reg. 11 of 1963, s. 3 and the Schedule and Laccadive, Minicoy and Amindivi Islands by Reg. 8 of 1965, s. 3 and the Schedule."
+    }
+   ],
    "children": [
     {
      "kind": "Section",

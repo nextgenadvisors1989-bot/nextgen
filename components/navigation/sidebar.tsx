@@ -13,6 +13,8 @@ export interface MenuItem {
   badge?: number | string;
   children?: MenuItem[];
   permission?: string;
+  /** Other address prefixes that keep this item highlighted (pages that belong to it but are not under its href). */
+  match?: string[];
 }
 
 export interface MenuSection {
@@ -87,6 +89,8 @@ export function Sidebar({ sections, panelLabel, appName = 'NextGen Socio & Envir
     return pathname.startsWith(`${href}/`) && href.split('/').filter(Boolean).length > 1;
   };
 
+  const itemActive = (item: MenuItem) => isActive(item.href) || (item.match ?? []).some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+
   /** Among sub-menu links, only the most specific match is highlighted ("/x/categories" beats "/x"). */
   const isActiveChild = (child: { href?: string }, siblings: { href?: string }[]) => {
     if (!isActive(child.href)) return false;
@@ -116,7 +120,7 @@ export function Sidebar({ sections, panelLabel, appName = 'NextGen Socio & Envir
               {section.items.map((item) => {
                 const hasChildren = Boolean(item.children?.length);
                 const open = expanded.includes(item.label);
-                const active = isActive(item.href) || item.children?.some((child) => isActive(child.href));
+                const active = itemActive(item) || item.children?.some((child) => isActive(child.href));
                 return (
                   <li key={item.label}>
                     {hasChildren ? (
@@ -170,7 +174,7 @@ export function Sidebar({ sections, panelLabel, appName = 'NextGen Socio & Envir
                         onClick={onNavigate}
                         className={clsx(
                           'flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150',
-                          isActive(item.href)
+                          itemActive(item)
                             ? 'bg-brand-500 font-medium text-white'
                             : 'text-slate-300 hover:bg-sidebar-hover hover:text-white'
                         )}

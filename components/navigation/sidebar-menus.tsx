@@ -83,17 +83,12 @@ export function adminMenu(counts: { employees?: number; employers?: number; pend
     {
       title: 'Compliance',
       items: [
-        { label: 'Act & Compliance', href: '/admin/compliance/act-compliance', icon: icon('gavel') },
-        {
-          label: 'Acts, Rules & Notices', icon: icon('gavel'),
-          children: [
-            { label: 'Acts', href: '/admin/compliance/acts' },
-            { label: 'Rules', href: '/admin/compliance/rules' },
-            { label: 'Regulations', href: '/admin/compliance/regulations' },
-            { label: 'Notifications', href: '/admin/compliance/notifications' },
-            { label: 'Legal Register', href: '/admin/compliance/documents' },
-          ],
-        },
+        // the names say what each page holds: the Acts and Rules with their full text; the Act-wise table with its Forms, Returns and Statements; the duties, regulations and
+        // Gazette notifications that come out of the Acts (three tabs); every employer's licences, certificates, permits and returns
+        { label: 'Acts & Rules', href: '/admin/compliance/acts', icon: icon('gavel') },
+        { label: 'Act & Compliance', href: '/admin/compliance/act-compliance', icon: icon('clipboard') },
+        { label: 'Obligations & Notices', href: '/admin/compliance/notices', icon: icon('fileText'), match: ['/admin/compliance/rules', '/admin/compliance/regulations', '/admin/compliance/notifications'] },
+        { label: 'Employer Documents', href: '/admin/compliance/documents', icon: icon('shield') },
       ],
     },
     {
