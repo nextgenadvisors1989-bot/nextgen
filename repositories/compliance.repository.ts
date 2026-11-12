@@ -18,7 +18,7 @@ import {
 
 /* ══════════════════════════════════ acts ═════════════════════════════════ */
 
-export const ACT_COLUMNS = `a.id, a.act_name, a.short_name, a.act_number, a.act_year, a.jurisdiction, a.state_name,
+export const ACT_COLUMNS = `a.id, a.act_name, a.short_name, a.subtitle, a.show_on_public, a.act_number, a.act_year, a.jurisdiction, a.state_name,
   a.ministry, a.department, a.enactment_date, a.effective_date, a.last_amended_date, a.applicability_criteria,
   a.industry_applicability, a.employee_threshold, a.summary, a.official_source_url, a.status,
   a.created_at, a.updated_at`;

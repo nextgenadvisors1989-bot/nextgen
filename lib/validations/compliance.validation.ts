@@ -63,6 +63,7 @@ export const DEFAULT_REMIND_DAYS = 30;
 export const actSchema = z.object({
   act_name: z.string().trim().min(4, 'Give the act its full name').max(500),
   short_name: optionalString(100),
+  subtitle: optionalString(255),
   act_number: optionalString(100),
   act_year: z.coerce.number().int().min(1800, 'A four-digit year').max(2100).optional().nullable(),
   jurisdiction: z.enum(asTuple(JURISDICTIONS)).default('Central'),
@@ -79,6 +80,9 @@ export const actSchema = z.object({
   full_text: optionalText(65000),
   official_source_url: optionalString(500),
   status: z.enum(asTuple(ACT_STATUSES)).default('active'),
+  // absent = not changed (a new Act is shown on the public site until an administrator hides it)
+  show_on_public: z.union([z.boolean(), z.literal(0), z.literal(1), z.literal('0'), z.literal('1')]).optional()
+    .transform((v) => (v === undefined ? undefined : v === true || v === 1 || v === '1' ? 1 : 0)),
 });
 
 /** A state act must name its state; a Central act must not claim one. */

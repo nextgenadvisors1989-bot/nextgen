@@ -26,6 +26,7 @@ export default async function EditActPage({ params }: { params: Promise<{ actId:
     id,
     act_name: String(act.act_name ?? ''),
     short_name: String(act.short_name ?? ''),
+    subtitle: String(act.subtitle ?? ''),
     act_number: String(act.act_number ?? ''),
     act_year: act.act_year ? String(act.act_year) : '',
     jurisdiction: String(act.jurisdiction ?? 'Central'),
@@ -41,6 +42,7 @@ export default async function EditActPage({ params }: { params: Promise<{ actId:
     summary: String(act.summary ?? ''),
     official_source_url: String(act.official_source_url ?? ''),
     status: String(act.status ?? 'active'),
+    show_on_public: act.show_on_public === undefined ? true : Boolean(Number(act.show_on_public)),
   };
 
   return (

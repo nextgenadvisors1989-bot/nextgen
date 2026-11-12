@@ -85,7 +85,7 @@ export default async function ActsCompliancePage({
                   <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <dt className="text-xs uppercase tracking-wide text-ink-muted">Act number</dt>
-                      <dd className="text-ink-soft">{String(act.act_number ?? '—')} of {String(act.act_year ?? '—')}</dd>
+                      <dd className="text-ink-soft">{/\bof\b/i.test(String(act.act_number ?? '')) ? String(act.act_number) : `${String(act.act_number ?? '—')} of ${String(act.act_year ?? '—')}`}</dd>
                     </div>
                     <div>
                       <dt className="text-xs uppercase tracking-wide text-ink-muted">State</dt>
@@ -109,6 +109,12 @@ export default async function ActsCompliancePage({
                     </p>
                   )}
 
+                  {Number(act.provision_count ?? 0) > 0 && (
+                    <Link href={`/acts-compliance/${String(act.id)}`}
+                      className="mt-4 mr-5 inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600">
+                      Read the Act
+                    </Link>
+                  )}
                   {act.official_source_url && (
                     <a href={String(act.official_source_url)} target="_blank" rel="noreferrer"
                       className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:underline">

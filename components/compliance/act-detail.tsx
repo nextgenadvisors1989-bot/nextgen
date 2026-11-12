@@ -8,7 +8,7 @@ import { LinkButton } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils/dates';
 import { formatNumber } from '@/lib/utils/formatting';
-import { ActProvisions } from '@/components/compliance/act-provisions';
+import { ActBuilder } from '@/components/compliance/act-builder';
 import { ComplianceActivity, ComplianceBadge, DetailRow, Prose } from '@/components/compliance/shared';
 
 interface ActDetailPayload {
@@ -175,6 +175,8 @@ export function ActDetail({ data, canUpdate, canCreate }: {
                   </div>
                   <div>
                     <dl className="divide-y divide-line rounded-lg border border-line px-4">
+                      <DetailRow label="Sub title">{(act as { subtitle?: string | null }).subtitle}</DetailRow>
+                      <DetailRow label="On the public website">{(act as { show_on_public?: number | boolean }).show_on_public === undefined || Boolean(Number((act as { show_on_public?: number | boolean }).show_on_public)) ? 'Shown' : 'Hidden'}</DetailRow>
                       <DetailRow label="Ministry">{act.ministry}</DetailRow>
                       <DetailRow label="Department">{act.department}</DetailRow>
                       <DetailRow label="Employee threshold">{act.employee_threshold}</DetailRow>
@@ -196,7 +198,7 @@ export function ActDetail({ data, canUpdate, canCreate }: {
             {
               key: 'provisions',
               label: 'Chapters & sections',
-              content: <ActProvisions actId={act.id} canEdit={canUpdate} />,
+              content: <ActBuilder actId={act.id} canEdit={canUpdate} />,
             },
             {
               key: 'rules',

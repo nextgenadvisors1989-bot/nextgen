@@ -33,7 +33,7 @@ export async function getPublicStatistics(): Promise<PublicStatistics> {
 
 /** Acts and rules published on the public site. */
 export async function listPublicActs(filters: { search?: string; state?: string; limit?: number } = {}) {
-  const where = ["status = 'active'", 'deleted_at IS NULL'];
+  const where = ["status = 'active'", 'deleted_at IS NULL', 'show_on_public = 1'];
   const params: unknown[] = [];
 
   if (filters.search) {
@@ -47,9 +47,10 @@ export async function listPublicActs(filters: { search?: string; state?: string;
   }
 
   return query<RowDataPacket>(
-    `SELECT id, act_name, short_name, act_number, act_year, jurisdiction, state_name, ministry, department,
+    `SELECT id, act_name, short_name, subtitle, act_number, act_year, jurisdiction, state_name, ministry, department,
             effective_date, last_amended_date, applicability_criteria, industry_applicability, summary,
-            official_source_url
+            official_source_url,
+            (SELECT COUNT(*) FROM act_provisions p WHERE p.act_id = compliance_acts.id AND p.deleted_at IS NULL) AS provision_count
        FROM compliance_acts
       WHERE ${where.join(' AND ')}
       ORDER BY act_name ASC

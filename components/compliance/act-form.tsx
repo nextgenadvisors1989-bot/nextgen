@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardBody, CardFooter } from '@/components/ui/card';
-import { Input, Textarea } from '@/components/ui/input';
+import { Checkbox, Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ export interface ActFormValues {
   id?: number;
   act_name: string;
   short_name: string;
+  subtitle: string;
   act_number: string;
   act_year: string;
   jurisdiction: string;
@@ -30,14 +31,15 @@ export interface ActFormValues {
   summary: string;
   official_source_url: string;
   status: string;
+  show_on_public: boolean;
 }
 
 export const EMPTY_ACT: ActFormValues = {
-  act_name: '', short_name: '', act_number: '', act_year: '',
+  act_name: '', short_name: '', subtitle: '', act_number: '', act_year: '',
   jurisdiction: 'Central', state_name: '', ministry: '', department: '',
   enactment_date: '', effective_date: '', last_amended_date: '',
   applicability_criteria: '', industry_applicability: '', employee_threshold: '',
-  summary: '', official_source_url: '', status: 'active',
+  summary: '', official_source_url: '', status: 'active', show_on_public: true,
 };
 
 const INDIAN_STATES = [
@@ -54,7 +56,7 @@ export function ActForm({ initial, mode }: { initial?: ActFormValues; mode: 'cre
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
-  const set = (key: keyof ActFormValues, value: string) => {
+  const set = (key: keyof ActFormValues, value: string | boolean) => {
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: '' }));
   };
@@ -67,6 +69,7 @@ export function ActForm({ initial, mode }: { initial?: ActFormValues; mode: 'cre
     const payload = {
       act_name: values.act_name.trim(),
       short_name: values.short_name.trim() || null,
+      subtitle: values.subtitle.trim() || null,
       act_number: values.act_number.trim() || null,
       act_year: values.act_year ? Number(values.act_year) : null,
       jurisdiction: values.jurisdiction,
@@ -82,6 +85,7 @@ export function ActForm({ initial, mode }: { initial?: ActFormValues; mode: 'cre
       summary: values.summary.trim() || null,
       official_source_url: values.official_source_url.trim() || null,
       status: values.status,
+      show_on_public: values.show_on_public,
     };
 
     const result = mode === 'create'
@@ -114,6 +118,8 @@ export function ActForm({ initial, mode }: { initial?: ActFormValues; mode: 'cre
           </div>
           <Input label="Short name" value={values.short_name} error={errors.short_name}
             placeholder="e.g. Factories Act" onChange={(event) => set('short_name', event.target.value)} />
+          <Input label="Sub title" value={values.subtitle} error={errors.subtitle}
+            placeholder="e.g. Arrangement of Sections" onChange={(event) => set('subtitle', event.target.value)} />
           <Input label="Act number" value={values.act_number} error={errors.act_number}
             placeholder="e.g. 63 of 1948" onChange={(event) => set('act_number', event.target.value)} />
           <Input label="Year" type="number" min={1800} max={2100} value={values.act_year} error={errors.act_year}
@@ -136,6 +142,12 @@ export function ActForm({ initial, mode }: { initial?: ActFormValues; mode: 'cre
             options={ACT_STATUSES.map((value) => ({ value, label: value }))}
             onChange={(value) => set('status', value)}
           />
+          <div className="flex items-end pb-2">
+            <Checkbox
+              label="Show this Act on the public website" checked={values.show_on_public} error={errors.show_on_public}
+              onChange={(event) => set('show_on_public', event.target.checked)}
+            />
+          </div>
           <Input label="Ministry" value={values.ministry} error={errors.ministry}
             placeholder="e.g. Ministry of Labour and Employment"
             onChange={(event) => set('ministry', event.target.value)} />

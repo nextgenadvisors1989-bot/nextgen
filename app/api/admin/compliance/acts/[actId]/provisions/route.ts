@@ -14,12 +14,13 @@ async function actKey(params: Promise<{ actId: string }>) {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-export async function GET(_request: Request, { params }: { params: Promise<{ actId: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ actId: string }> }) {
   const id = await actKey(params);
   if (!id) return notFound('Act');
   try {
     await requireAdminApi(['compliance_act.read']);
-    return ok({ data: await actTree(id) });
+    // the texts are left out unless asked for (?bodies=1): the builder loads a text when it is opened
+    return ok({ data: await actTree(id, { bodies: new URL(request.url).searchParams.get('bodies') === '1' }) });
   } catch (error) {
     return handleRouteError(error, { route: '/api/admin/compliance/acts/[actId]/provisions', method: 'GET' });
   }

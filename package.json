@@ -53,6 +53,13 @@
     "test:water-usage": "tsx scripts/test-water-usage.ts"
   },
   "dependencies": {
+    "@tiptap/extension-subscript": "3.32.0",
+    "@tiptap/extension-superscript": "3.32.0",
+    "@tiptap/extension-table": "3.32.0",
+    "@tiptap/extensions": "3.32.0",
+    "@tiptap/pm": "3.32.0",
+    "@tiptap/react": "3.32.0",
+    "@tiptap/starter-kit": "3.32.0",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
     "docx": "9.13.0",

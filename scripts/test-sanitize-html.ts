@@ -1,0 +1,18 @@
+import { sanitizeActHtml, htmlToPlain } from '@/lib/utils/sanitize-html';
+let fails = 0;
+const eq = (name: string, got: string, want: string) => { const ok = got === want; if (!ok) fails++; console.log((ok ? 'PASS ' : 'FAIL ') + name + (ok ? '' : `\n   got:  ${got}\n   want: ${want}`)); };
+eq('keeps formatting', sanitizeActHtml('<p data-indent="2"><strong>1.</strong> Short <em>title</em><sup>1</sup></p>'), '<p data-indent="2"><strong>1.</strong> Short <em>title</em><sup>1</sup></p>');
+eq('drops script with content', sanitizeActHtml('<p>a</p><script>alert(1)</script><p>b</p>'), '<p>a</p><p>b</p>');
+eq('drops unclosed script', sanitizeActHtml('<p>a</p><script>alert(1)'), '<p>a</p>');
+eq('drops event handlers and style', sanitizeActHtml('<p onclick="x()" style="color:red" data-align="center">t</p>'), '<p data-align="center">t</p>');
+eq('javascript href removed', sanitizeActHtml('<a href="javascript:alert(1)">x</a>'), '<a>x</a>');
+eq('obfuscated javascript href removed', sanitizeActHtml('<a href="java&#x09;script:alert(1)">x</a>'), '<a>x</a>');
+eq('https href kept with rel', sanitizeActHtml('<a href="https://indiacode.nic.in/x?a=1&b=2" onclick="y()">x</a>'), '<a href="https://indiacode.nic.in/x?a=1&b=2" rel="noopener noreferrer">x</a>');
+eq('unknown tags dropped, text kept', sanitizeActHtml('<div><font color=red>text</font><img src=x onerror=alert(1)></div>'), 'text');
+eq('table kept with spans', sanitizeActHtml('<table><tbody><tr><th colspan="2">H</th></tr><tr><td rowspan="x">c</td></tr></tbody></table>'), '<table><tbody><tr><th colspan="2">H</th></tr><tr><td>c</td></tr></tbody></table>');
+eq('stray < becomes text', sanitizeActHtml('<p>a < b and <3</p>'), '<p>a &lt; b and &lt;3</p>');
+eq('comments removed', sanitizeActHtml('<p>a<!-- <b>x</b> --></p>'), '<p>a</p>');
+eq('bad indent dropped', sanitizeActHtml('<p data-indent="99">t</p>'), '<p>t</p>');
+eq('plain text of editor html', htmlToPlain('<p>1. Short title</p><ul><li>one</li><li>two &amp; three</li></ul>'), '1. Short title\none\ntwo & three');
+console.log(fails ? `FAILED ${fails}` : 'ALL PASSED');
+process.exit(fails ? 1 : 0);
