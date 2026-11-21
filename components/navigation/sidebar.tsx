@@ -53,6 +53,7 @@ const ICONS: Record<string, ReactNode> = {
   wrench: <path d="M14.7 6.3a4 4 0 0 0 5 5l-9.6 9.6a2.1 2.1 0 0 1-3-3L14.7 6.3Z" />,
   award: <path d="M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12Zm-3 .5V22l3-2 3 2v-6.5" />,
   download: <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 21h16" />,
+  help: <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.8M12 17v.01" />,
 };
 
 export function Icon({ name, className }: { name: keyof typeof ICONS | string; className?: string }) {
@@ -114,7 +115,7 @@ export function Sidebar({ sections, panelLabel, appName = 'NextGen Socio & Envir
         {sections.map((section, index) => (
           <div key={section.title ?? index} className={index > 0 ? 'mt-5' : ''}>
             {section.title && (
-              <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{section.title}</p>
+              <p className="mb-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{section.title}</p>
             )}
             <ul className="space-y-0.5">
               {section.items.map((item) => {
@@ -157,7 +158,7 @@ export function Sidebar({ sections, panelLabel, appName = 'NextGen Socio & Envir
                                     onClick={onNavigate}
                                     className={clsx(
                                       'mt-0.5 flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] transition-colors duration-150',
-                                      isActiveChild(child, item.children ?? []) ? 'bg-brand-500 text-white' : 'text-slate-400 hover:bg-sidebar-hover hover:text-white'
+                                      isActiveChild(child, item.children ?? []) ? 'bg-brand-600 text-white' : 'text-slate-400 hover:bg-sidebar-hover hover:text-white'
                                     )}
                                   >
                                     <span className="truncate">{child.label}</span>
@@ -175,7 +176,7 @@ export function Sidebar({ sections, panelLabel, appName = 'NextGen Socio & Envir
                         className={clsx(
                           'flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150',
                           itemActive(item)
-                            ? 'bg-brand-500 font-medium text-white'
+                            ? 'bg-brand-600 font-medium text-white'
                             : 'text-slate-300 hover:bg-sidebar-hover hover:text-white'
                         )}
                       >
@@ -184,7 +185,7 @@ export function Sidebar({ sections, panelLabel, appName = 'NextGen Socio & Envir
                           <span className="truncate">{item.label}</span>
                         </span>
                         {item.badge !== undefined && item.badge !== 0 && (
-                          <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">{item.badge}</span>
+                          <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-[11px] font-semibold text-white">{item.badge}</span>
                         )}
                       </Link>
                     )}

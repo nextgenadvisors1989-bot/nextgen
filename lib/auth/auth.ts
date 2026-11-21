@@ -104,6 +104,12 @@ export async function resolveAuthUser(userId: number, sessionId: string): Promis
   const roleSlugs = roles.map((r) => r.slug);
   const primaryRole = roleSlugs.includes('super_admin') ? 'super_admin' : roleSlugs[0] ?? 'employee';
 
+  // An employee the employer has switched "data entry" on for may enter Data Management records (a per-person switch, not a role).
+  if (scope.employeeId && primaryRole === 'employee') {
+    const flag = await queryOne<{ data_entry_enabled: number }>('SELECT data_entry_enabled FROM employees WHERE id = ? AND deleted_at IS NULL', [scope.employeeId]).catch(() => null);
+    if (flag?.data_entry_enabled) permissions.push(...['create', 'read', 'update', 'upload', 'download'].map((action) => `data_management.${action}`));
+  }
+
   return {
     id: user.id,
     uuid: user.uuid,

@@ -13,7 +13,7 @@ export function Avatar({ name, src, size = 32, className, rounded = 'full' }: {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={src} alt={name ?? 'User'} style={dimension} className={clsx('object-cover', rounded === 'full' ? 'rounded-full' : 'rounded-lg', className)} />;
   }
-  const palette = ['bg-brand-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-600'];
+  const palette = ['bg-brand-600', 'bg-emerald-700', 'bg-violet-600', 'bg-amber-700', 'bg-rose-600', 'bg-cyan-700'];
   const index = (name ?? '?').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % palette.length;
   return (
     <span

@@ -426,7 +426,7 @@ export function FormBuilder({ moduleId, formId, form, structure, counts, permiss
           ))}
           <div className="flex items-center justify-between pt-2">
             <span className="text-xs text-ink-muted">Collapse all</span>
-            <Switch checked={collapseAll} onChange={setCollapseAll} label="" />
+            <Switch checked={collapseAll} onChange={setCollapseAll} aria-label="Collapse all sections" />
           </div>
         </aside>
 

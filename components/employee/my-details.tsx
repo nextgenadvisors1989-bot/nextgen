@@ -125,8 +125,8 @@ export function MyDetails() {
         <dl className="grid gap-x-8 px-6 py-2 sm:grid-cols-2 lg:grid-cols-3">
           {READ_ONLY.map((row) => (
             <div key={row.key} className="flex items-baseline justify-between gap-4 border-b border-line py-3 last:border-0">
-              <dt className="text-sm text-ink-muted">{row.label}</dt>
-              <dd className="text-right text-sm font-medium text-ink">
+              <dt className="shrink-0 text-sm text-ink-muted">{row.label}</dt>
+              <dd className="min-w-0 text-right text-sm font-medium text-ink [overflow-wrap:anywhere]">
                 {employee[row.key] === null || employee[row.key] === undefined || employee[row.key] === ''
                   ? '—'
                   : String(employee[row.key])}

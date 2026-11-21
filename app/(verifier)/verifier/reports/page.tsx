@@ -114,9 +114,9 @@ export default async function VerifierQueuePage() {
                             <span className="text-xs text-ink-muted">Not scored</span>
                           ) : (
                             <span className={`font-semibold ${
-                              Number(row.score_percentage) >= 90 ? 'text-emerald-600'
+                              Number(row.score_percentage) >= 90 ? 'text-emerald-700'
                                 : Number(row.score_percentage) >= 75 ? 'text-brand-600'
-                                  : Number(row.score_percentage) >= 60 ? 'text-amber-600' : 'text-red-600'
+                                  : Number(row.score_percentage) >= 60 ? 'text-amber-700' : 'text-red-600'
                             }`}>
                               {Number(row.score_percentage).toFixed(1)}%
                             </span>

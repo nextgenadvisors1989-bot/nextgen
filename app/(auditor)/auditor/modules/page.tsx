@@ -5,7 +5,7 @@ import { ModuleCatalogue, type AvailableModule } from '@/components/auditor/modu
 import { availableModules } from '@/services/dynamic-module.service';
 import { actorFromUser, listSubmissions, submissionStats } from '@/services/dynamic-submission.service';
 
-export const metadata: Metadata = { title: 'Assigned Modules' };
+export const metadata: Metadata = { title: 'Forms & Modules' };
 export const dynamic = 'force-dynamic';
 
 export default async function AuditorModulesPage() {
@@ -21,9 +21,9 @@ export default async function AuditorModulesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Assigned Modules"
-        description="Every published dynamic module and form assigned to you — audits, assessments, risk reports, studies and work permits. Starting a form opens a submission; drafts resume exactly where you left them."
-        breadcrumbs={[{ label: 'Dashboard', href: '/auditor/dashboard' }, { label: 'Assigned Modules' }]}
+        title="Forms & Modules"
+        description="Every published module and form, open to every auditor — audits, assessments, risk reports, studies and work permits. Starting a form opens a submission; drafts resume exactly where you left them."
+        breadcrumbs={[{ label: 'Dashboard', href: '/auditor/dashboard' }, { label: 'Forms & Modules' }]}
       />
       <ModuleCatalogue
         modules={modules as unknown as AvailableModule[]}

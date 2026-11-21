@@ -8,13 +8,13 @@ export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'dan
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-brand-500 text-white hover:bg-brand-600 focus:ring-brand-500/40',
+  primary: 'bg-brand-600 text-white hover:bg-brand-700 focus:ring-brand-500/40',
   secondary: 'bg-slate-700 text-white hover:bg-slate-800 focus:ring-slate-500/40',
   outline: 'border border-line bg-white text-ink-soft hover:bg-surface-muted focus:ring-brand-500/30',
   ghost: 'bg-transparent text-ink-soft hover:bg-surface-muted focus:ring-brand-500/30',
   danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500/40',
-  success: 'bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500/40',
-  warning: 'bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500/40',
+  success: 'bg-emerald-700 text-white hover:bg-emerald-800 focus:ring-emerald-500/40',
+  warning: 'bg-amber-700 text-white hover:bg-amber-800 focus:ring-amber-500/40',
 };
 
 const SIZES: Record<ButtonSize, string> = {

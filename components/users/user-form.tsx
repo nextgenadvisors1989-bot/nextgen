@@ -105,7 +105,7 @@ function RolePicker({
             >
               <span
                 className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                  checked ? 'border-brand-500 bg-brand-500 text-white' : 'border-line bg-white'
+                  checked ? 'border-brand-500 bg-brand-600 text-white' : 'border-line bg-white'
                 }`}
               >
                 {checked && (

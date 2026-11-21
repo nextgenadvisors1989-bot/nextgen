@@ -43,7 +43,7 @@ export default async function ActsCompliancePage({
                 <option key={state} value={state}>{state}</option>
               ))}
             </select>
-            <button type="submit" className="rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-brand-600">
+            <button type="submit" className="rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-brand-700">
               Search
             </button>
           </form>
@@ -65,7 +65,7 @@ export default async function ActsCompliancePage({
                 <Link href="/acts-compliance" className="rounded-lg border border-line px-5 py-2.5 text-sm font-semibold text-ink-soft transition-colors hover:bg-surface-muted">
                   Clear filters
                 </Link>
-                <Link href="/contact" className="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600">
+                <Link href="/contact" className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700">
                   Request an Act
                 </Link>
               </div>
@@ -111,7 +111,7 @@ export default async function ActsCompliancePage({
 
                   {Number(act.provision_count ?? 0) > 0 && (
                     <Link href={`/acts-compliance/${String(act.id)}`}
-                      className="mt-4 mr-5 inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600">
+                      className="mt-4 mr-5 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700">
                       Read the Act
                     </Link>
                   )}

@@ -49,13 +49,13 @@ export function CaparCreateModal({ open, onClose, panel }: { open: boolean; onCl
     void api.get<{ id: number; name: string; status: string }[]>('/api/compliance-register/types').then((result) => {
       if (result.ok && Array.isArray(result.data)) setAuditTypes(result.data.filter((type) => type.status === 'active').map((type) => ({ value: String(type.id), label: type.name })));
     });
-    if (isAuditor) { void lookup<MyAudit>('myaudits').then(setAudits); return; }
     void lookup('employers').then(setEmployers);
+    if (isAuditor) { void lookup<MyAudit>('myaudits').then(setAudits); return; }
     void lookup('verifiers').then(setVerifiers);
   }, [open, isAuditor]);
 
   useEffect(() => {
-    if (isAuditor) return;
+    if (isAuditor) { setForm((current) => (current.assignment_id ? { ...current, assignment_id: '' } : current)); return; }
     // A unit and an audit assignment belong to one company: picking another company must drop the earlier choice.
     setUnits([]);
     setAssignments([]);
@@ -73,7 +73,7 @@ export function CaparCreateModal({ open, onClose, panel }: { open: boolean; onCl
     setSaving(true);
     setErrors({});
     const body = isAuditor
-      ? { assignment_id: form.assignment_id || undefined, title: form.title || null, audit_type_id: form.audit_type_id || undefined, buyer_standards: buyerType ? standards.join(', ') : null, audit_purpose: form.audit_purpose || null }
+      ? { employer_id: form.employer_id || undefined, assignment_id: form.assignment_id || undefined, audit_date: form.audit_date || undefined, title: form.title || null, audit_type_id: form.audit_type_id || undefined, buyer_standards: buyerType ? standards.join(', ') : null, audit_purpose: form.audit_purpose || null }
       : {
           employer_id: form.employer_id || undefined,
           unit_id: form.unit_id || null,
@@ -107,48 +107,40 @@ export function CaparCreateModal({ open, onClose, panel }: { open: boolean; onCl
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={create} loading={saving} disabled={isAuditor ? !form.assignment_id || !form.audit_type_id || form.audit_purpose.trim().length < 5 : !form.employer_id}>Start report</Button>
+          <Button onClick={create} loading={saving} disabled={isAuditor ? !form.employer_id || !form.audit_type_id || form.audit_purpose.trim().length < 5 : !form.employer_id}>Start report</Button>
         </div>
       }
     >
       {isAuditor ? (
         <div className="space-y-4">
-          {audits === null ? (
-            <p className="py-6 text-center text-sm text-ink-muted">Loading your audits...</p>
-          ) : audits.length === 0 ? (
-            <p className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900">No audit has been assigned to you yet. Ask the administrator to assign you an audit, then it appears here.</p>
-          ) : (
+          <Select label="Company or factory audited" required searchable options={employers} value={form.employer_id} onChange={set('employer_id')} placeholder="Choose the company (a company and its factory are one)" error={errors.employer_id} />
+          {form.employer_id && (audits ?? []).some((audit) => String(audit.employerId) === form.employer_id) && (
+            <Select
+              label="Scheduled audit (optional)"
+              helper="If the administrator scheduled this audit, pick it to fill in the unit and the audit date."
+              options={(audits ?? []).filter((audit) => String(audit.employerId) === form.employer_id).map((audit) => ({ value: audit.value, label: audit.label, hint: audit.hint }))}
+              value={form.assignment_id}
+              onChange={set('assignment_id')}
+              placeholder="None, I am doing it on my own"
+              clearable
+            />
+          )}
+          {chosen && (
+            <dl className="grid grid-cols-1 gap-x-6 gap-y-3 rounded-xl border border-line bg-surface-muted p-4 text-sm sm:grid-cols-2">
+              <Fact label="Company" value={chosen.company} />
+              <Fact label="Unit / facility" value={chosen.unit ?? 'All units'} />
+              <Fact label="Audit date" value={chosen.auditDate ? formatDate(chosen.auditDate) : 'Not set'} />
+            </dl>
+          )}
+          {form.employer_id && (
             <>
-              <Select
-                label="Audit"
-                required
-                searchable
-                options={audits.map((audit) => ({ value: audit.value, label: audit.label, hint: audit.hint }))}
-                value={form.assignment_id}
-                onChange={set('assignment_id')}
-                placeholder="Choose the audit assigned to you"
-                error={errors.assignment_id}
-              />
-              {chosen && (
-                <dl className="grid grid-cols-1 gap-x-6 gap-y-3 rounded-xl border border-line bg-surface-muted p-4 text-sm sm:grid-cols-2">
-                  <Fact label="Company" value={chosen.company} />
-                  <Fact label="Unit / facility" value={chosen.unit ?? 'All units'} />
-                  <Fact label="Audit date" value={chosen.auditDate ? formatDate(chosen.auditDate) : 'Not set'} />
-                </dl>
-              )}
-              {chosen && !chosen.packSubmitted && (
-                <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">This company has not submitted its Audit Documents yet. You can start the report; ask the employer to submit them from the employer portal when you can.</p>
-              )}
-              {form.assignment_id && (
-                <>
-                  <Select label="Which audit or assessment is this?" required searchable options={auditTypes} value={form.audit_type_id} onChange={set('audit_type_id')} placeholder="Choose from the list" error={errors.audit_type_id} />
-                  {buyerType && <StandardsPicker label="Buyer standards being audited" value={standards.join(', ')} onChange={(value) => setStandards(splitStandards(value))} />}
-                  <Textarea label="Why is this audit being done?" required rows={3} value={form.audit_purpose} onChange={(event) => set('audit_purpose')(event.target.value)} placeholder="e.g. Buyer audit before the new season order, statutory check, customer request" error={errors.audit_purpose} />
-                </>
-              )}
-              <Input label="Report title (optional)" value={form.title} onChange={(event) => set('title')(event.target.value)} placeholder="Left blank, it is named after the facility and audit date" error={errors.title} />
+              <Select label="Which audit or assessment is this?" required searchable options={auditTypes} value={form.audit_type_id} onChange={set('audit_type_id')} placeholder="Choose from the list" error={errors.audit_type_id} />
+              {buyerType && <StandardsPicker label="Buyer standards being audited" value={standards.join(', ')} onChange={(value) => setStandards(splitStandards(value))} />}
+              <Textarea label="Why is this audit being done?" required rows={3} value={form.audit_purpose} onChange={(event) => set('audit_purpose')(event.target.value)} placeholder="e.g. Buyer audit before the new season order" error={errors.audit_purpose} />
+              {!chosen && <DatePicker label="Audit date" value={form.audit_date} onChange={set('audit_date')} error={errors.audit_date} />}
             </>
           )}
+          <Input label="Report title (optional)" value={form.title} onChange={(event) => set('title')(event.target.value)} placeholder="Left blank, it is named after the facility and audit date" error={errors.title} />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

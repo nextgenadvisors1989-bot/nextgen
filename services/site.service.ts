@@ -7,6 +7,7 @@
  */
 import { query, type RowDataPacket } from '@/lib/db/mysql';
 import defaults from '@/lib/public/home-defaults.json';
+import { isSampleValue } from '@/lib/utils/sample-values';
 
 export interface SiteItem {
   title?: string | null;
@@ -25,6 +26,12 @@ export interface SiteBlock {
   subheading: string;
   html: string;
   items: SiteItem[];
+  /** A photo attached to the block (the principal's portrait), or ''. */
+  imageUrl: string;
+  /** The editor switched the block off: the home page leaves it out (the bundled default does not bring it back). */
+  hidden: boolean;
+  /** The editor has saved this block (otherwise the bundled default is showing). */
+  customised: boolean;
 }
 
 export interface SiteInfo {
@@ -49,7 +56,7 @@ export async function getSiteInfo(): Promise<SiteInfo> {
     `SELECT setting_key, setting_value FROM settings WHERE setting_group = 'company' AND setting_key IN (${keys.map(() => '?').join(', ')})`,
     keys
   ).catch(() => [] as RowDataPacket[]);
-  const stored = Object.fromEntries(rows.map((row) => [String(row.setting_key), String(row.setting_value ?? '').trim()]));
+  const stored = Object.fromEntries(rows.map((row) => [String(row.setting_key), String(row.setting_value ?? '').trim()]).filter(([, value]) => !isSampleValue(value)));
   const pick = (key: string) => {
     // A saved-but-blank social link means "hide it"; every other blank falls back to the default.
     if (key.startsWith('social_')) return key in stored ? stored[key] : ((defaults.settings as Record<string, string>)[key] ?? '');
@@ -101,29 +108,41 @@ export async function getHomeBlocks(): Promise<Record<string, SiteBlock>> {
       subheading: section.subheading ?? '',
       html: section.content_html ?? '',
       items: section.items ?? [],
+      imageUrl: '',
+      hidden: false,
+      customised: false,
     };
   }
 
   const rows = await query<RowDataPacket>(
-    `SELECT s.section_key, s.heading, s.subheading, s.content_html, s.content_json
+    `SELECT s.section_key, s.heading, s.subheading, s.content_html, s.content_json, s.image_url, s.status
        FROM cms_page_sections s
        JOIN cms_pages p ON p.id = s.page_id
       WHERE p.is_homepage = 1 AND p.status = 'published' AND p.deleted_at IS NULL
-        AND s.status = 'active' AND s.deleted_at IS NULL AND s.section_key IS NOT NULL
+        AND s.deleted_at IS NULL AND s.section_key IS NOT NULL
       ORDER BY s.sort_order, s.id`
   ).catch(() => [] as RowDataPacket[]);
 
+  const seen = new Set<string>();
   for (const row of rows) {
     const key = String(row.section_key);
     const base = blocks[key];
-    if (!base) continue;
+    if (!base || seen.has(key)) continue;
+    seen.add(key);
     const items = parseItems(row.content_json);
+    // A saved block is the editor's: a field they emptied stays empty for the fields a block can leave blank
+    // (the principal's message, designation and highlights), and falls back to the default everywhere else.
+    const optionalBlock = key === 'spotlight';
     blocks[key] = {
       key,
       heading: String(row.heading ?? '').trim() || base.heading,
-      subheading: String(row.subheading ?? '').trim() || base.subheading,
-      html: String(row.content_html ?? '').trim() || base.html,
-      items: items.length ? items : base.items,
+      subheading: optionalBlock ? String(row.subheading ?? '').trim() : String(row.subheading ?? '').trim() || base.subheading,
+      html: optionalBlock ? String(row.content_html ?? '').trim() : String(row.content_html ?? '').trim() || base.html,
+      // A saved list is the editor's, even when they emptied it; a block saved without any list keeps the default rows.
+      items: row.content_json === null || row.content_json === undefined ? base.items : items,
+      imageUrl: String(row.image_url ?? '').trim(),
+      hidden: String(row.status) !== 'active',
+      customised: true,
     };
   }
   return blocks;

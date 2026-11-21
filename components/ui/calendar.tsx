@@ -136,15 +136,15 @@ export function Calendar({ events, view = 'month', value, onDateChange, onEventC
                 isSelected && 'ring-2 ring-inset ring-brand-500'
               )}
             >
-              <span className={clsx('inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium', isToday ? 'bg-brand-500 text-white' : 'text-ink-soft')}>
+              <span className={clsx('inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium', isToday ? 'bg-brand-600 text-white' : 'text-ink-soft')}>
                 {cell.date.getDate()}
               </span>
               <span className="mt-1 block space-y-0.5">
                 {dayEvents.slice(0, 2).map((event) => (
                   <span
                     key={event.id}
-                    style={{ backgroundColor: `${event.color ?? '#3b82f6'}1a`, color: event.color ?? '#1d4ed8' }}
-                    className="block truncate rounded px-1 py-0.5 text-[10px] font-medium"
+                    style={{ backgroundColor: `${event.color ?? '#3b82f6'}1a`, color: `color-mix(in srgb, ${event.color ?? '#3b82f6'} 50%, #0f172a)` }}
+                    className="block truncate rounded px-1 py-0.5 text-[11px] font-medium"
                   >
                     {event.title}
                   </span>

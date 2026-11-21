@@ -3,6 +3,10 @@
 export const APP_NAME = process.env.APP_NAME ?? 'NextGen Socio and Enviro Advisors';
 export const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
 
+/** The date the privacy policy and terms text was last revised. Change it whenever that text changes (never "today": a legal date must not move by itself). */
+export const LEGAL_TEXT_REVISED = '13 November 2026';
+
+/** Fallback company details; the live values are the client's Company settings (services/company.service.ts). */
 export const COMPANY_LEGAL = {
   name: 'NextGen Socio and Enviro Advisors',
   address: 'No: 3/46, Erumaippatti Village, Naranamangalam Postal, Ramanathapuram District, Tamilnadu, India',

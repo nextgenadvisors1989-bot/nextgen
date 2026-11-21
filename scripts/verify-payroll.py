@@ -1252,7 +1252,7 @@ def main():
           "EARNINGS" in register_text.upper() and "DEDUCTIONS" in register_text.upper(),
           register_text[:200])
     check("the register totals the month rather than only listing rows",
-          "NET WAGES PAID" in register_text.upper(), register_text[-400:])
+          "NET WAGES" in register_text.upper() and "GRAND TOTAL" in register_text.upper(), register_text[-400:])
     # The rows must name the people: a register of amounts with a blank name
     # column is not a register. The fixture's employees carry the run stamp.
     check("every row names the employee it belongs to",

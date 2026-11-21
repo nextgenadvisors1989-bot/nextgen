@@ -139,7 +139,7 @@ function ScoreTrend({ rows }: { rows: ReportRow[] }) {
       {scored.length === 0 ? (
         <p className="px-4 py-5 text-sm text-ink-muted sm:px-6">Scores appear here once an audit report with a scorecard has been filed.</p>
       ) : (
-        <div className="flex items-end gap-3 overflow-x-auto px-4 pb-5 pt-4 sm:px-6" role="img" aria-label="Compliance score trend">
+        <div className="flex items-end gap-3 overflow-x-auto px-4 pb-5 pt-4 sm:px-6" role="group" aria-label="Compliance score trend">
           {scored.map((row) => {
             const value = Math.round(Number(row.score_percentage));
             return (

@@ -162,7 +162,7 @@ export function SubmissionList({
         const percentage = Number(row.score_percentage);
         return (
           <div>
-            <span className={percentage >= 90 ? 'font-semibold text-emerald-600' : percentage >= 75 ? 'font-semibold text-brand-600' : percentage >= 60 ? 'font-semibold text-amber-600' : 'font-semibold text-red-600'}>
+            <span className={percentage >= 90 ? 'font-semibold text-emerald-700' : percentage >= 75 ? 'font-semibold text-brand-600' : percentage >= 60 ? 'font-semibold text-amber-700' : 'font-semibold text-red-600'}>
               {percentage.toFixed(1)}%
             </span>
             <span className="block text-xs text-ink-muted">

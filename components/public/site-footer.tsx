@@ -10,18 +10,10 @@ const QUICK_LINKS: [string, string][] = [
   ['Services', '/services'], ['Resources & Downloads', '/resources'], ['Compliance Reports', '/reports'], ['Training & Capacity Building', '/training-capacity-building'],
   ['Safety & Environmental Calculation', '/calculators'], ['Quotation Generation', '/quotation'], ['Bill Generation', '/bill-generation'], ['Contact Us', '/contact'],
 ];
-const SERVICES: string[] = [
-  'Legal & Statutory Compliance', 'Safety Audit (IS 14489)', 'Environment Consent & CTE', 'HAZOP & Risk Study',
-  'ETP / STP Assessment', 'Energy & Water Audits', 'Training & Manpower', 'Certification Support',
-];
-const ACTS: string[] = [
-  'Factories Act 1948', 'TNPCB Red Category Norms', 'DISH Factory Rules 1950', 'Water (P&CP) Act 1974',
-  'Air (P&CP) Act 1981', 'Hazardous Wastes Rules', 'E-Waste Rules 2022',
-];
-
 const HEAD = 'border-b border-slate-100 pb-1 font-mono text-xs font-bold uppercase tracking-wider text-[#0B1E36]';
 
-export function SiteFooter({ site }: { site: SiteInfo }) {
+/** `services` and `acts` are the same lists the home page shows (Admin -> Content -> Home page), so they are edited in one place. */
+export function SiteFooter({ site, services = [], acts = [] }: { site: SiteInfo; services?: string[]; acts?: string[] }) {
   return (
     <footer className="border-t border-slate-200 bg-white text-slate-700">
       <div className="h-1 bg-[#C59B27]" />
@@ -32,11 +24,11 @@ export function SiteFooter({ site }: { site: SiteInfo }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/brand/logo.png" alt="NextGen Socio & Enviro Advisors" className="h-14 w-auto max-w-[200px] object-contain" />
             </Link>
-            <p className="text-xs font-medium leading-relaxed text-slate-600">
+            <p className="text-sm font-medium leading-relaxed text-slate-600">
               NextGen Socio &amp; Enviro Advisors - Your trusted Directorate for Legal Compliance, Safety Audit (IS 14489),
               ETP/ZLD Environmental Engineering, and Global Sustainability Standards.
             </p>
-            <div className="space-y-0.5 text-[11px] text-slate-500">
+            <div className="space-y-0.5 text-xs text-slate-600">
               <div>Government Registered Advisory</div>
               <div>Tamil Nadu &amp; Pan-India Practice</div>
             </div>
@@ -44,7 +36,7 @@ export function SiteFooter({ site }: { site: SiteInfo }) {
 
           <div className="space-y-3">
             <h4 className={HEAD}>Quick Links</h4>
-            <ul className="space-y-1.5 text-xs font-medium text-slate-600">
+            <ul className="space-y-1.5 text-sm font-medium text-slate-600">
               {QUICK_LINKS.map(([label, href]) => (
                 <li key={label}><Link href={href} className="transition-colors hover:text-[#C59B27]">{label}</Link></li>
               ))}
@@ -53,8 +45,8 @@ export function SiteFooter({ site }: { site: SiteInfo }) {
 
           <div className="space-y-3">
             <h4 className={HEAD}>Our Services</h4>
-            <ul className="space-y-1.5 text-xs font-medium text-slate-600">
-              {SERVICES.map((label) => (
+            <ul className="space-y-1.5 text-sm font-medium text-slate-600">
+              {services.map((label) => (
                 <li key={label}><Link href="/services" className="transition-colors hover:text-[#C59B27]">{label}</Link></li>
               ))}
             </ul>
@@ -62,8 +54,8 @@ export function SiteFooter({ site }: { site: SiteInfo }) {
 
           <div className="space-y-3">
             <h4 className={HEAD}>Resources &amp; Acts</h4>
-            <ul className="space-y-1.5 text-xs font-medium text-slate-600">
-              {ACTS.map((label) => (
+            <ul className="space-y-1.5 text-sm font-medium text-slate-600">
+              {acts.map((label) => (
                 <li key={label}><Link href="/acts-compliance" className="transition-colors hover:text-[#C59B27]">{label}</Link></li>
               ))}
             </ul>
@@ -71,7 +63,7 @@ export function SiteFooter({ site }: { site: SiteInfo }) {
 
           <div className="space-y-4">
             <h4 className={HEAD}>Contact Us</h4>
-            <div className="space-y-2 text-xs font-medium text-slate-600">
+            <div className="space-y-2 text-sm font-medium text-slate-600">
               {site.address && (
                 <div className="flex items-start gap-2">
                   <SiteIcon name="pin" className="mt-0.5 h-4 w-4 shrink-0 text-[#C59B27]" />
@@ -107,9 +99,9 @@ export function SiteFooter({ site }: { site: SiteInfo }) {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-slate-100 pt-8 text-xs text-slate-500 sm:flex-row">
+        <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-slate-100 pt-8 text-sm text-slate-600 sm:flex-row">
           <p>
-            © 2024-{new Date().getFullYear()} {site.name}. All Rights Reserved. |{' '}
+            © {new Date().getFullYear()} {site.name}. All Rights Reserved. |{' '}
             <Link href="/privacy-policy" className="hover:text-[#C59B27]">Privacy Policy</Link> |{' '}
             <Link href="/terms-conditions" className="hover:text-[#C59B27]">Terms &amp; Conditions</Link>
           </p>

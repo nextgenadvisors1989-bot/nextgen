@@ -47,7 +47,7 @@ export function QuotationRequest() {
         <h2 className="text-2xl font-bold text-emerald-900">Request received</h2>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-emerald-900/80">Thank you. Our team will study the scope and send you a priced quotation. Once you accept it, your tax invoices and receipts appear under Billing in your client portal.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link href="/" className="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-600">Back to home</Link>
+          <Link href="/" className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">Back to home</Link>
           <button type="button" onClick={() => { setState('idle'); setChosen([]); setForm({ ...EMPTY }); }} className="rounded-lg border border-line bg-white px-5 py-2.5 text-sm font-semibold text-ink-soft hover:bg-surface-muted">Request another</button>
         </div>
       </div>
@@ -93,7 +93,7 @@ export function QuotationRequest() {
       {errors.form && <p className="text-sm font-medium text-red-600" role="alert">{errors.form}</p>}
       {errors.message && <p className="text-sm font-medium text-red-600" role="alert">{errors.message}</p>}
       <div className="flex flex-wrap items-center gap-4">
-        <button type="submit" disabled={state === 'sending'} className="rounded-lg bg-brand-500 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:opacity-60">{state === 'sending' ? 'Sending...' : `Request quotation${chosen.length ? ` (${chosen.length} selected)` : ''}`}</button>
+        <button type="submit" disabled={state === 'sending'} className="rounded-lg bg-brand-600 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-60">{state === 'sending' ? 'Sending...' : `Request quotation${chosen.length ? ` (${chosen.length} selected)` : ''}`}</button>
         <p className="text-xs text-ink-muted">The fees are prepared by our team for your scope; you are not charged for asking.</p>
       </div>
     </form>

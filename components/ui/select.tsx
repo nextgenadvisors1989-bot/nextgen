@@ -101,31 +101,28 @@ export function Select({
           className={clsx(
             'focus-ring flex w-full items-center justify-between rounded-lg border bg-white text-left text-sm',
             size === 'sm' ? 'h-8 px-2.5' : 'h-10 px-3',
+            clearable && selected && 'pr-12',
             error ? 'border-red-400' : 'border-line',
             disabled ? 'cursor-not-allowed bg-surface-muted text-ink-muted' : 'text-ink'
           )}
         >
-          <span className={clsx('truncate', !selected && 'text-slate-400')}>{selected?.label ?? placeholder}</span>
+          <span className={clsx('truncate', !selected && 'text-slate-500')}>{selected?.label ?? placeholder}</span>
           <span className="flex items-center gap-1">
-            {clearable && selected && (
-              <span
-                role="button"
-                tabIndex={0}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onChange?.('');
-                }}
-                className="rounded p-0.5 text-ink-muted hover:bg-surface-muted hover:text-ink"
-                aria-label="Clear selection"
-              >
-                ×
-              </span>
-            )}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={clsx('transition-transform', open && 'rotate-180')}>
               <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
         </button>
+        {clearable && selected && !disabled && (
+          <button
+            type="button"
+            onClick={() => onChange?.('')}
+            className="focus-ring absolute right-8 top-1/2 -translate-y-1/2 rounded p-0.5 text-ink-muted hover:bg-surface-muted hover:text-ink"
+            aria-label="Clear selection"
+          >
+            ×
+          </button>
+        )}
 
         {open && (
           <div className="animate-slide-down absolute z-30 mt-1 w-full overflow-hidden rounded-lg border border-line bg-white shadow-lg">

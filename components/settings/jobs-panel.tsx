@@ -122,7 +122,7 @@ export function JobsPanel({
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <Switch checked={job.active} disabled={!canEdit || busy === job.code} onChange={(next) => toggle(job, next)} label="" />
+              <Switch checked={job.active} disabled={!canEdit || busy === job.code} onChange={(next) => toggle(job, next)} aria-label={`${job.name ?? job.code} active`} />
               {job.type === 'REMINDER' && (
                 <Button
                   size="sm"

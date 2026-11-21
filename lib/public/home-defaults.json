@@ -1,16 +1,16 @@
 {
   "settings": {
     "company_name": "One Legal Culture / NextGen Socio & Enviro Advisors",
-    "company_phone": "+91 99948 99948",
-    "company_email": "info@onelegalculture.com",
+    "company_phone": "+91 94884 65966",
+    "company_email": "info@nextgenseadvisors.com",
     "company_timing": "Mon - Sat: 9:00 AM - 6:00 PM",
-    "company_address": "No.123, Green Avenue, SIDCO Industrial Estate, Coimbatore - 641 021, Tamil Nadu, India.",
+    "company_address": "No: 3/46, Erumaippatti Village, Naranamangalam Postal, Ramanathapuram District, Tamilnadu, India",
     "company_website": "www.onelegalculture.com",
     "company_tagline": "Compliance | Safety | Sustainability",
-    "social_facebook": "https://facebook.com",
-    "social_linkedin": "https://linkedin.com",
-    "social_twitter": "https://x.com",
-    "social_instagram": "https://instagram.com"
+    "social_facebook": "",
+    "social_linkedin": "",
+    "social_twitter": "",
+    "social_instagram": ""
   },
   "sections": [
     {
@@ -20,20 +20,19 @@
       "subheading": "COMPLIANCE | SAFETY | SUSTAINABILITY",
       "content_html": "Your Trusted Partner for Legal Compliance, Risk Management, Environment, Safety and Sustainability Solutions.",
       "items": [
-        { "value": "500+", "label": "Satisfied Clients", "icon": "shield" },
-        { "value": "1000+", "label": "Compliance Projects", "icon": "clipboard" },
-        { "value": "50+", "label": "Expert Professionals", "icon": "users" }
+        { "title": "Schedule a plant audit", "link": "#contact" },
+        { "title": "Browse Acts & Rules", "link": "/acts-compliance" }
       ]
     },
     {
       "key": "gateways",
       "type": "features",
-      "heading": "Login portals",
-      "subheading": "Role-based secure access",
+      "heading": "Sign in to your portal",
+      "subheading": "One secure sign-in. It opens the right workspace for you.",
       "items": [
-        { "title": "ADMIN LOGIN", "text": "Secure access for system administrators and management.", "link": "/login", "linkLabel": "LOGIN NOW", "icon": "lock" },
-        { "title": "EMPLOYEE LOGIN", "text": "Access compliance, training, documents and reports.", "link": "/login", "linkLabel": "LOGIN NOW", "icon": "user-check" },
-        { "title": "CUSTOMER LOGIN", "text": "Track compliance, reports and project updates.", "link": "/login", "linkLabel": "LOGIN NOW", "icon": "building" }
+        { "title": "Employer", "text": "Payroll, attendance, audits and compliance records for your establishment.", "link": "/login", "linkLabel": "Employer sign-in", "icon": "building" },
+        { "title": "Employee", "text": "Your attendance, leave, payslips and personal file.", "link": "/login", "linkLabel": "Employee sign-in", "icon": "user-check" },
+        { "title": "Auditor", "text": "Assigned audits, checklists, reports and CAPAR.", "link": "/login", "linkLabel": "Auditor sign-in", "icon": "clipboard" }
       ]
     },
     {
@@ -65,6 +64,14 @@
         { "title": "Training & Manpower", "text": "Training Programs, Skill Development and Manpower Sourcing Solutions.", "icon": "users", "link": "/services", "linkLabel": "Read More" },
         { "title": "Certification Support", "text": "Support for ISO, SA8000, BSCI, WRAP, OEKO-TEX, GOTS, ZDHC and more.", "icon": "star", "link": "/services", "linkLabel": "Read More" }
       ]
+    },
+    {
+      "key": "spotlight",
+      "type": "team",
+      "heading": "Kannan",
+      "subheading": "",
+      "content_html": "",
+      "items": []
     },
     {
       "key": "statutory",

@@ -330,7 +330,7 @@ export function EmployeeWizard({
                   }`}
                 >
                   <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                    isCurrent ? 'bg-brand-500 text-white' : isDone ? 'bg-emerald-100 text-emerald-700' : 'bg-surface-muted text-ink-muted'
+                    isCurrent ? 'bg-brand-600 text-white' : isDone ? 'bg-emerald-100 text-emerald-700' : 'bg-surface-muted text-ink-muted'
                   }`}>
                     {isDone ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden><path d="M20 6 9 17l-5-5" /></svg> : index + 1}
                   </span>

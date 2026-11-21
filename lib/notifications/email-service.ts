@@ -1,7 +1,8 @@
 /** Template-driven email facade used by business services. */
 import { sendEmail, type EmailAttachment } from '@/lib/integrations/email-provider';
 import { getTemplate, renderTemplate, findMissingVariables } from './notification-templates';
-import { APP_NAME, APP_URL, COMPANY_LEGAL } from '@/lib/utils/constants';
+import { APP_NAME, APP_URL } from '@/lib/utils/constants';
+import { getCompanyLegal } from '@/services/company.service';
 
 export interface TemplateEmailInput {
   to: string | string[];
@@ -17,13 +18,14 @@ export async function sendTemplateEmail(input: TemplateEmailInput) {
   const template = getTemplate(input.templateCode);
   if (!template) throw new Error(`Unknown email template: ${input.templateCode}`);
 
+  const company = await getCompanyLegal();
   const data: Record<string, unknown> = {
     platform_name: APP_NAME,
     login_url: `${APP_URL}/login`,
-    support_email: COMPANY_LEGAL.email,
-    company_address: COMPANY_LEGAL.address,
-    company_email: COMPANY_LEGAL.email,
-    company_phone: COMPANY_LEGAL.phone,
+    support_email: company.email,
+    company_address: company.address,
+    company_email: company.email,
+    company_phone: company.phone,
     ...(input.data ?? {}),
   };
 

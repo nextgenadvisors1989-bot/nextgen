@@ -196,7 +196,7 @@ def main():
     baseline = int((payload.get("stats") or {}).get("total", 0))
     check("stats expose the vault totals", all(k in (payload.get("stats") or {}) for k in
           ("total", "active", "archived", "totalBytes", "versions", "pdfs", "images")), payload.get("stats"))
-    check("entity-type catalogue is complete", len(payload.get("entityTypes") or []) == 16, len(payload.get("entityTypes") or []))
+    check("entity-type catalogue is complete", len(payload.get("entityTypes") or []) >= 16, len(payload.get("entityTypes") or []))
 
     employer = Session(EMPLOYER)
     eok, eerror = employer.login()

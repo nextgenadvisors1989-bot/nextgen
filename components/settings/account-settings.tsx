@@ -79,8 +79,8 @@ export function AccountSettings({ user, notificationBasePath }: {
             { label: 'Last sign-in', value: user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Never' },
           ].map((row) => (
             <div key={row.label} className="flex items-start justify-between gap-4 px-6 py-3">
-              <dt className="text-sm text-ink-muted">{row.label}</dt>
-              <dd className="text-right text-sm font-medium text-ink">{row.value}</dd>
+              <dt className="shrink-0 text-sm text-ink-muted">{row.label}</dt>
+              <dd className="min-w-0 text-right text-sm font-medium text-ink [overflow-wrap:anywhere]">{row.value}</dd>
             </div>
           ))}
         </dl>

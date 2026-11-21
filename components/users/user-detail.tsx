@@ -177,7 +177,7 @@ export function UserDetail({
                     </div>
                     <div className="rounded-lg border border-line p-4">
                       <p className="text-[12px] uppercase tracking-wide text-ink-muted">Successful sign-ins</p>
-                      <p className="mt-1 text-xl font-semibold text-emerald-600">{formatNumber(activity?.logins ?? 0)}</p>
+                      <p className="mt-1 text-xl font-semibold text-emerald-700">{formatNumber(activity?.logins ?? 0)}</p>
                       <p className="text-[12px] text-ink-muted">Logged in activity_logs</p>
                     </div>
                     <div className="rounded-lg border border-line p-4">

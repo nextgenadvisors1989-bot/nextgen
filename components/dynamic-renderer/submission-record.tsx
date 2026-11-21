@@ -81,7 +81,7 @@ export function SubmissionRecord({
             <div className="flex flex-wrap items-center gap-3">
               <StatusBadge status={String(submission.status)} />
               {scorePercentage !== null && (
-                <span className={`text-sm font-semibold ${scorePercentage >= 90 ? 'text-emerald-600' : scorePercentage >= 75 ? 'text-brand-600' : scorePercentage >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+                <span className={`text-sm font-semibold ${scorePercentage >= 90 ? 'text-emerald-700' : scorePercentage >= 75 ? 'text-brand-600' : scorePercentage >= 60 ? 'text-amber-700' : 'text-red-600'}`}>
                   {scorePercentage.toFixed(1)}%
                 </span>
               )}

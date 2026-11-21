@@ -41,8 +41,8 @@ export function StatCard({ label, value, hint, icon, tone = 'brand', trend }: {
 }) {
   const tones: Record<string, string> = {
     brand: 'bg-brand-50 text-brand-600',
-    emerald: 'bg-emerald-50 text-emerald-600',
-    amber: 'bg-amber-50 text-amber-600',
+    emerald: 'bg-emerald-50 text-emerald-700',
+    amber: 'bg-amber-50 text-amber-700',
     red: 'bg-red-50 text-red-600',
     violet: 'bg-violet-50 text-violet-600',
     slate: 'bg-slate-100 text-slate-600',
@@ -55,7 +55,7 @@ export function StatCard({ label, value, hint, icon, tone = 'brand', trend }: {
           <p className="mt-1.5 text-2xl font-bold text-ink">{value}</p>
           {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
           {trend && (
-            <p className={clsx('mt-1 text-xs font-medium', trend.positive ? 'text-emerald-600' : 'text-red-600')}>
+            <p className={clsx('mt-1 text-xs font-medium', trend.positive ? 'text-emerald-700' : 'text-red-600')}>
               {trend.positive ? '▲' : '▼'} {trend.value}
             </p>
           )}

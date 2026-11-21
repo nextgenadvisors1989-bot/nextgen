@@ -447,9 +447,9 @@ def main():
     code, _ = page(f"/auditor/submissions/{submission_id}", AUD)
     check("auditor · submission record", code == 200)
 
-    out = subprocess.run(["curl", "-s", "-o", "/dev/null", "-w", "%{http_code} %{redirect_url}", "-b", AUD,
+    out = subprocess.run(["curl", "-s", "-o", os.devnull, "-w", "%{http_code} %{redirect_url}", "-b", AUD,
                           f"{BASE}/auditor/forms/{form_id}"], capture_output=True, text=True).stdout.split(" ")
-    check("auditor · deep link into a form opens a submission", out[0] == "307" and "/auditor/submissions/" in out[1], out[1])
+    check("auditor · deep link into a form opens a submission", out[0] == "307" and "/auditor/submissions/" in out[1], " ".join(out))
 
     code, redirect = page("/admin/dynamic-modules", AUD)
     check("auditor cannot open the admin panel", code == 307 and redirect.endswith("/auditor/dashboard"), redirect)

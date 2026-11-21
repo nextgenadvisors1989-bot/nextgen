@@ -347,7 +347,7 @@ export function CalendarScreen({
                 ? `${Math.round(row.reminder_minutes / 1440)} day(s) before`
                 : `${Math.round(row.reminder_minutes / 60)} hour(s) before`}
             </p>
-            <p className={row.reminder_sent ? 'text-emerald-600' : 'text-ink-muted'}>{row.reminder_sent ? 'Sent' : 'Pending'}</p>
+            <p className={row.reminder_sent ? 'text-emerald-700' : 'text-ink-muted'}>{row.reminder_sent ? 'Sent' : 'Pending'}</p>
           </div>
         ),
     },
@@ -448,7 +448,7 @@ export function CalendarScreen({
                     onClick={() => setView(option)}
                     className={
                       view === option
-                        ? 'rounded-md bg-brand-500 px-3 py-1.5 text-[13px] font-medium text-white'
+                        ? 'rounded-md bg-brand-600 px-3 py-1.5 text-[13px] font-medium text-white'
                         : 'rounded-md px-3 py-1.5 text-[13px] font-medium text-ink-soft hover:bg-surface-muted'
                     }
                   >

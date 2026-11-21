@@ -1,16 +1,17 @@
 import type { Metadata } from 'next';
-import { APP_NAME, COMPANY_LEGAL } from '@/lib/utils/constants';
+import { APP_NAME, LEGAL_TEXT_REVISED } from '@/lib/utils/constants';
+import { getCompanyLegal, type CompanyLegal } from '@/services/company.service';
 
 export const metadata: Metadata = {
   title: 'Terms & Conditions',
   description: `Terms governing the use of the ${APP_NAME} platform and services.`,
 };
 
-const SECTIONS = [
+const buildSections = (company: CompanyLegal) => [
   {
     title: '1. Agreement',
     body: [
-      `These terms govern access to and use of the ${APP_NAME} platform, related mobile interfaces and any professional services provided by ${COMPANY_LEGAL.name} ("we", "us", "our"). By creating an account or using the platform you accept these terms on behalf of the organisation you represent.`,
+      `These terms govern access to and use of the ${APP_NAME} platform, related mobile interfaces and any professional services provided by ${company.name} ("we", "us", "our"). By creating an account or using the platform you accept these terms on behalf of the organisation you represent.`,
       'Where we have signed a separate master services agreement or statement of work with your organisation, that document prevails over these terms to the extent of any conflict.',
     ],
   },
@@ -77,13 +78,15 @@ const SECTIONS = [
   },
 ];
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const company = await getCompanyLegal();
+  const SECTIONS = buildSections(company);
   return (
     <section className="py-14">
       <div className="mx-auto max-w-3xl px-4 lg:px-8">
         <h1 className="text-4xl font-bold text-ink">Terms &amp; Conditions</h1>
         <p className="mt-3 text-sm text-ink-muted">
-          Last updated {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
+          Last updated {LEGAL_TEXT_REVISED}
         </p>
 
         <div className="mt-10 space-y-8">
@@ -102,8 +105,8 @@ export default function TermsPage() {
         <div className="mt-12 rounded-xl bg-surface-muted p-6">
           <h2 className="text-sm font-semibold text-ink">Questions about these terms?</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-            Write to {COMPANY_LEGAL.email} or call {COMPANY_LEGAL.phone} during business hours.
-            {COMPANY_LEGAL.name}, {COMPANY_LEGAL.address}.
+            Write to {company.email} or call {company.phone} during business hours.
+            {company.name}, {company.address}.
           </p>
         </div>
       </div>

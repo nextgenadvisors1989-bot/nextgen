@@ -209,8 +209,8 @@ export function CompanyProfile({ canUpdate = false, startInEdit = false }: { can
               ['Address', [employer.address_line_1, employer.address_line_2].filter(Boolean).join(', ') || null],
             ].map(([label, value]) => (
               <div key={String(label)} className="flex items-baseline justify-between gap-4 border-b border-line py-3 last:border-0">
-                <dt className="text-sm text-ink-muted">{String(label)}</dt>
-                <dd className="text-right text-sm font-medium text-ink">{text(value)}</dd>
+                <dt className="shrink-0 text-sm text-ink-muted">{String(label)}</dt>
+                <dd className="min-w-0 text-right text-sm font-medium text-ink [overflow-wrap:anywhere]">{text(value)}</dd>
               </div>
             ))}
           </dl>

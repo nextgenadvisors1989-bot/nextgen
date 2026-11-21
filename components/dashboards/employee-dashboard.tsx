@@ -73,12 +73,14 @@ export function EmployeeDashboard({ data, userName }: { data: EmployeeDashboardD
               />
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <dl className="contents">
                 <Detail label="Payslip No." value={data.latestPayslip.payslip_number} />
                 <Detail label="Period" value={`${formatDate(data.latestPayslip.period_from)} → ${formatDate(data.latestPayslip.period_to)}`} />
                 <Detail label="Payment status" value={<StatusBadge status={data.latestPayslip.payment_status} />} />
                 <Detail label="Gross Earnings" value={formatCurrency(data.latestPayslip.gross_earnings)} />
                 <Detail label="Total Deductions" value={formatCurrency(data.latestPayslip.total_deductions)} />
                 <Detail label="Net Pay" value={<span className="text-lg font-semibold text-emerald-700">{formatCurrency(data.latestPayslip.net_pay)}</span>} />
+                </dl>
                 <div className="sm:col-span-3 flex gap-2">
                   <Link href="/employee/payslips" className="btn btn-outline btn-sm">View Payslip</Link>
                   <a href={`/api/employee/payslips/${data.latestPayslip.id}/download`} className="btn btn-primary btn-sm" download>Download PDF</a>

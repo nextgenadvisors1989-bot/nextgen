@@ -16,11 +16,13 @@ import { api } from '@/lib/utils/api-client';
 interface LinkedForm { id: number; name: string; canOpen: boolean }
 interface AuditType { id: number; name: string; status: string; forms: LinkedForm[] }
 interface MyAudit { value: string; label: string; hint?: string; employerId: number; company: string; unit: string | null; auditDate: string | null }
+interface Company { value: string; label: string; hint?: string }
 
 export function AuditPicker() {
   const { error: errorToast } = useToast();
   const [types, setTypes] = useState<AuditType[] | null>(null);
   const [audits, setAudits] = useState<MyAudit[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [typeId, setTypeId] = useState('');
   const [formId, setFormId] = useState('');
   const [company, setCompany] = useState('');
@@ -30,19 +32,21 @@ export function AuditPicker() {
   useEffect(() => {
     void api.get<AuditType[]>('/api/compliance-register/types').then((result) => { if (result.ok && Array.isArray(result.data)) setTypes(result.data); });
     void api.get<MyAudit[]>('/api/capar/lookups?type=myaudits').then((result) => { if (result.ok && Array.isArray(result.data)) setAudits(result.data); });
+    void api.get<Company[]>('/api/capar/lookups?type=employers').then((result) => { if (result.ok && Array.isArray(result.data)) setCompanies(result.data); });
   }, []);
 
   const type = types?.find((entry) => String(entry.id) === typeId) ?? null;
   const openable = useMemo(() => (type?.forms ?? []).filter((form) => form.canOpen), [type]);
   const form = openable.find((entry) => String(entry.id) === formId) ?? (openable.length === 1 ? openable[0] : null);
-  const picked = audits.find((audit) => audit.value === company) ?? null;
-  const typed = picked ? '' : company.trim();
+  const picked = audits.find((audit) => `a${audit.value}` === company) ?? null;
+  const pickedCompany = companies.find((entry) => `e${entry.value}` === company) ?? null;
+  const typed = picked || pickedCompany ? '' : company.trim();
+  const companyLabel = picked ? picked.label : pickedCompany ? pickedCompany.label : typed;
 
   // choosing another audit clears the form and any form already opened
   useEffect(() => { setFormId(''); setWorkspace(null); }, [typeId]);
 
-  // Any auditor may do any audit on the list for any company, so every audit with a form is offered in the order the administrator keeps; an audit that
-  // has no form linked yet is not shown (the administrator links forms under Audit and Assessment).
+  // Any auditor may do any audit for any company: the administrator's list comes first, in the order it keeps, then every other published form by kind.
   const options = useMemo(() => (types ?? []).filter((entry) => entry.forms.some((f) => f.canOpen)).map((entry) => ({ value: String(entry.id), label: entry.name })), [types]);
 
   const fetchWorkspace = useCallback(async (id: number) => {
@@ -59,7 +63,7 @@ export function AuditPicker() {
     if (!form) return;
     setBusy(true);
     const body: Record<string, unknown> = { form_id: form.id };
-    if (picked) { body.assignment_id = Number(picked.value); body.employer_id = picked.employerId; } else body.title = `${form.name} — ${typed}`;
+    if (picked) { body.assignment_id = Number(picked.value); body.employer_id = picked.employerId; } else if (pickedCompany) { body.employer_id = Number(pickedCompany.value); body.title = `${form.name} — ${pickedCompany.label}`; } else body.title = `${form.name} — ${typed}`;
     const started = await api.post<unknown>('/api/auditor/submissions', body);
     const id = Number((started.raw as { submissionId?: number } | undefined)?.submissionId);
     if (!started.ok || !id) { setBusy(false); errorToast('Could not open the form', started.message); return; }
@@ -69,7 +73,7 @@ export function AuditPicker() {
       const sections = (next.structure as { sections?: { fields?: { field_key: string }[] }[] }).sections ?? [];
       const fields = sections.flatMap((section) => section.fields ?? []).map((field) => field.field_key);
       const values: Record<string, unknown> = {};
-      if (fields.includes('facility_unit_name') && !next.values.facility_unit_name) values.facility_unit_name = picked ? picked.label : typed;
+      if (fields.includes('facility_unit_name') && !next.values.facility_unit_name) values.facility_unit_name = companyLabel;
       if (picked?.auditDate && fields.includes('audit_date') && !next.values.audit_date) values.audit_date = picked.auditDate;
       if (Object.keys(values).length) {
         // a save replaces the answers it carries, so the answers already there go with it
@@ -97,11 +101,14 @@ export function AuditPicker() {
               required
               searchable
               allowCustom
-              options={audits.map((audit) => ({ value: audit.value, label: audit.label }))}
+              options={[
+                ...audits.map((audit) => ({ value: `a${audit.value}`, label: audit.label, group: 'Audits the administrator has scheduled for you' })),
+                ...companies.map((entry) => ({ value: `e${entry.value}`, label: entry.label, group: 'All companies' })),
+              ]}
               value={company}
               onChange={setCompany}
-              placeholder="Choose from your assigned audits or type a company name"
-              helper="Your assigned audits are listed. A company that is not listed can be typed and added."
+              placeholder="Choose the company or factory, or type its name"
+              helper="Every company on the platform is listed (a company and its factory are one). One that is not listed can be typed."
             />
             <div className="flex items-end gap-3">
               <Button onClick={open} loading={busy} disabled={!form || !company.trim()}>Open the form</Button>
@@ -119,7 +126,7 @@ export function AuditPicker() {
       {workspace && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold text-ink">{String(workspace.form.name)}{company ? <span className="font-normal text-ink-muted"> · {picked ? picked.label : typed}</span> : null}</h2>
+            <h2 className="text-lg font-semibold text-ink">{String(workspace.form.name)}{company ? <span className="font-normal text-ink-muted"> · {companyLabel}</span> : null}</h2>
             <Button variant="outline" size="sm" onClick={() => setWorkspace(null)}>Close the form</Button>
           </div>
           <SubmissionRecord

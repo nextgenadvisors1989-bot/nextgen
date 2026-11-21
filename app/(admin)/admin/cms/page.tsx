@@ -34,6 +34,7 @@ export default async function CmsOverviewPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {hasPermission(user.permissions, 'cms_page.read') && <LinkButton href="/admin/cms/home" size="sm">Home page</LinkButton>}
           {hasPermission(user.permissions, 'cms_page.read') && <LinkButton href="/admin/cms/pages" variant="outline" size="sm">Pages</LinkButton>}
           {hasPermission(user.permissions, 'cms_media.read') && <LinkButton href="/admin/cms/media" variant="outline" size="sm">Media Library</LinkButton>}
           {hasPermission(user.permissions, 'cms_resource.read') && <LinkButton href="/admin/cms/resources" variant="outline" size="sm">Resources</LinkButton>}

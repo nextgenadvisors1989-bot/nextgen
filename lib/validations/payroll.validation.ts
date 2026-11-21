@@ -375,8 +375,8 @@ export const leaveTypeSchema = z.object({
 
 /** The window every payroll dashboard reads: a month, an employer, a unit. */
 export const payrollWindowQuerySchema = z.object({
-  month: z.coerce.number().int().min(1).max(12).optional().default(new Date().getMonth() + 1),
-  year: z.coerce.number().int().min(2000).max(2100).optional().default(new Date().getFullYear()),
+  month: z.coerce.number().int().min(1).max(12).optional().default(() => new Date().getMonth() + 1),
+  year: z.coerce.number().int().min(2000).max(2100).optional().default(() => new Date().getFullYear()),
   employer_id: z.union([z.coerce.number().int().positive(), z.literal('all'), z.literal('')]).optional(),
   unit_id: z.union([z.coerce.number().int().positive(), z.literal('all'), z.literal('')]).optional(),
 });

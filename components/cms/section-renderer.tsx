@@ -101,7 +101,7 @@ function Icon({ path }: { path?: string | null }) {
 function ActionLink({ href, label, primary = true }: { href?: string | null; label?: string | null; primary?: boolean }) {
   if (!href || !label) return null;
   const classes = primary
-    ? 'rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600'
+    ? 'rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700'
     : 'rounded-lg border border-line px-5 py-2.5 text-sm font-semibold text-ink-soft transition-colors hover:bg-surface-muted';
   if (/^https?:\/\//.test(href)) {
     return (
@@ -197,7 +197,7 @@ export function CmsSectionBlock({ section }: { section: CmsSection }) {
                   <ul className="mt-4 space-y-2">
                     {item.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-start gap-2 text-sm text-ink-soft">
-                        <span className="mt-0.5 text-emerald-600">✓</span>
+                        <span className="mt-0.5 text-emerald-700">✓</span>
                         <span>{feature}</span>
                       </li>
                     ))}

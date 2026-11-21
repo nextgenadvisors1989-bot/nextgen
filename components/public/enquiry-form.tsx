@@ -1,23 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { api, fieldErrors } from '@/lib/utils/api-client';
 import { SiteIcon } from '@/components/public/icons';
 
-const SERVICES = [
-  'Zero Liquid Discharge / ETP Advisory',
-  'IS 14489 Safety Audit & DISH License',
-  'GHG Protocol Carbon Footprint (Scope 1-3)',
-  'GOTS / GRS / Textile Exchange Certification',
-  'TNPCB CTO Red Category Renewal & Defense',
-];
-
-const EMPTY = { company_name: '', contact_person: '', email: '', phone: '', district_state: 'Tirupur, Tamil Nadu', service: SERVICES[0], notes: '' };
-const FIELD = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs font-medium text-[#0B2545] focus:border-[#0B2545] focus:outline-none';
+const OTHER = 'Something else / not sure yet';
+const EMPTY = { company_name: '', contact_person: '', email: '', phone: '', district_state: '', service: '', notes: '' };
+const FIELD = 'w-full rounded-sm border border-slate-400 bg-white px-3.5 py-3 text-base text-[#0B1E36] placeholder:text-slate-400 focus:border-[#0B1E36] focus:outline-none focus:ring-2 focus:ring-[#C59B27]/60';
+const LABEL = 'mb-1.5 block text-sm font-bold text-[#0B1E36]';
 
 /** The "Official Plant Audit Request Form": every submission lands in the admin's Contact Enquiries inbox. */
-export function EnquiryForm() {
-  const [form, setForm] = useState({ ...EMPTY });
+export function EnquiryForm({ services = [] }: { services?: string[] }) {
+  const uid = useId();
+  const options = [...services, OTHER];
+  const [form, setForm] = useState({ ...EMPTY, service: options[0] });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [state, setState] = useState<'idle' | 'sending' | 'done'>('idle');
 
@@ -34,7 +30,7 @@ export function EnquiryForm() {
       mobile: form.phone,
       company_name: form.company_name,
       subject: form.service,
-      message: `Service requested: ${form.service}\nDistrict / State: ${form.district_state}\n\n${form.notes || 'No further scope provided.'}`,
+      message: `Service requested: ${form.service}\nDistrict / State: ${form.district_state || 'not given'}\n\n${form.notes || 'No further scope provided.'}`,
       enquiry_type: 'sales',
       website: '',
     });
@@ -45,62 +41,69 @@ export function EnquiryForm() {
       return;
     }
     setState('done');
-    setForm({ ...EMPTY });
-    setTimeout(() => setState('idle'), 6000);
+    setForm({ ...EMPTY, service: options[0] });
   }
 
+  const id = (name: string) => `${uid}-${name}`;
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-md sm:p-8">
-      <div>
-        <h3 className="text-lg font-bold text-[#0B2545]">Official Plant Audit Request Form</h3>
-        <p className="mt-0.5 text-xs text-slate-500">Submit your manufacturing plant details for statutory scoping and pre-audit proposal</p>
-      </div>
+    <div className="rounded-sm border border-[#0B1E36]/25 bg-white p-6 shadow-[6px_6px_0_0_rgba(11,30,54,0.08)] sm:p-8">
+      <h3 className="font-display text-2xl font-semibold text-[#0B1E36]">Request a plant audit</h3>
+      <p className="mt-1 text-[15px] text-slate-600">Tell us about your plant. Fields marked * are needed.</p>
 
-      <form onSubmit={submit} className="space-y-4 text-xs">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <label className="block"><span className="mb-1 block font-bold text-slate-700">Company / Factory Name *</span>
-            <input required className={FIELD} placeholder="e.g. Shakthi Knitting Unit #2" value={form.company_name} onChange={set('company_name')} />
-            {errors.company_name && <span className="mt-1 block text-red-600">{errors.company_name}</span>}
-          </label>
-          <label className="block"><span className="mb-1 block font-bold text-slate-700">Contact Person & Designation *</span>
-            <input required className={FIELD} placeholder="e.g. S. Raman (EHS General Manager)" value={form.contact_person} onChange={set('contact_person')} />
-            {errors.name && <span className="mt-1 block text-red-600">{errors.name}</span>}
-          </label>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <label className="block"><span className="mb-1 block font-bold text-slate-700">Official Email Address *</span>
-            <input required type="email" className={FIELD} placeholder="ehs@company.com" value={form.email} onChange={set('email')} />
-            {errors.email && <span className="mt-1 block text-red-600">{errors.email}</span>}
-          </label>
-          <label className="block"><span className="mb-1 block font-bold text-slate-700">Phone / Mobile Number *</span>
-            <input required type="tel" className={FIELD} placeholder="+91 98422 00000" value={form.phone} onChange={set('phone')} />
-            {errors.mobile && <span className="mt-1 block text-red-600">{errors.mobile}</span>}
-          </label>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <label className="block"><span className="mb-1 block font-bold text-slate-700">Manufacturing District & State</span>
-            <input className={FIELD} value={form.district_state} onChange={set('district_state')} />
-          </label>
-          <label className="block"><span className="mb-1 block font-bold text-slate-700">Advisory Service Required</span>
-            <select className={FIELD} value={form.service} onChange={set('service')}>
-              {SERVICES.map((service) => <option key={service} value={service}>{service}</option>)}
-            </select>
-          </label>
-        </div>
-        <label className="block"><span className="mb-1 block font-bold text-slate-700">Specific Plant Scope / Requirements</span>
-          <textarea rows={3} className={FIELD} placeholder="Describe your plant capacity (e.g. 500 KLD ETP, 10 Ton/day dyeing), current permits or notice status..." value={form.notes} onChange={set('notes')} />
-        </label>
-
-        {errors.form && <div className="rounded-xl border border-red-200 bg-red-50 p-3 font-semibold text-red-700">{errors.form}</div>}
-        {state === 'done' && (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 font-bold text-emerald-800">
-            Your official plant audit enquiry has been sent to our team. We will respond within one working day.
+      <form onSubmit={submit} className="mt-6 space-y-5" noValidate={false}>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor={id('company')} className={LABEL}>Company / factory name *</label>
+            <input id={id('company')} required autoComplete="organization" className={FIELD} value={form.company_name} onChange={set('company_name')} aria-invalid={Boolean(errors.company_name)} />
+            {errors.company_name && <p className="mt-1 text-sm font-medium text-red-700">{errors.company_name}</p>}
           </div>
-        )}
+          <div>
+            <label htmlFor={id('person')} className={LABEL}>Contact person *</label>
+            <input id={id('person')} required autoComplete="name" className={FIELD} value={form.contact_person} onChange={set('contact_person')} aria-invalid={Boolean(errors.name)} />
+            {errors.name && <p className="mt-1 text-sm font-medium text-red-700">{errors.name}</p>}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor={id('email')} className={LABEL}>E-mail *</label>
+            <input id={id('email')} required type="email" autoComplete="email" className={FIELD} value={form.email} onChange={set('email')} aria-invalid={Boolean(errors.email)} />
+            {errors.email && <p className="mt-1 text-sm font-medium text-red-700">{errors.email}</p>}
+          </div>
+          <div>
+            <label htmlFor={id('phone')} className={LABEL}>Mobile number *</label>
+            <input id={id('phone')} required type="tel" inputMode="tel" autoComplete="tel" className={FIELD} value={form.phone} onChange={set('phone')} aria-invalid={Boolean(errors.mobile)} />
+            {errors.mobile && <p className="mt-1 text-sm font-medium text-red-700">{errors.mobile}</p>}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor={id('place')} className={LABEL}>District & state</label>
+            <input id={id('place')} autoComplete="address-level2" className={FIELD} placeholder="Where is the plant?" value={form.district_state} onChange={set('district_state')} />
+          </div>
+          <div>
+            <label htmlFor={id('service')} className={LABEL}>What do you need?</label>
+            <select id={id('service')} className={FIELD} value={form.service} onChange={set('service')}>
+              {options.map((service) => <option key={service} value={service}>{service}</option>)}
+            </select>
+          </div>
+        </div>
+        <div>
+          <label htmlFor={id('notes')} className={LABEL}>About your plant (optional)</label>
+          <textarea id={id('notes')} rows={4} className={FIELD} placeholder="What you make, how many people work there, any notice or renewal that is due." value={form.notes} onChange={set('notes')} />
+        </div>
 
-        <button type="submit" disabled={state === 'sending'} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0B2545] py-3.5 text-xs font-extrabold text-white shadow-md transition-all hover:bg-[#133B5C] disabled:opacity-60">
-          <span>{state === 'sending' ? 'Sending...' : 'Dispatch Statutory Audit Request'}</span>
-          <SiteIcon name="send" className="h-4 w-4 text-amber-400" />
+        <div aria-live="polite">
+          {errors.form && <div role="alert" className="rounded-sm border border-red-300 bg-red-50 p-3 text-[15px] font-semibold text-red-800">{errors.form}</div>}
+          {state === 'done' && (
+            <div role="status" className="rounded-sm border border-emerald-300 bg-emerald-50 p-3.5 text-[15px] font-semibold text-emerald-900">
+              Thank you — your enquiry has reached our team. We will contact you on the e-mail or mobile number you gave.
+            </div>
+          )}
+        </div>
+
+        <button type="submit" disabled={state === 'sending'} className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-sm bg-[#0B1E36] px-6 text-base font-bold text-white transition-colors hover:bg-[#16365c] disabled:opacity-60 motion-reduce:transition-none">
+          <span>{state === 'sending' ? 'Sending…' : 'Send enquiry'}</span>
+          <SiteIcon name="send" className="h-4 w-4 text-[#C59B27]" />
         </button>
       </form>
     </div>

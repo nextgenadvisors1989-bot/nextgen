@@ -27,7 +27,7 @@ export default function BillGenerationPage() {
           <ol className="grid gap-4 md:grid-cols-2">
             {STEPS.map(([title, text], i) => (
               <li key={title} className="flex gap-4 rounded-xl border border-line bg-white p-5">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white" aria-hidden>{i + 1}</span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white" aria-hidden>{i + 1}</span>
                 <span><span className="block text-base font-bold text-ink">{title}</span><span className="mt-1 block text-sm leading-relaxed text-ink-muted">{text}</span></span>
               </li>
             ))}
@@ -36,7 +36,7 @@ export default function BillGenerationPage() {
             <div className="rounded-xl border border-line bg-surface-muted p-6">
               <h2 className="text-lg font-bold text-ink">Already a client?</h2>
               <p className="mt-2 text-sm leading-relaxed text-ink-muted">Sign in to your client portal and open <strong>Billing</strong> to view and download your quotations, tax invoices and receipts.</p>
-              <Link href="/login?next=/employer/billing" className="mt-4 inline-block rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-600">Sign in to Billing</Link>
+              <Link href="/login?next=/employer/billing" className="mt-4 inline-block rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">Sign in to Billing</Link>
             </div>
             <div className="rounded-xl border border-line bg-surface-muted p-6">
               <h2 className="text-lg font-bold text-ink">Need a quotation first?</h2>

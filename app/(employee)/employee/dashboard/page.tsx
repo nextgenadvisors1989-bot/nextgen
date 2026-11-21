@@ -3,6 +3,7 @@ import { requirePageUser } from '@/lib/auth/permission-check';
 import { getEmployeeDashboardData } from '@/services/dashboard.service';
 import { EmployeeDashboard } from '@/components/dashboards/employee-dashboard';
 import { Card, CardBody } from '@/components/ui/card';
+import { StartHere } from '@/components/help/start-here';
 
 export const metadata: Metadata = { title: 'My Dashboard' };
 export const dynamic = 'force-dynamic';
@@ -31,5 +32,10 @@ export default async function EmployeeDashboardPage() {
   }
 
   const data = await getEmployeeDashboardData(user.employeeId, user.employerId ?? 0);
-  return <EmployeeDashboard data={data} userName={user.fullName} />;
+  return (
+    <div className="space-y-6">
+      <StartHere role="employee" limit={3} permissions={user.permissions} />
+      <EmployeeDashboard data={data} userName={user.fullName} />
+    </div>
+  );
 }

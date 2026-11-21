@@ -19,7 +19,7 @@ export const PERMISSION_MODULES = [
   'compliance_act', 'compliance_rule', 'compliance_regulation', 'compliance_notification',
   'compliance_document', 'verifier', 'calendar', 'holiday', 'payroll', 'payslip', 'attendance',
   'leave', 'salary_structure', 'file', 'notification', 'cms_page', 'cms_media', 'cms_resource',
-  'report', 'activity_log', 'settings', 'user', 'contact_enquiry', 'capar', 'capar_category', 'water_noc', 'billing', 'designation', 'evidence',
+  'report', 'activity_log', 'settings', 'user', 'contact_enquiry', 'capar', 'capar_category', 'water_noc', 'billing', 'designation', 'evidence', 'data_management',
 ] as const;
 
 export const PERMISSION_ACTIONS = [
@@ -121,6 +121,8 @@ export const DEFAULT_ROLE_GRANTS: RoleGrantRule[] = [
       water_noc: ['create', 'read', 'update', 'export', 'download', 'upload'],
       employer: ['read'],
       employee: ['read'],
+      // Data Management: an auditor reads and exports any company's records (nothing can be entered or changed).
+      data_management: ['read', 'export'],
       // An auditor maintains the meetings that hang off its own audits: it may
       // add one, move it, and remove one it created by mistake.
       calendar: ['read', 'create', 'update', 'delete', 'export'],
@@ -148,6 +150,9 @@ export const DEFAULT_ROLE_GRANTS: RoleGrantRule[] = [
       designation: ['create', 'read', 'update', 'delete'],
       // The employer fills its own document pack, attaches files and submits it.
       evidence: ['create', 'read', 'update', 'delete', 'download', 'upload'],
+      // Data Management: the company enters its daily data, verifies what its staff enter and exports it. An employee gets create/read/update
+      // only when the employer switches "data entry" on for that employee (lib/auth/auth.ts).
+      data_management: ['create', 'read', 'update', 'delete', 'verify', 'export', 'upload', 'download'],
       module: ['read'],
       form: ['read'],
       submission: ['create', 'read', 'update', 'delete', 'download', 'upload'],

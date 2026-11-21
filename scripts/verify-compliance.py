@@ -670,15 +670,15 @@ def main():
     # ── the panels themselves ─────────────────────────────────────────────
     print("\n[10] Panel pages")
     pages = [
-        ("/admin/compliance/acts", "Compliance Acts"),
+        ("/admin/compliance/acts", "Acts &amp; Rules"),
         ("/admin/compliance/acts/create", "Add an Act"),
         (f"/admin/compliance/acts/{factories['id']}", factories["act_name"]),
         (f"/admin/compliance/acts/{factories['id']}/edit", "Edit"),
-        ("/admin/compliance/rules", "Compliance Obligations"),
+        ("/admin/compliance/notices?tab=rules", "Obligations"),
         ("/admin/compliance/rules/create", "Add an Obligation"),
-        ("/admin/compliance/regulations", "Compliance Regulations"),
-        ("/admin/compliance/notifications", "Gazette Notifications"),
-        ("/admin/compliance/documents", "Compliance Documents"),
+        ("/admin/compliance/notices?tab=regulations", "Regulations"),
+        ("/admin/compliance/notices?tab=notifications", "Gazette notifications"),
+        ("/admin/compliance/documents", "Employer Documents"),
         ("/admin/compliance/documents/create", "Record a Document"),
         (f"/admin/compliance/documents/{expiring_document}", "Pollution Consent"),
         (f"/admin/compliance/documents/{expiring_document}/edit", "Edit"),

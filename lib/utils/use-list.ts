@@ -85,7 +85,8 @@ export function useList<T = Record<string, unknown>>({
     (async () => {
       setLoading(true);
       setError(null);
-      const result = await api.get<T[]>(`${endpoint}?${queryString}`);
+      // an endpoint may already carry a query string (a month, an employer): the list's own paging and filters are added with & then
+      const result = await api.get<T[]>(`${endpoint}${endpoint.includes('?') ? '&' : '?'}${queryString}`);
       // Ignore out-of-order responses (fast typing in the search box).
       if (cancelled || current !== requestId.current) return;
 

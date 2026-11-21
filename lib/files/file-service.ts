@@ -444,6 +444,14 @@ async function nocBelongsToEmployer(nocId: number | null, employerId: number | n
   return Boolean(row);
 }
 
+/** A Data Management attachment (a meter photo, weighbridge slip ...) belongs to the company whose record it is on. */
+async function dataEntryEmployer(entryId: number | null): Promise<number | null> {
+  if (!entryId) return null;
+  const row = await queryOne<{ employer_id: number } & RowDataPacket>('SELECT employer_id FROM dm_entries WHERE id = ? AND deleted_at IS NULL LIMIT 1', [entryId]);
+  return row ? Number(row.employer_id) : null;
+}
+const isDataEntryFile = (file: StoredFileRow) => file.entity_type === 'OTHER' && file.category === 'Data Management';
+
 /**
  * Panel-aware read rule for the vault:
  *   admin / super_admin  → everything
@@ -467,11 +475,16 @@ export async function canAccessFile(user: AuthUser, file: StoredFileRow): Promis
     }
     if (file.entity_type === 'CAPAR') return caparBelongsToEmployer(file.entity_id, user.employerId);
     if (file.entity_type === 'WATER_NOC') return nocBelongsToEmployer(file.entity_id, user.employerId);
+    if (isDataEntryFile(file)) return (await dataEntryEmployer(file.entity_id)) === Number(user.employerId);
     return false;
   }
 
   if (slugs.includes('employee')) {
     if (file.access_level === 'restricted') return false;
+    if (isDataEntryFile(file) && user.permissions.includes('data_management.read') && user.employeeId) {
+      const mine = await queryOne<{ employer_id: number } & RowDataPacket>('SELECT employer_id FROM employees WHERE id = ? LIMIT 1', [user.employeeId]);
+      return Boolean(mine) && (await dataEntryEmployer(file.entity_id)) === Number(mine!.employer_id);
+    }
     if (file.entity_type === 'EMPLOYEE') return Number(file.entity_id) === Number(user.employeeId);
     if (file.entity_type === 'PAYSLIP') return payslipBelongsToEmployee(file.entity_id, user.employeeId);
     return false;

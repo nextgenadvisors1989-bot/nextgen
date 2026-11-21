@@ -131,7 +131,7 @@ export function Topbar({ user, onMenuClick, notifications = [], unreadCount = 0,
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             {unreadCount > 0 && (
-              <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+              <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[11px] font-semibold text-white">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
@@ -177,6 +177,9 @@ export function Topbar({ user, onMenuClick, notifications = [], unreadCount = 0,
               setUserMenuOpen((value) => !value);
               setNotifOpen(false);
             }}
+            aria-label={`Account menu for ${user.fullName}`}
+            aria-haspopup="menu"
+            aria-expanded={userMenuOpen}
             className="flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-surface-muted"
           >
             <Avatar name={user.fullName} src={user.profilePhoto} size={32} />

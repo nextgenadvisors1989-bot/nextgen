@@ -28,7 +28,7 @@ export default async function EmployerProfileEditPage() {
           title="Correct Company Details"
           breadcrumbs={[
             { label: 'Dashboard', href: '/employer/dashboard' },
-            { label: 'Company Profile', href: '/employer/profile' },
+            { label: 'Company & Factory Profile', href: '/employer/profile' },
             { label: 'Correct Details' },
           ]}
         />
@@ -48,7 +48,7 @@ export default async function EmployerProfileEditPage() {
         description="Your establishment's own file. Save when you are done — the change is written to the activity log."
         breadcrumbs={[
           { label: 'Dashboard', href: '/employer/dashboard' },
-          { label: 'Company Profile', href: '/employer/profile' },
+          { label: 'Company & Factory Profile', href: '/employer/profile' },
           { label: 'Correct Details' },
         ]}
       />

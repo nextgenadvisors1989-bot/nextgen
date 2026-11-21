@@ -47,7 +47,7 @@ export function Tabs({ items, defaultTab, onChange, className, variant = 'underl
                   ? isActive
                     ? 'text-brand-600'
                     : 'text-ink-muted hover:text-ink-soft'
-                  : clsx('rounded-lg', isActive ? 'bg-brand-500 text-white' : 'text-ink-soft hover:bg-surface-muted')
+                  : clsx('rounded-lg', isActive ? 'bg-brand-600 text-white' : 'text-ink-soft hover:bg-surface-muted')
               )}
             >
               <span className="inline-flex items-center gap-2">

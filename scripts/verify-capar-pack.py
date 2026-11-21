@@ -63,12 +63,17 @@ check("a sub section needs a section", admin.send("POST", P, {"kind": "Sub Secti
 check("a section cannot sit under a section", admin.send("POST", P, {"kind": "Section", "parent_id": sec, "title": "ZZ TEST bad"})[0] == 422)
 check("a chapter cannot have a parent", admin.send("POST", P, {"kind": "Chapter", "parent_id": ch, "title": "ZZ TEST bad"})[0] == 422)
 check("a title is required", admin.send("POST", P, {"kind": "Chapter", "title": ""})[0] == 422)
+def provision(pid):
+    body = data(admin.send("GET", f"{P}/{pid}")) or {}
+    return body.get("data", body)
+
 tree = data(admin.send("GET", P)) or {}
 mine = next((n for n in tree.get("tree", []) if n["id"] == ch), None)
 check("the tree nests chapter > section > sub section", bool(mine) and mine["children"][0]["id"] == sec and mine["children"][0]["children"][0]["id"] == sub)
-check("amendments come back with the section", mine and mine["children"][0]["amendments"][0]["reference"] == "Act 12 of 2020")
+# the outline tree is light on purpose (an Act has hundreds of sections); the text and amendments come with the single provision
+check("amendments come back with the section", (provision(sec).get("amendments") or [{}])[0].get("reference") == "Act 12 of 2020")
 check("a section can be edited", admin.send("PUT", f"{P}/{sec}", {"kind": "Section", "parent_id": ch, "number": "ZZ-46", "title": "ZZ TEST Canteens (edited)", "amendments": []})[0] == 200)
-check("editing replaces the amendments", (data(admin.send("GET", P)) or {})["tree"][[n["id"] for n in data(admin.send("GET", P))["tree"]].index(ch)]["children"][0]["amendments"] == [])
+check("editing replaces the amendments", provision(sec).get("amendments") == [])
 check("a provision cannot move under its own descendant", admin.send("PUT", f"{P}/{sec}", {"kind": "Section", "parent_id": sub, "title": "ZZ TEST loop"})[0] == 422)
 check("an auditor cannot edit the Act library", priya.send("POST", P, {"kind": "Chapter", "title": "ZZ TEST no"})[0] in (401, 403))
 check("an employer cannot edit the Act library", balaji.send("POST", P, {"kind": "Chapter", "title": "ZZ TEST no"})[0] in (401, 403))
@@ -144,23 +149,27 @@ check("an auditor cannot submit for an employer", priya.send("POST", "/api/evide
 aud = data(priya.send("GET", "/api/evidence/auditor/employers")) or {}
 row2 = next((e for e in aud.get("employers", []) if e["id"] == 2), None)
 check("the auditor list shows the latest submission and no download yet", bool(row2) and row2["latest"]["id"] == sub1 and row2["downloaded_at"] is None, str(row2))
-status, body = priya.send("POST", "/api/capar", {"employer_id": 2, "title": "ZZ TEST CAPAR gate"})
-check("a CAPAR cannot be started before the pack is downloaded", status == 409 and "Download" in str(body), f"{status} {str(body)[:200]}")
+# A CAPAR is started from an audit the administrator assigned; the employer's document pack is only a reminder now (not a gate).
+my_audits = data(priya.send("GET", "/api/capar/lookups?type=myaudits")) or []
+audit2 = next((a for a in my_audits if int(a["employerId"]) == 2), None)
+audit_type = (data(priya.send("GET", "/api/compliance-register/types")) or [{}])[0].get("id")
+check("the auditor's assigned audit tells whether the pack was submitted", bool(audit2) and audit2.get("packSubmitted") is True, str(audit2))
+
+
+def start(title, audit=audit2, who=priya):
+    return who.send("POST", "/api/capar", {"assignment_id": int(audit["value"]), "audit_type_id": audit_type, "audit_purpose": "ZZ TEST verification run", "title": title})
+
+
+status, body = start("ZZ TEST CAPAR gate")
+rid = (data((status, body)) or {}).get("id")
+check("a CAPAR can be started before the pack is downloaded (the pack is only a reminder)", status in (200, 201) and rid, f"{status} {str(body)[:200]}")
 pdf = priya.send("GET", f"/api/pdf/evidence-pack/{sub1}", raw=True)
 check("the auditor downloads the pack as a PDF", pdf[0] == 200 and pdf[1][:4] == b"%PDF" and len(pdf[1]) > 2000, f"{pdf[0]} {len(pdf[1])}")
 check("the download is recorded", int(db(f"SELECT COUNT(*) FROM evidence_pack_downloads WHERE submission_id = {sub1} AND auditor_id = {priya_id}")[0][0]) == 1)
-status, body = priya.send("POST", "/api/capar", {"employer_id": 2, "title": "ZZ TEST CAPAR gate"})
-rid = (data((status, body)) or {}).get("id")
-check("after the download the CAPAR can be started", status in (200, 201) and rid, f"{status} {str(body)[:200]}")
-check("another auditor is still held up", karthik.send("POST", "/api/capar", {"employer_id": 2, "title": "ZZ TEST CAPAR gate 2"})[0] == 409)
-status, body = priya.send("POST", "/api/capar", {"employer_id": 3, "title": "ZZ TEST CAPAR none"})
-check("a company that has submitted nothing blocks the CAPAR with a clear reason", status == 409 and "not submitted" in str(body), f"{status} {str(body)[:200]}")
-check("the administrator is never held up", (lambda r: r[0] in (200, 201))(admin.send("POST", "/api/capar", {"employer_id": 3, "title": "ZZ TEST CAPAR admin", "auditor_id": priya_id})))
-balaji.send("POST", "/api/evidence/employers/me/submit", {"note": "ZZ TEST second"})
-status, body = priya.send("POST", "/api/capar", {"employer_id": 2, "title": "ZZ TEST CAPAR gate 3"})
-check("a newer submission must be downloaded again", status == 409, f"{status}")
+status, body = priya.send("POST", "/api/capar", {"employer_id": 2, "title": "ZZ TEST CAPAR no audit"})
+check("a CAPAR cannot be started without choosing an assigned audit", status == 422, f"{status} {str(body)[:200]}")
+check("another auditor cannot start a report on this audit", start("ZZ TEST CAPAR other", who=karthik)[0] in (403, 422))
 admin.send("PUT", f"/api/evidence/access/{karthik_id}", {"section_ids": []})
-check("an auditor given no sections has nothing to download and is not held up", karthik.send("POST", "/api/capar", {"employer_id": 3, "title": "ZZ TEST CAPAR k"})[0] in (200, 201))
 check("an auditor given no sections gets no checklist and no PDF", len(data(karthik.send("GET", "/api/evidence/employers/2"))["sections"]) == 0 and karthik.send("GET", f"/api/pdf/evidence-pack/{sub1}", raw=True)[0] == 403)
 admin.send("PUT", f"/api/evidence/access/{karthik_id}", {"section_ids": sections_all})
 admin.send("PUT", f"/api/evidence/access/{priya_id}", {"section_ids": sections_all[:1]})
@@ -175,7 +184,7 @@ print("== CAPAR item form")
 db("DELETE FROM evidence_pack_downloads WHERE auditor_id = %d" % priya_id)
 latest = data(balaji.send("GET", "/api/evidence/employers/me"))["latest"]["id"]
 priya.send("GET", f"/api/pdf/evidence-pack/{latest}", raw=True)
-status, body = priya.send("POST", "/api/capar", {"employer_id": 2, "title": "ZZ TEST CAPAR item form"})
+status, body = start("ZZ TEST CAPAR item form")
 rid = (data((status, body)) or {}).get("id")
 check("a report for the item-form checks", rid)
 F = f"/api/capar/{rid}/findings"

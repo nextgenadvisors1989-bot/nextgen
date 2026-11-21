@@ -423,20 +423,10 @@ export async function moduleAccessFor(moduleId: number, userId: number, roleSlug
   }
   if (!roleSlug) return null;
   if (roleSlug === 'auditor') {
-    // An auditor works the forms mapped to their auditor type, the ones assigned to them by name, and every form that an active Audit and Assessment
-    // entry offers (any auditor may do any audit on that list, for any company).
-    const mapped = await queryOne<RowDataPacket>(
-      `SELECT atm.id FROM auditor_type_modules atm
-         JOIN auditors a ON a.auditor_type_id = atm.auditor_type_id AND a.user_id = ? AND a.deleted_at IS NULL
-        WHERE atm.module_id = ?
-       UNION ALL
-       SELECT atf.id FROM audit_type_forms atf
-         JOIN audit_types t ON t.id = atf.audit_type_id AND t.deleted_at IS NULL AND t.status = 'active'
-         JOIN dynamic_forms f ON f.id = atf.form_id AND f.deleted_at IS NULL AND f.status = 'published'
-        WHERE f.module_id = ? LIMIT 1`,
-      [userId, moduleId, moduleId]
-    );
-    return mapped
+    // Nobody hands an auditor their forms: whoever goes to audit a company or factory may do any audit on it, so every published module is open to every
+    // auditor (the administrator can still assign an unpublished module to a named auditor for testing, handled above).
+    const published = await queryOne<RowDataPacket>("SELECT id FROM dynamic_modules WHERE id = ? AND deleted_at IS NULL AND status = 'published'", [moduleId]);
+    return published
       ? { role: 'auditor', can_create: true, can_read: true, can_update: true, can_delete: false, can_approve: false }
       : null;
   }
@@ -468,17 +458,10 @@ export async function modulesForUser(userId: number, roleSlug: string | null, op
   let sql: string;
 
   if (roleSlug === 'auditor') {
-    // Auditors: the forms of their own auditor type, plus anything assigned to them personally.
-    sql = `
-      SELECT DISTINCT ${columns}
-      FROM dynamic_modules m
-      WHERE m.deleted_at IS NULL AND (
-        EXISTS (SELECT 1 FROM dynamic_module_user_assignments ua WHERE ua.module_id = m.id AND ua.user_id = ?)
-        OR EXISTS (SELECT 1 FROM auditor_type_modules atm
-                     JOIN auditors a ON a.auditor_type_id = atm.auditor_type_id AND a.user_id = ? AND a.deleted_at IS NULL
-                    WHERE atm.module_id = m.id)
-      )`;
-    params.push(userId, userId);
+    // Auditors see every module (see moduleAccessFor): any auditor may do any audit.
+    sql = `SELECT DISTINCT ${columns} FROM dynamic_modules m WHERE m.deleted_at IS NULL
+             AND (m.status = 'published' OR EXISTS (SELECT 1 FROM dynamic_module_user_assignments ua WHERE ua.module_id = m.id AND ua.user_id = ?))`;
+    params.push(userId);
   } else {
     sql = `
       SELECT DISTINCT ${columns}

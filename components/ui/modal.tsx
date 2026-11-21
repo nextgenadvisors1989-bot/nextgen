@@ -125,7 +125,7 @@ export function ConfirmDialog({
             disabled={loading}
             className={clsx(
               'rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-60',
-              variant === 'danger' ? 'bg-red-600 hover:bg-red-700' : variant === 'warning' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-brand-500 hover:bg-brand-600'
+              variant === 'danger' ? 'bg-red-600 hover:bg-red-700' : variant === 'warning' ? 'bg-amber-700 hover:bg-amber-800' : 'bg-brand-600 hover:bg-brand-700'
             )}
           >
             {loading ? 'Working…' : confirmLabel}

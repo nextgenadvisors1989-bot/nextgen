@@ -68,9 +68,10 @@ for code, session in auditors.items():
     forms_by_type[code] = text_
     check(f"{code} auditor can list forms", status == 200, f"{status}")
 check("water auditor sees STP assessment", "STP Functionality Assessment" in forms_by_type["WATER"])
-check("water auditor does not see Energy Audit", "Energy Audit" not in forms_by_type["WATER"])
+# Any auditor may do any audit (2026-11-14): nothing is hidden by auditor type any more.
+check("a water auditor sees Energy Audit too", "Energy Audit" in forms_by_type["WATER"])
 check("GHG auditor sees Energy Audit and GHG verification", "Energy Audit" in forms_by_type["GHG"] and "GHG Inventory Verification" in forms_by_type["GHG"])
-check("GHG auditor does not see the permits", "Confined Space Entry Permit" not in forms_by_type["GHG"])
+check("a GHG auditor sees the permits too", "Confined Space Entry Permit" in forms_by_type["GHG"])
 check("fire auditor sees Work at Height Permit", "Work at Height Permit" in forms_by_type["FIRE"])
 check("env auditor sees TSDF audit and Environmental Statement", "TSDF Audit" in forms_by_type["ENV"] and "Environmental Statement (Form V)" in forms_by_type["ENV"])
 

@@ -57,7 +57,7 @@ export function WizardProgress({ steps, currentIndex, onStepClick, completedStep
                 onClick={() => onStepClick?.(index)}
                 className={clsx(
                   'flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors',
-                  isActive ? 'bg-brand-500 text-white' : isDone ? 'bg-emerald-50 text-emerald-700' : 'bg-surface-muted text-ink-muted hover:bg-slate-200'
+                  isActive ? 'bg-brand-600 text-white' : isDone ? 'bg-emerald-50 text-emerald-700' : 'bg-surface-muted text-ink-muted hover:bg-slate-200'
                 )}
               >
                 <span className={clsx('flex h-5 w-5 items-center justify-center rounded-full text-[11px]', isActive ? 'bg-white/25' : isDone ? 'bg-emerald-200' : 'bg-slate-200')}>

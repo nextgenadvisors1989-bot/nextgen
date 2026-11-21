@@ -23,7 +23,7 @@ export default async function CalculatorsPage({ searchParams }: { searchParams: 
         <div className="mx-auto max-w-5xl px-4 lg:px-8">
           <Calculators initial={tool} />
           <div className="mt-10 flex flex-wrap gap-3">
-            <Link href="/quotation" className="rounded-lg bg-brand-500 px-6 py-3 text-sm font-semibold text-white hover:bg-brand-600">Get a quotation</Link>
+            <Link href="/quotation" className="rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white hover:bg-brand-700">Get a quotation</Link>
             <Link href="/contact" className="rounded-lg border border-line bg-white px-6 py-3 text-sm font-semibold text-ink-soft hover:bg-surface-muted">Talk to an expert</Link>
           </div>
         </div>

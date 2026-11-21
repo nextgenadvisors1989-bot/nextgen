@@ -205,7 +205,7 @@ export function RoleDetail({
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {dirty && (
-                        <span className="text-[12px] text-amber-600">
+                        <span className="text-[12px] text-amber-700">
                           {added.length} to grant · {removed.length} to revoke
                         </span>
                       )}

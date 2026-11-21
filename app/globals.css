@@ -54,11 +54,11 @@ html, body {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
            transition-all duration-150 ease-in-out disabled:cursor-not-allowed disabled:opacity-60;
   }
-  .btn-primary { @apply bg-brand-500 text-white hover:-translate-y-[2px] hover:bg-brand-600 hover:shadow-md; }
+  .btn-primary { @apply bg-brand-600 text-white hover:-translate-y-[2px] hover:bg-brand-700 hover:shadow-md; }
   .btn-outline { @apply border border-line bg-white text-ink-soft hover:-translate-y-[2px] hover:border-brand-300 hover:text-brand-600; }
   .btn-ghost { @apply text-ink-soft hover:bg-surface-muted; }
   .btn-danger { @apply bg-red-600 text-white hover:-translate-y-[2px] hover:bg-red-700; }
-  .btn-success { @apply bg-emerald-600 text-white hover:-translate-y-[2px] hover:bg-emerald-700; }
+  .btn-success { @apply bg-emerald-700 text-white hover:-translate-y-[2px] hover:bg-emerald-800; }
   .btn-warning { @apply bg-amber-500 text-white hover:-translate-y-[2px] hover:bg-amber-600; }
   .btn-sm { @apply px-3 py-1.5 text-[13px]; }
   .btn-lg { @apply px-6 py-2.5 text-base; }
@@ -141,11 +141,15 @@ html, body {
 
 /* Public website palette: the inner pages (about, services, resources, ...) are written with the app's blue "brand"
    scale; inside the public layout it is remapped to the site's navy and gold so every page matches the home page. */
-.public-theme .bg-brand-500, .public-theme .bg-brand-600 { background-color: #c59b27; }
-.public-theme .hover\:bg-brand-600:hover, .public-theme .hover\:bg-brand-700:hover { background-color: #b0881e; }
+/* white text sits on these fills (buttons, badges): the deeper brass keeps it readable (5.4:1) */
+.public-theme .bg-brand-500, .public-theme .bg-brand-600 { background-color: #8a6612; }
+.public-theme .hover\:bg-brand-600:hover { background-color: #b0881e; }
+.public-theme .hover\:bg-brand-700:hover { background-color: #6f520e; }
 .public-theme .bg-brand-50, .public-theme .bg-brand-100, .public-theme .hover\:bg-brand-100:hover { background-color: #fef7e0; }
 .public-theme .text-brand-600, .public-theme .text-brand-700, .public-theme .text-brand-800, .public-theme .text-brand-900,
-.public-theme .hover\:text-brand-600:hover { color: #9a7518; }
+.public-theme .hover\:text-brand-600:hover { color: #8a6612; }
+.public-theme .link { color: #8a6612; }
+.public-theme .link:hover { color: #6f520e; }
 .public-theme .border-brand-500, .public-theme .border-brand-300 { border-color: #c59b27; }
 .public-theme .accent-brand-500 { accent-color: #c59b27; }
 .public-theme .focus\:border-brand-500:focus, .public-theme .focus\:ring-brand-500:focus { border-color: #c59b27; --tw-ring-color: #c59b27; }

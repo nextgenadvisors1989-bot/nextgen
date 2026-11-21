@@ -69,11 +69,33 @@ export async function listTypes(actor: RegisterActor) {
     list.push({ id: n(link.form_id), name: String(link.form_name), canOpen: await canOpen(n(link.module_id)) });
     byType.set(n(link.audit_type_id), list);
   }
-  return rows.map((r) => {
+  const listed = rows.map((r) => {
     const forms = byType.get(n(r.id)) ?? [];
     // formId, formName and canOpen describe the first form, for callers written when an entry opened a single form.
     return { id: n(r.id), name: String(r.name), status: String(r.status), forms, formId: forms[0]?.id ?? null, formName: forms[0]?.name ?? null, canOpen: forms.some((form) => form.canOpen) };
   });
+  if (actor.role === 'admin') return listed;
+
+  // An auditor is not limited to what the administrator listed: every other published form is offered too, grouped by what kind of work it is
+  // (the administrator's list keeps its order first), so whoever goes to audit a company can do any audit.
+  const linked = new Set(links.map((link) => n(link.form_id)));
+  const others = await query<RowDataPacket>(
+    `SELECT f.id, f.name, m.module_type FROM dynamic_forms f JOIN dynamic_modules m ON m.id = f.module_id AND m.deleted_at IS NULL AND m.status = 'published'
+      WHERE f.deleted_at IS NULL AND f.status = 'published' ORDER BY m.sort_order, f.name`);
+  const KIND: Record<string, [number, string]> = {
+    AUDIT: [-1, 'More audits'], ASSESSMENT: [-2, 'More assessments'], RISK: [-3, 'More risk assessments'], STUDY: [-4, 'More studies (HAZOP, HACCP ...)'],
+    WORK_PERMIT: [-5, 'Work permits'], CUSTOM: [-6, 'Other forms'],
+  };
+  const extra = new Map<number, { id: number; name: string; status: string; forms: { id: number; name: string; canOpen: boolean }[] }>();
+  for (const form of others) {
+    if (linked.has(n(form.id))) continue;
+    const [id, name] = KIND[String(form.module_type)] ?? KIND.CUSTOM;
+    const entry = extra.get(id) ?? { id, name, status: 'active', forms: [] };
+    entry.forms.push({ id: n(form.id), name: String(form.name), canOpen: true });
+    extra.set(id, entry);
+  }
+  const more = [...extra.values()].sort((a, b) => b.id - a.id).map((entry) => ({ ...entry, formId: entry.forms[0].id, formName: entry.forms[0].name, canOpen: true }));
+  return [...listed, ...more];
 }
 
 /** The published dynamic forms an administrator can link an audit type to. */

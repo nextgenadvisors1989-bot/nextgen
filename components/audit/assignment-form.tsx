@@ -292,7 +292,7 @@ export function AssignmentForm({
                   {auditor.auditor_type_name ?? 'Auditor'}
                   {auditor.specialization ? ` · ${auditor.specialization}` : ''} · {auditor.email}
                 </span>
-                <span className={auditorAtCapacity ? 'mt-1 inline-block text-red-600' : 'mt-1 inline-block text-emerald-600'}>
+                <span className={auditorAtCapacity ? 'mt-1 inline-block text-red-600' : 'mt-1 inline-block text-emerald-700'}>
                   {auditorAtCapacity
                     ? `At capacity — ${auditor.open_assignments} of ${auditor.max_concurrent_audits} already open`
                     : `${auditor.max_concurrent_audits - auditor.open_assignments} slot(s) free`}

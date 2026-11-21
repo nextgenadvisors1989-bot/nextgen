@@ -200,8 +200,8 @@ export const calendarEventListQuerySchema = z.object({
 
 /** The month grid reads one month at a time; the agenda reads a window. */
 export const calendarWindowQuerySchema = z.object({
-  month: z.coerce.number().int().min(1).max(12).optional().default(new Date().getMonth() + 1),
-  year: z.coerce.number().int().min(2000).max(2100).optional().default(new Date().getFullYear()),
+  month: z.coerce.number().int().min(1).max(12).optional().default(() => new Date().getMonth() + 1),
+  year: z.coerce.number().int().min(2000).max(2100).optional().default(() => new Date().getFullYear()),
   employer_id: z.coerce.number().int().positive().optional(),
   unit_id: z.coerce.number().int().positive().optional(),
   auditor_id: z.coerce.number().int().positive().optional(),

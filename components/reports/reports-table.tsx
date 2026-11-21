@@ -144,7 +144,7 @@ export function ReportsTable({
         <div className="text-xs">
           <span className="block text-ink-soft">{row.submitted_at ? formatDate(row.submitted_at) : 'Not submitted'}</span>
           {row.status === 'Approved' && row.approved_at ? (
-            <span className="block text-emerald-600">Approved {formatDate(row.approved_at)}</span>
+            <span className="block text-emerald-700">Approved {formatDate(row.approved_at)}</span>
           ) : row.days_in_review !== null && row.days_in_review !== undefined ? (
             <span className="block text-ink-muted">{Number(row.days_in_review)} day(s) in review</span>
           ) : row.next_audit_due ? (
@@ -360,9 +360,9 @@ export function ReportsTable({
 }
 
 function scoreColor(percentage: number): string {
-  if (percentage >= 90) return 'text-emerald-600';
+  if (percentage >= 90) return 'text-emerald-700';
   if (percentage >= 75) return 'text-brand-600';
-  if (percentage >= 60) return 'text-amber-600';
+  if (percentage >= 60) return 'text-amber-700';
   return 'text-red-600';
 }
 

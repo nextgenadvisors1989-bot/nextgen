@@ -336,7 +336,7 @@ export function PanelCalendar({
                     onClick={() => setView(option)}
                     className={
                       view === option
-                        ? 'rounded-md bg-brand-500 px-3 py-1.5 text-[13px] font-medium text-white'
+                        ? 'rounded-md bg-brand-600 px-3 py-1.5 text-[13px] font-medium text-white'
                         : 'rounded-md px-3 py-1.5 text-[13px] font-medium text-ink-soft hover:bg-surface-muted'
                     }
                   >

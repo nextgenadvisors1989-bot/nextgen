@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { APP_NAME, COMPANY_LEGAL } from '@/lib/utils/constants';
+import { APP_NAME } from '@/lib/utils/constants';
+import { getCompanyLegal } from '@/services/company.service';
 import { STATUTORY_COVERAGE } from '@/lib/utils/public-content';
 
 export const metadata: Metadata = {
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
   description: `${APP_NAME} helps Indian establishments stay compliant, audited and payroll-ready.`,
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const company = await getCompanyLegal();
   return (
     <>
       <section className="border-b border-line bg-surface-muted py-16">
@@ -76,14 +78,14 @@ export default function AboutPage() {
             <div className="rounded-xl border border-line p-6">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">Registered office</h3>
               <address className="mt-4 not-italic text-sm leading-relaxed text-ink-soft">
-                {COMPANY_LEGAL.name}<br />
-                <span className="block">{COMPANY_LEGAL.address}</span>
+                {company.name}<br />
+                <span className="block">{company.address}</span>
               </address>
               <dl className="mt-5 space-y-2 text-sm">
-                <div className="flex justify-between gap-4"><dt className="text-ink-muted">Email</dt><dd className="text-ink-soft">{COMPANY_LEGAL.email}</dd></div>
-                <div className="flex justify-between gap-4"><dt className="text-ink-muted">Phone</dt><dd className="text-ink-soft">{COMPANY_LEGAL.phone}</dd></div>
-                <div className="flex justify-between gap-4"><dt className="text-ink-muted">GSTIN</dt><dd className="text-ink-soft">{COMPANY_LEGAL.gstin}</dd></div>
-                <div className="flex justify-between gap-4"><dt className="text-ink-muted">CIN</dt><dd className="text-ink-soft">{COMPANY_LEGAL.cin}</dd></div>
+                <div className="flex justify-between gap-4"><dt className="text-ink-muted">Email</dt><dd className="text-ink-soft">{company.email}</dd></div>
+                <div className="flex justify-between gap-4"><dt className="text-ink-muted">Phone</dt><dd className="text-ink-soft">{company.phone}</dd></div>
+                {company.gstin && <div className="flex justify-between gap-4"><dt className="text-ink-muted">GSTIN</dt><dd className="text-ink-soft">{company.gstin}</dd></div>}
+                {company.cin && <div className="flex justify-between gap-4"><dt className="text-ink-muted">CIN</dt><dd className="text-ink-soft">{company.cin}</dd></div>}
               </dl>
             </div>
 

@@ -11,11 +11,14 @@ const config: Config = {
           400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
           800: '#1e40af', 900: '#1e3a8a',
         },
-        ink: { DEFAULT: '#1e293b', muted: '#64748b', soft: '#475569' },
+        ink: { DEFAULT: '#1e293b', muted: '#566274', soft: '#475569' },
         line: '#e2e8f0',
         surface: { DEFAULT: '#ffffff', muted: '#f8fafc', canvas: '#f5f5f5' },
       },
-      fontFamily: { sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'] },
+      fontFamily: {
+        sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
+        display: ['"Source Serif 4 Variable"', 'Georgia', 'Cambria', '"Times New Roman"', 'serif'],
+      },
       keyframes: {
         'fade-up': { '0%': { opacity: '0', transform: 'translateY(8px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
         'scale-in': { '0%': { opacity: '0', transform: 'scale(.95)' }, '100%': { opacity: '1', transform: 'scale(1)' } },

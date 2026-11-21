@@ -173,7 +173,7 @@ export function Calculators({ initial = 'rates' }: { initial?: string }) {
             <span className={`w-24 text-xs font-bold uppercase tracking-wide ${group?.key === g.key ? 'text-brand-600' : 'text-ink-muted'}`}>{g.label}</span>
             {g.tools.map(([key, label]) => (
               <button key={key} type="button" onClick={() => setTool(key)} aria-pressed={tool === key}
-                className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${tool === key ? 'border-brand-500 bg-brand-500 text-white' : 'border-line bg-white text-ink-soft hover:bg-surface-muted'}`}>{label}</button>
+                className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${tool === key ? 'border-brand-500 bg-brand-600 text-white' : 'border-line bg-white text-ink-soft hover:bg-surface-muted'}`}>{label}</button>
             ))}
           </div>
         ))}

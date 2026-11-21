@@ -48,7 +48,7 @@ export function DynamicSidebarSection() {
 
   return (
     <div className="mt-5">
-      <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Assigned Modules</p>
+      <p className="mb-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Assigned Modules</p>
       <ul className="space-y-0.5">
         {modules.map((module) => (
           <li key={module.id}>

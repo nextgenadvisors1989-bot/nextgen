@@ -297,7 +297,7 @@ export function BackupSettings({
           <p className="text-[12px] text-ink-muted">
             {storage.backups.exists ? storage.backups.path : 'The backup directory does not exist yet — it is created on the first run.'}
           </p>
-          <div className="max-h-72 space-y-1.5 overflow-y-auto">
+          <div className="max-h-72 space-y-1.5 overflow-y-auto" tabIndex={0} role="region" aria-label="Backup files on disk">
             {files.map((file) => (
               <div key={file.path} className="flex items-center justify-between gap-3 rounded-md border border-line px-2.5 py-1.5">
                 <span className="truncate font-mono text-[11px] text-ink-soft">{file.name}</span>

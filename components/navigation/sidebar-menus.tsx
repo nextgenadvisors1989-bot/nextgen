@@ -89,6 +89,13 @@ export function adminMenu(counts: { employees?: number; employers?: number; pend
         { label: 'Act & Compliance', href: '/admin/compliance/act-compliance', icon: icon('clipboard') },
         { label: 'Obligations & Notices', href: '/admin/compliance/notices', icon: icon('fileText'), match: ['/admin/compliance/rules', '/admin/compliance/regulations', '/admin/compliance/notifications'] },
         { label: 'Employer Documents', href: '/admin/compliance/documents', icon: icon('shield') },
+        {
+          label: 'Data Management', icon: icon('layers'),
+          children: [
+            { label: 'Company Data', href: '/admin/data-management' },
+            { label: 'Emission Factors', href: '/admin/data-management/factors' },
+          ],
+        },
       ],
     },
     {
@@ -111,12 +118,15 @@ export function adminMenu(counts: { employees?: number; employers?: number; pend
         {
           label: 'CMS', icon: icon('globe'),
           children: [
+            { label: 'Home Page', href: '/admin/cms/home' },
             { label: 'Pages', href: '/admin/cms/pages' },
             { label: 'Media Library', href: '/admin/cms/media' },
             { label: 'Resources', href: '/admin/cms/resources' },
             { label: 'Contact Enquiries', href: '/admin/contact-enquiries' },
           ],
         },
+        { label: 'Go-live Checklist', href: '/admin/setup', icon: icon('shield') },
+        { label: 'Help & Guide', href: '/admin/help', icon: icon('help') },
         { label: 'Reports', href: '/admin/reports', icon: icon('chart') },
         { label: 'Files', href: '/admin/files', icon: icon('folder') },
         {
@@ -196,6 +206,7 @@ export function auditorMenu(counts: { openAudits?: number; isWater?: boolean } =
         { label: 'Audit and Assessment', href: '/auditor/compliance', icon: icon('clipboard') },
         { label: 'Act & Compliance', href: '/auditor/act-compliance', icon: icon('gavel') },
         { label: 'CAPAR Reports', href: '/auditor/capar', icon: icon('shield') },
+        { label: 'Data Management', href: '/auditor/data-management', icon: icon('layers') },
         ...(counts.isWater ? [{ label: 'Groundwater NOC', href: '/auditor/water-noc', icon: icon('alert') }] : []),
         {
           label: 'Assessments & Risks', icon: icon('alert'),
@@ -207,9 +218,9 @@ export function auditorMenu(counts: { openAudits?: number; isWater?: boolean } =
           ],
         },
         {
-          label: 'Assigned Modules', icon: icon('layers'),
+          label: 'Forms & Modules', icon: icon('layers'),
           children: [
-            { label: 'My Modules & Forms', href: '/auditor/modules' },
+            { label: 'All Modules & Forms', href: '/auditor/modules' },
             { label: 'My Submissions', href: '/auditor/submissions' },
           ],
         },
@@ -222,6 +233,7 @@ export function auditorMenu(counts: { openAudits?: number; isWater?: boolean } =
         { label: 'My Profile', href: '/auditor/profile', icon: icon('userCheck') },
         { label: 'Notifications', href: '/auditor/notifications', icon: icon('bell') },
         { label: 'Settings', href: '/auditor/settings', icon: icon('settings') },
+        { label: 'Help & Guide', href: '/auditor/help', icon: icon('help') },
       ],
     },
   ];
@@ -233,8 +245,7 @@ export function employerMenu(counts: { employees?: number; upcomingAudits?: numb
     {
       title: 'Organisation',
       items: [
-        { label: 'Company Profile', href: '/employer/profile', icon: icon('building') },
-        { label: 'Factory Profile', href: '/employer/factory-profile', icon: icon('factory') },
+        { label: 'Company & Factory Profile', href: '/employer/profile', icon: icon('building'), match: ['/employer/factory-profile'] },
         { label: 'Audit Documents', href: '/employer/audit-documents', icon: icon('folder') },
         { label: 'Units', href: '/employer/units', icon: icon('layers') },
         { label: 'Departments', href: '/employer/departments', icon: icon('folder') },
@@ -287,18 +298,25 @@ export function employerMenu(counts: { employees?: number; upcomingAudits?: numb
       ],
     },
     {
+      title: 'Factory Data',
+      items: [
+        { label: 'Data Management', href: '/employer/data-management', icon: icon('layers') },
+      ],
+    },
+    {
       title: 'Account',
       items: [
         { label: 'Billing', href: '/employer/billing', icon: icon('rupee') },
         { label: 'Downloads', href: '/employer/downloads', icon: icon('download') },
         { label: 'Notifications', href: '/employer/notifications', icon: icon('bell') },
         { label: 'Settings', href: '/employer/settings', icon: icon('settings') },
+        { label: 'Help & Guide', href: '/employer/help', icon: icon('help') },
       ],
     },
   ];
 }
 
-export function employeeMenu(): MenuSection[] {
+export function employeeMenu(options: { dataManagement?: boolean } = {}): MenuSection[] {
   return [
     { items: [{ label: 'Dashboard', href: '/employee/dashboard', icon: icon('dashboard') }] },
     {
@@ -326,11 +344,13 @@ export function employeeMenu(): MenuSection[] {
         { label: 'Calendar', href: '/employee/calendar', icon: icon('calendar') },
       ],
     },
+    ...(options.dataManagement ? [{ title: 'Factory Data', items: [{ label: 'Data Management', href: '/employee/data-management', icon: icon('layers') }] }] : []),
     {
       title: 'Account',
       items: [
         { label: 'Notifications', href: '/employee/notifications', icon: icon('bell') },
         { label: 'Settings', href: '/employee/settings', icon: icon('settings') },
+        { label: 'Help & Guide', href: '/employee/help', icon: icon('help') },
       ],
     },
   ];
@@ -354,6 +374,7 @@ export function verifierMenu(counts: { pending?: number } = {}): MenuSection[] {
       items: [
         { label: 'Notifications', href: '/verifier/notifications', icon: icon('bell') },
         { label: 'Settings', href: '/verifier/settings', icon: icon('settings') },
+        { label: 'Help & Guide', href: '/verifier/help', icon: icon('help') },
       ],
     },
   ];

@@ -5,8 +5,9 @@ import { PanelShell } from './panel-shell';
 import type { TopbarNotification, TopbarUser } from '@/components/navigation/topbar';
 import type { ReactNode } from 'react';
 
-export function EmployeeLayout({ user, children, notifications, unreadCount }: {
+export function EmployeeLayout({ user, children, notifications, unreadCount, dataManagement }: {
   user: TopbarUser;
+  dataManagement?: boolean;
   children: ReactNode;
   notifications?: TopbarNotification[];
   unreadCount?: number;
@@ -14,7 +15,7 @@ export function EmployeeLayout({ user, children, notifications, unreadCount }: {
   return (
     <PanelShell
       user={user}
-      sections={employeeMenu()}
+      sections={employeeMenu({ dataManagement })}
       panelLabel="Employee"
       notifications={notifications}
       unreadCount={unreadCount}

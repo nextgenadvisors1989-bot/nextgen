@@ -1,5 +1,6 @@
 'use client';
 
+import { DataEntrySwitch } from '@/components/data-management/dm-employee-switch';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -648,6 +649,9 @@ export function EmployeeDetailView({
                       <Detail label="Actions" value={<LinkButton href={`/admin/users/${detail.login.id}`} size="sm" variant="outline">Manage Account</LinkButton>} />
                     </div>
                   )}
+                  {detail.login && basePath === '/api/employer' && (
+                    <DataEntrySwitch employeeId={employee.id} initial={Boolean((employee as unknown as Record<string, unknown>).data_entry_enabled)} />
+                  )}
                 </CardBody>
               </Card>
             ),
@@ -907,7 +911,7 @@ function EmployeeRecordModal({
                 }}
               />
               {form.file_id && (
-                <p className="mt-2 text-xs text-emerald-600">
+                <p className="mt-2 text-xs text-emerald-700">
                   Scanned copy attached to the record (vault file #{form.file_id}).
                 </p>
               )}

@@ -161,7 +161,7 @@ export function PayslipDetail({
                 href={pdfHref}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-10 items-center rounded-lg bg-brand-500 px-4 text-sm font-medium text-white hover:bg-brand-600"
+                className="inline-flex h-10 items-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white hover:bg-brand-700"
               >
                 {panel === 'employee' ? 'Download payslip' : 'Service card PDF'}
               </a>

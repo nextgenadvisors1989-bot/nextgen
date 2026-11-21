@@ -53,6 +53,7 @@
     "test:water-usage": "tsx scripts/test-water-usage.ts"
   },
   "dependencies": {
+    "@fontsource-variable/source-serif-4": "5.3.1",
     "@tiptap/extension-subscript": "3.32.0",
     "@tiptap/extension-superscript": "3.32.0",
     "@tiptap/extension-table": "3.32.0",

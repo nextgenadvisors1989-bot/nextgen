@@ -64,7 +64,7 @@ export default function ServicesPage() {
           </div>
 
           <div className="mt-10 flex flex-wrap gap-3">
-            <Link href="/contact" className="rounded-lg bg-brand-500 px-6 py-3 text-sm font-semibold text-white transition-all duration-150 hover:-translate-y-[2px] hover:bg-brand-600">
+            <Link href="/contact" className="rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition-all duration-150 hover:-translate-y-[2px] hover:bg-brand-700">
               Request a Demo
             </Link>
             <Link href="/acts-compliance" className="rounded-lg border border-line bg-white px-6 py-3 text-sm font-semibold text-ink-soft transition-colors hover:bg-surface-muted">

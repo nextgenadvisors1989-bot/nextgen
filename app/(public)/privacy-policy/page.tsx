@@ -1,17 +1,18 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { APP_NAME, COMPANY_LEGAL } from '@/lib/utils/constants';
+import { APP_NAME, LEGAL_TEXT_REVISED } from '@/lib/utils/constants';
+import { getCompanyLegal, type CompanyLegal } from '@/services/company.service';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description: `How ${APP_NAME} collects, uses, stores and protects personal data.`,
 };
 
-const SECTIONS = [
+const buildSections = (company: CompanyLegal) => [
   {
     title: '1. Who we are',
     body: [
-      `${COMPANY_LEGAL.name} operates the ${APP_NAME} compliance, audit, HR and payroll platform. We act as a data processor for the employee and payroll data our customers upload, and as a data fiduciary for the account and enquiry data we collect directly.`,
+      `${company.name} operates the ${APP_NAME} compliance, audit, HR and payroll platform. We act as a data processor for the employee and payroll data our customers upload, and as a data fiduciary for the account and enquiry data we collect directly.`,
     ],
   },
   {
@@ -73,18 +74,20 @@ const SECTIONS = [
     title: '9. Changes and contact',
     body: [
       'We will update this policy when our practices change and will note the revision date at the top of the page. Material changes affecting customer data will be notified to administrators by email.',
-      `Questions or requests may be sent to ${COMPANY_LEGAL.email} or by post to ${COMPANY_LEGAL.name}, ${COMPANY_LEGAL.address}.`,
+      `Questions or requests may be sent to ${company.email} or by post to ${company.name}, ${company.address}.`,
     ],
   },
 ];
 
-export default function PrivacyPolicyPage() {
+export default async function PrivacyPolicyPage() {
+  const company = await getCompanyLegal();
+  const SECTIONS = buildSections(company);
   return (
     <section className="py-14">
       <div className="mx-auto max-w-3xl px-4 lg:px-8">
         <h1 className="text-4xl font-bold text-ink">Privacy Policy</h1>
         <p className="mt-3 text-sm text-ink-muted">
-          Last updated {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
+          Last updated {LEGAL_TEXT_REVISED}
         </p>
 
         <div className="mt-10 space-y-8">
@@ -103,7 +106,7 @@ export default function PrivacyPolicyPage() {
         <div className="mt-12 rounded-xl bg-surface-muted p-6">
           <h2 className="text-sm font-semibold text-ink">Data protection contact</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-            {COMPANY_LEGAL.name}, {COMPANY_LEGAL.address} · {COMPANY_LEGAL.email} · {COMPANY_LEGAL.phone}
+            {company.name}, {company.address} · {company.email} · {company.phone}
           </p>
           <p className="mt-3 text-sm text-ink-muted">
             See also our <Link href="/terms-conditions" className="link">Terms &amp; Conditions</Link>.

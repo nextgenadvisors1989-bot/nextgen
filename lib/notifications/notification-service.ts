@@ -9,7 +9,8 @@ import { sendEmail } from '@/lib/integrations/email-provider';
 import { sendSms } from '@/lib/integrations/sms-provider';
 import { sendWhatsApp } from '@/lib/integrations/whatsapp-provider';
 import { getTemplate, renderTemplate } from './notification-templates';
-import { APP_NAME, APP_URL, COMPANY_LEGAL } from '@/lib/utils/constants';
+import { APP_NAME, APP_URL } from '@/lib/utils/constants';
+import { getCompanyLegal } from '@/services/company.service';
 
 export type NotificationChannel = 'in_app' | 'email' | 'sms' | 'whatsapp';
 
@@ -122,13 +123,14 @@ export async function notifyUser(input: NotifyInput): Promise<NotifyResult> {
   }
 
   const template = input.templateCode ? getTemplate(input.templateCode) : null;
+  const company = await getCompanyLegal();
   const templateData: Record<string, unknown> = {
     platform_name: APP_NAME,
     login_url: `${APP_URL}/login`,
     recipient_name: `${recipient.first_name} ${recipient.last_name}`.trim(),
-    company_address: COMPANY_LEGAL.address,
-    company_email: COMPANY_LEGAL.email,
-    company_phone: COMPANY_LEGAL.phone,
+    company_address: company.address,
+    company_email: company.email,
+    company_phone: company.phone,
     ...(input.templateData ?? {}),
   };
 
@@ -142,7 +144,7 @@ export async function notifyUser(input: NotifyInput): Promise<NotifyResult> {
     try {
       if (channel === 'email') {
         const subject = template?.subject ? renderTemplate(template.subject, templateData) : input.title;
-        const html = template ? renderTemplate(template.body, templateData) : simpleEmail(input.title, input.message, input.actionUrl);
+        const html = template ? renderTemplate(template.body, templateData) : simpleEmail(input.title, input.message, company, input.actionUrl);
         const result = await sendEmail({
           to: recipient.email,
           subject,
@@ -282,7 +284,7 @@ export async function listNotifications(userId: number, params: { page?: number;
   };
 }
 
-function simpleEmail(title: string, message: string, actionUrl?: string | null): string {
+function simpleEmail(title: string, message: string, company: { address: string; email: string; phone: string }, actionUrl?: string | null): string {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
 <body style="font-family:Arial,sans-serif;color:#1e293b;background:#f5f5f5;margin:0;padding:20px;">
   <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;">
@@ -293,7 +295,7 @@ function simpleEmail(title: string, message: string, actionUrl?: string | null):
       ${actionUrl ? `<a href="${actionUrl}" style="display:inline-block;background:#3b82f6;color:#fff;padding:12px 24px;border-radius:4px;text-decoration:none;margin-top:16px;">Open</a>` : ''}
     </div>
     <div style="background:#f8fafc;padding:20px;text-align:center;font-size:12px;color:#64748b;">
-      ${COMPANY_LEGAL.address}<br>${COMPANY_LEGAL.email} | ${COMPANY_LEGAL.phone}
+      ${company.address}<br>${company.email} | ${company.phone}
     </div>
   </div>
 </body></html>`;

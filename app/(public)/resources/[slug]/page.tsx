@@ -63,7 +63,7 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
             {resource.file_id ? (
               <a
                 href={downloadHref}
-                className="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+                className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
               >
                 Download {resource.file_name ? `· ${resource.file_name}` : ''}
               </a>
@@ -72,7 +72,7 @@ export default async function ResourceDetailPage({ params }: { params: Promise<{
                 href={resource.external_url}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+                className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
               >
                 Open the resource
               </a>

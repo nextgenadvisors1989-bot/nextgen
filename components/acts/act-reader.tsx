@@ -107,7 +107,7 @@ export function ActReader({ data, basePath, view = 'part' }: { data: ReaderData;
       <form method="get" action={basePath} role="search" className="no-print mb-6 flex gap-2">
         <input type="search" name="q" defaultValue={data.query} placeholder={`Search this ${unit === 'rules' ? 'set of Rules' : 'Act'}: a ${unit === 'rules' ? 'rule' : 'section'} number, a heading or a word`} aria-label="Search this Act"
           className="focus-ring w-full rounded-lg border border-line px-4 py-2 text-sm" />
-        <button type="submit" className="rounded-lg bg-brand-500 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600">Search</button>
+        <button type="submit" className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700">Search</button>
       </form>
 
       {searching ? (

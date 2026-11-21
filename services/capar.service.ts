@@ -236,12 +236,12 @@ export async function createReport(actor: Actor, input: unknown) {
   let auditorId: number | null = role === 'auditor' ? Number(actor.user.auditorId ?? 0) || null : (data.auditor_id ?? null);
   if (role === 'auditor' && !auditorId) fail('FORBIDDEN', 'Your login is not linked to an auditor profile yet. Ask the administrator to link it (Users > Link to an auditor).');
   const assignment = data.assignment_id ? await repo.assignmentForHeader(data.assignment_id) : null;
-  // An auditor reports on an audit the administrator assigned to them; the audit decides the company, unit, date and verifier.
-  if (role === 'auditor' && !data.assignment_id) fail('VALIDATION_FAILED', 'Choose the audit you are reporting on. Only audits the administrator assigned to you are listed.', { issues: [{ field: 'assignment_id', message: 'Choose the audit' }] });
+  // An auditor reports on any company they audited. A scheduled audit is only a shortcut: it fills the company, unit, date and verifier in.
+  if (role === 'auditor' && !data.assignment_id && !data.employer_id) fail('VALIDATION_FAILED', 'Choose the company or factory you audited.', { issues: [{ field: 'employer_id', message: 'Choose the company' }] });
   if (data.assignment_id) {
     if (!assignment) fail('INVALID_REFERENCE', 'That audit assignment does not exist');
     if (data.employer_id && Number(assignment!.employer_id) !== data.employer_id) fail('VALIDATION_FAILED', 'That audit assignment belongs to a different employer');
-    if (role === 'auditor' && Number(assignment!.auditor_id) !== auditorId) fail('FORBIDDEN', 'That audit is assigned to another auditor');
+    if (role === 'auditor' && Number(assignment!.auditor_id) !== auditorId) fail('FORBIDDEN', 'That scheduled audit belongs to another auditor');
     if (!auditorId) auditorId = Number(assignment!.auditor_id);
   }
   const employerId = assignment ? Number(assignment.employer_id) : data.employer_id;
@@ -258,7 +258,7 @@ export async function createReport(actor: Actor, input: unknown) {
   const employer = await repo.employerForHeader(employerId!);
   if (!employer) fail('INVALID_REFERENCE', 'That employer does not exist');
   // The employer's Audit Documents pack is NOT required to start: the auditor is only reminded when it has not been submitted.
-  const fromAssignment = role === 'auditor';
+  const fromAssignment = role === 'auditor' && Boolean(data.assignment_id);
   const unitId = (fromAssignment ? null : data.unit_id) ?? (assignment?.unit_id ? Number(assignment.unit_id) : null);
   const unit = unitId ? await repo.unitForHeader(unitId, employerId!) : null;
   if (unitId && !unit) fail('INVALID_REFERENCE', 'That unit does not belong to this employer');
@@ -457,6 +457,10 @@ export async function attachFiles(actor: Actor, reportId: number, findingId: num
   mustEdit(actor.user, role, report);
   await loadFinding(reportId, findingId);
   const kind = (CAPAR_FILE_KINDS as readonly string[]).includes(kindInput) ? kindInput : 'Photo';
+  // A photo is a picture; papers (PDF, Word ...) go in as Evidence.
+  if (kind === 'Photo' && files.some((file) => !/^image\//i.test(String(file.mimeType ?? '')))) {
+    fail('INVALID_FILE_TYPE', 'A photo must be an image (JPG, PNG or WebP). Attach papers as Evidence.');
+  }
   const saved = await saveUploads(
     files,
     { entityType: 'CAPAR', entityId: reportId, category: kind === 'Photo' ? 'CAPAR photo' : 'CAPAR evidence', accessLevel: 'private', description: caption },
@@ -804,14 +808,12 @@ export async function lookup(user: AuthUser, type: string, params: { q?: string;
 
   if (type === 'employers') {
     const term = `%${q}%`;
-    // An auditor is offered only the companies the administrator has assigned an audit to them for.
-    const mine = role === 'auditor';
+    // Any auditor may audit any company, so every active company is offered (an assigned audit is only a shortcut that fills the date and unit).
     const rows = await query<RowDataPacket>(
       `SELECT e.id, e.company_name, e.employer_code, e.city FROM employers e
         WHERE e.deleted_at IS NULL AND e.status = 'active' AND (e.company_name LIKE ? OR e.employer_code LIKE ?)
-          ${mine ? "AND EXISTS (SELECT 1 FROM audit_assignments a WHERE a.employer_id = e.id AND a.auditor_id = ? AND a.deleted_at IS NULL AND a.status <> 'Cancelled')" : ''}
-        ORDER BY e.company_name LIMIT 50`,
-      mine ? [term, term, Number(user.auditorId ?? 0)] : [term, term]
+        ORDER BY e.company_name LIMIT 500`,
+      [term, term]
     );
     return rows.map((row) => ({ value: String(row.id), label: String(row.company_name), hint: [row.employer_code, row.city].filter(Boolean).join(' · ') }));
   }

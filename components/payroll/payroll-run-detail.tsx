@@ -277,7 +277,7 @@ export function PayrollRunDetail({
               <span
                 className={
                   index <= currentStep && run.status !== 'Cancelled'
-                    ? 'rounded-full bg-brand-500 px-2.5 py-1 font-medium text-white'
+                    ? 'rounded-full bg-brand-600 px-2.5 py-1 font-medium text-white'
                     : 'rounded-full bg-surface-muted px-2.5 py-1 text-ink-muted'
                 }
               >

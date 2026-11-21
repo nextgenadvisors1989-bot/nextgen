@@ -7,7 +7,8 @@ import { contactEnquirySchema } from '@/lib/validations/contact.validation';
 import { sendEmail } from '@/lib/integrations/email-provider';
 import { notifyMany, usersWithRole } from '@/lib/notifications/notification-service';
 import { escapeHtml } from '@/lib/utils/formatting';
-import { APP_NAME, APP_URL, COMPANY_LEGAL } from '@/lib/utils/constants';
+import { APP_NAME, APP_URL } from '@/lib/utils/constants';
+import { getCompanyLegal, type CompanyLegal } from '@/services/company.service';
 
 /**
  * The form posts lowercase keys; the column is an ENUM with display values. An unmapped key is
@@ -24,6 +25,7 @@ export interface ContactSubmitContext {
 }
 
 export async function submitContactEnquiry(input: unknown, context: ContactSubmitContext = {}) {
+  const company = await getCompanyLegal();
   const parsed = contactEnquirySchema.parse(input);
 
   // Honeypot tripped — accept silently so the bot does not retry, but store nothing.
@@ -70,7 +72,7 @@ export async function submitContactEnquiry(input: unknown, context: ContactSubmi
     await sendEmail({
       to: adminEmails.map((row) => row.email),
       subject: `[${APP_NAME}] New ${parsed.enquiry_type} enquiry — ${parsed.subject}`,
-      html: internalEnquiryHtml(parsed as Record<string, unknown>, enquiryId),
+      html: internalEnquiryHtml(parsed as Record<string, unknown>, enquiryId, company),
       templateCode: 'contact.enquiry.internal',
       entityType: 'contact_enquiry',
       entityId: enquiryId,
@@ -81,7 +83,7 @@ export async function submitContactEnquiry(input: unknown, context: ContactSubmi
   await sendEmail({
     to: parsed.email,
     subject: `We have received your enquiry — ${APP_NAME}`,
-    html: acknowledgementHtml(parsed.name, parsed.subject),
+    html: acknowledgementHtml(parsed.name, parsed.subject, company),
     templateCode: 'contact.enquiry.acknowledgement',
     entityType: 'contact_enquiry',
     entityId: enquiryId,
@@ -90,19 +92,19 @@ export async function submitContactEnquiry(input: unknown, context: ContactSubmi
   return { enquiryId, spam: false as const };
 }
 
-function acknowledgementHtml(name: string, subject: string): string {
-  return shell(`
+function acknowledgementHtml(name: string, subject: string, company: CompanyLegal): string {
+  return shell(company, `
     <p>Dear ${escapeHtml(name)},</p>
     <p>Thank you for contacting ${escapeHtml(APP_NAME)}. We have received your enquiry about
-       <strong>${escapeHtml(subject)}</strong> and a member of our team will respond within one working day.</p>
-    <p>If your requirement is urgent, call us on ${escapeHtml(COMPANY_LEGAL.phone)} during business hours
+       <strong>${escapeHtml(subject)}</strong> and a member of our team will get in touch with you.</p>
+    <p>If your requirement is urgent, call us on ${escapeHtml(company.phone)} during business hours
        (Monday to Saturday, 9:30 am to 6:30 pm IST).</p>
     <p class="muted">This is an automated acknowledgement — please reply to this email if you need to add anything
        to your enquiry.</p>`);
 }
 
-function internalEnquiryHtml(input: Record<string, unknown>, enquiryId: number): string {
-  return shell(`
+function internalEnquiryHtml(input: Record<string, unknown>, enquiryId: number, company: CompanyLegal): string {
+  return shell(company, `
     <p>A new enquiry has been submitted from the public website.</p>
     <table>
       <tr><th style="width:30%">Enquiry ID</th><td>#${enquiryId}</td></tr>
@@ -118,7 +120,7 @@ function internalEnquiryHtml(input: Record<string, unknown>, enquiryId: number):
 }
 
 /** Shared HTML shell — matches the styling of the templated notification emails. */
-function shell(inner: string): string {
+function shell(company: CompanyLegal, inner: string): string {
   return `<!doctype html>
 <html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
@@ -137,7 +139,7 @@ function shell(inner: string): string {
 <body><div class="wrapper"><div class="card">
   <div class="header">${escapeHtml(APP_NAME)}</div>
   <div class="body">${inner}</div>
-  <div class="footer">${escapeHtml(COMPANY_LEGAL.name)}<br />${escapeHtml(COMPANY_LEGAL.address)}<br />
-    ${escapeHtml(COMPANY_LEGAL.email)} · ${escapeHtml(COMPANY_LEGAL.phone)}</div>
+  <div class="footer">${escapeHtml(company.name)}<br />${escapeHtml(company.address)}<br />
+    ${escapeHtml(company.email)} · ${escapeHtml(company.phone)}</div>
 </div></div></body></html>`;
 }

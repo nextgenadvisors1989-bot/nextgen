@@ -2,13 +2,17 @@
 
 /** Help menu in the top bar of every panel: email, phones and a WhatsApp chat, all from Settings > Company. */
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { api } from '@/lib/utils/api-client';
+import { guideForPath } from '@/lib/help/guides';
 
 interface Contact { email: string; phone: string; phone2: string; whatsapp: string; timing: string }
 
 const digits = (value: string) => value.replace(/\D/g, '');
 
 export function SupportMenu() {
+  const guide = guideForPath(usePathname() ?? '');
   const [open, setOpen] = useState(false);
   const [contact, setContact] = useState<Contact | null>(null);
   const box = useRef<HTMLDivElement>(null);
@@ -42,6 +46,12 @@ export function SupportMenu() {
       {open && (
         <div role="dialog" aria-label="Help and contact" className="absolute right-0 z-50 mt-2 w-72 rounded-xl border border-line bg-white p-3 shadow-lg">
           <p className="px-1 pb-2 text-sm font-semibold text-ink">Need help?</p>
+          {guide && (
+            <Link href={`/${guide.role}/help`} onClick={() => setOpen(false)} className="mb-2 block rounded-lg bg-brand-50 px-2 py-2 text-sm font-medium text-brand-800 hover:bg-brand-100">
+              How to use the {guide.panel.toLowerCase()} portal
+              <span className="block text-xs font-normal text-brand-700">Step-by-step guide to every task</span>
+            </Link>
+          )}
           {!contact ? <p className="px-1 py-2 text-xs text-ink-muted">Loading...</p> : rows.length === 0 ? (
             <p className="px-1 py-2 text-xs text-ink-muted">No contact details have been set yet.</p>
           ) : (

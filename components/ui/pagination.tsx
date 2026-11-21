@@ -48,7 +48,7 @@ export function Pagination({ pagination, onPageChange, onLimitChange, limitOptio
           disabled={page <= 1}
           className={clsx(
             'inline-flex h-8 items-center gap-1 rounded-md px-2.5 text-[13px] font-medium transition-colors',
-            page <= 1 ? 'cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-brand-500 text-white hover:bg-brand-600'
+            page <= 1 ? 'cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-brand-600 text-white hover:bg-brand-600'
           )}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="m15 18-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -68,7 +68,7 @@ export function Pagination({ pagination, onPageChange, onLimitChange, limitOptio
                 className={clsx(
                   'h-8 min-w-8 rounded-md border px-2 text-[13px] font-medium transition-colors',
                   item === page
-                    ? 'border-brand-500 bg-brand-500 text-white'
+                    ? 'border-brand-500 bg-brand-600 text-white'
                     : 'border-line bg-white text-ink-soft hover:bg-brand-50'
                 )}
               >
@@ -88,7 +88,7 @@ export function Pagination({ pagination, onPageChange, onLimitChange, limitOptio
           disabled={page >= totalPages}
           className={clsx(
             'inline-flex h-8 items-center gap-1 rounded-md px-2.5 text-[13px] font-medium transition-colors',
-            page >= totalPages ? 'cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-brand-500 text-white hover:bg-brand-600'
+            page >= totalPages ? 'cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-brand-600 text-white hover:bg-brand-600'
           )}
         >
           Next

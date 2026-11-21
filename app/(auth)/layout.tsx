@@ -13,9 +13,9 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         </Link>
 
         <div>
-          <h1 className="text-3xl font-bold leading-tight">
+          <p className="text-3xl font-bold leading-tight">
             Compliance, audits, HR and payroll — one platform.
-          </h1>
+          </p>
           <p className="mt-4 max-w-md text-slate-300">
             Run statutory compliance registers, schedule and verify safety audits, maintain employee records,
             and process payroll with bilingual payslips.
@@ -35,7 +35,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </ul>
         </div>
 
-        <p className="text-xs text-slate-500">© {new Date().getFullYear()} NextGen Socio and Enviro Advisors</p>
+        <p className="text-xs text-slate-400">© {new Date().getFullYear()} NextGen Socio and Enviro Advisors</p>
       </aside>
 
       <main className="flex w-full items-center justify-center bg-surface-canvas px-4 py-10 lg:w-1/2">

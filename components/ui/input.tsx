@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -16,7 +16,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   { label, error, helper, leftIcon, rightIcon, requiredMark, className, id, required, ...rest },
   ref
 ) {
-  const inputId = id ?? rest.name ?? `input-${Math.random().toString(36).slice(2, 9)}`;
+  const generatedId = useId();   // the same on the server and in the browser (a random id made the page hydrate with a mismatch)
+  const inputId = id ?? rest.name ?? generatedId;
   return (
     <div className="w-full">
       {label && (
@@ -59,7 +60,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
   { label, error, helper, className, id, rows = 3, required, ...rest },
   ref
 ) {
-  const inputId = id ?? rest.name ?? `textarea-${Math.random().toString(36).slice(2, 9)}`;
+  const generatedId = useId();
+  const inputId = id ?? rest.name ?? generatedId;
   return (
     <div className="w-full">
       {label && (
@@ -93,7 +95,8 @@ export function Checkbox({
   id,
   ...rest
 }: InputHTMLAttributes<HTMLInputElement> & { label?: ReactNode; error?: string }) {
-  const inputId = id ?? rest.name ?? `checkbox-${Math.random().toString(36).slice(2, 9)}`;
+  const generatedId = useId();
+  const inputId = id ?? rest.name ?? generatedId;
   return (
     <div className={className}>
       <label htmlFor={inputId} className="flex cursor-pointer items-start gap-2.5 text-sm text-ink-soft">
@@ -116,12 +119,15 @@ export function Switch({
   label,
   disabled,
   name,
+  'aria-label': ariaLabel,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label?: string;
   disabled?: boolean;
   name?: string;
+  /** The accessible name when there is no visible label (a switch in a table cell). */
+  'aria-label'?: string;
 }) {
   return (
     <label className="flex cursor-pointer items-center gap-3 text-sm text-ink-soft">
@@ -130,6 +136,7 @@ export function Switch({
         role="switch"
         name={name}
         aria-checked={checked}
+        aria-label={ariaLabel ?? (label || undefined)}
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={clsx(

@@ -490,7 +490,7 @@ export function ReportForm({
               <Checkbox label="Submit to the verifier immediately (generates the PDF and notifies them)" checked={submitAfterSave}
                 onChange={(event) => setSubmitAfterSave((event.target as HTMLInputElement).checked)} />
               {!form.verifier_id && submitAfterSave && (
-                <p className="text-xs text-amber-600">
+                <p className="text-xs text-amber-700">
                   No verifier selected — the audit assignment&apos;s verifier will be used if one is set, otherwise the report is
                   submitted without a reviewer and you will be told so.
                 </p>

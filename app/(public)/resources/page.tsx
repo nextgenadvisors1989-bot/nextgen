@@ -46,7 +46,7 @@ export default async function ResourcesPage() {
                 <Link href="/acts-compliance" className="rounded-lg border border-line px-5 py-2.5 text-sm font-semibold text-ink-soft transition-colors hover:bg-surface-muted">
                   Browse Acts
                 </Link>
-                <Link href="/contact" className="rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600">
+                <Link href="/contact" className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700">
                   Ask for a format
                 </Link>
               </div>

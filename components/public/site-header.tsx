@@ -90,7 +90,7 @@ export function SiteHeader({ phone, email }: { phone: string; email: string }) {
   useEffect(() => { setDrawer(false); }, [pathname]);
 
   const on = (href: string) => (href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`));
-  const cls = (href: string) => `${NAV_BTN} ${on(href) ? 'text-[#C59B27]' : NAV_IDLE}`;
+  const cls = (href: string) => `${NAV_BTN} ${on(href) ? 'text-[#8A6612]' : NAV_IDLE}`;
   const chevron = <SiteIcon name="chevron" className="h-3.5 w-3.5 text-slate-400 transition-transform duration-200 group-hover:rotate-180" />;
 
   return (
@@ -122,7 +122,7 @@ export function SiteHeader({ phone, email }: { phone: string; email: string }) {
           </div>
 
           <div className="group relative py-2">
-            <button type="button" className={`${NAV_BTN} ${COMPLIANCE_AREAS.some((a) => on(a.href)) ? 'text-[#C59B27]' : NAV_IDLE}`} aria-haspopup="true"><span>COMPLIANCE</span>{chevron}</button>
+            <button type="button" className={`${NAV_BTN} ${COMPLIANCE_AREAS.some((a) => on(a.href)) ? 'text-[#8A6612]' : NAV_IDLE}`} aria-haspopup="true"><span>COMPLIANCE</span>{chevron}</button>
             <div className="absolute -left-40 top-full z-50 hidden pt-2 group-focus-within:block group-hover:block">
               <div className="w-[760px] whitespace-normal rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
                 <div className="grid grid-cols-4 gap-5">
@@ -206,18 +206,18 @@ export function SiteHeader({ phone, email }: { phone: string; email: string }) {
                   <Link href="/services" className="group/bot flex items-center gap-3">
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0B2545] text-xs font-bold text-white">HR</span>
                     <span>
-                      <span className="block text-xs font-bold text-slate-900 group-hover/bot:text-amber-600">Smart Workforce Suite →</span>
+                      <span className="block text-xs font-bold text-slate-900 group-hover/bot:text-amber-700">Smart Workforce Suite →</span>
                       <span className="block text-[11px] text-slate-500">Digital ID cards, Shift &amp; OT engine</span>
                     </span>
                   </Link>
                   <Link href="/services" className="group/bot flex items-center gap-3">
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-700 text-xs font-bold text-white">F&amp;F</span>
                     <span>
-                      <span className="block text-xs font-bold text-slate-900 group-hover/bot:text-emerald-600">Full &amp; Final Settlement ★ →</span>
+                      <span className="block text-xs font-bold text-slate-900 group-hover/bot:text-emerald-700">Full &amp; Final Settlement ★ →</span>
                       <span className="block text-[11px] text-slate-500">Gratuity 1972 &amp; Relieving letter generator</span>
                     </span>
                   </Link>
-                  <Link href="/calculators" className="flex items-center gap-1 text-xs font-bold text-[#0B2545] hover:text-amber-600">Calculators &amp; Estimators <span>→</span></Link>
+                  <Link href="/calculators" className="flex items-center gap-1 text-xs font-bold text-[#0B2545] hover:text-amber-700">Calculators &amp; Estimators <span>→</span></Link>
                 </div>
               </div>
             </div>

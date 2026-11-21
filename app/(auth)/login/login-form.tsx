@@ -43,7 +43,7 @@ export function LoginForm() {
   return (
     <div className="card card-pad animate-fade-up">
       <div className="mb-6 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500 text-xl font-bold text-white lg:hidden">C</div>
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-xl font-bold text-white lg:hidden">C</div>
         <h1 className="text-xl font-bold text-ink">Sign in to your account</h1>
         <p className="mt-1 text-sm text-ink-muted">Enter your credentials to access your panel</p>
       </div>

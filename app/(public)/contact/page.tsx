@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import { ContactForm } from './contact-form';
-import { COMPANY_LEGAL } from '@/lib/utils/constants';
+import { getCompanyLegal } from '@/services/company.service';
 
 export const metadata: Metadata = {
   title: 'Contact Us',
   description: 'Talk to our compliance, audit and payroll team. We respond within one working day.',
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const company = await getCompanyLegal();
   return (
     <>
       <section className="border-b border-line bg-surface-muted py-14">
@@ -33,19 +34,19 @@ export default function ContactPage() {
                 <div>
                   <dt className="text-ink-muted">Email</dt>
                   <dd className="mt-0.5 text-ink-soft">
-                    <a href={`mailto:${COMPANY_LEGAL.email}`} className="link">{COMPANY_LEGAL.email}</a>
+                    <a href={`mailto:${company.email}`} className="link">{company.email}</a>
                   </dd>
                 </div>
                 <div>
                   <dt className="text-ink-muted">Phone</dt>
                   <dd className="mt-0.5 text-ink-soft">
-                    <a href={`tel:${COMPANY_LEGAL.phone.replace(/[^+0-9]/g, '')}`} className="link">{COMPANY_LEGAL.phone}</a>
+                    <a href={`tel:${company.phone.replace(/[^+0-9]/g, '')}`} className="link">{company.phone}</a>
                   </dd>
                 </div>
                 <div>
                   <dt className="text-ink-muted">Office</dt>
                   <dd className="mt-0.5 not-italic text-ink-soft">
-                    {COMPANY_LEGAL.name}<br />{COMPANY_LEGAL.address}
+                    {company.name}<br />{company.address}
                   </dd>
                 </div>
                 <div>

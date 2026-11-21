@@ -131,7 +131,7 @@ export function UsersRegister({
         <div className="flex flex-wrap items-center gap-2">
           <UserStatusBadge user={row} />
           {Boolean(row.is_first_login) && !row.deleted_at && (
-            <span className="text-[11px] text-amber-600">activation pending</span>
+            <span className="text-[11px] text-amber-700">activation pending</span>
           )}
         </div>
       ),
@@ -142,7 +142,7 @@ export function UsersRegister({
       align: 'center',
       hideOnMobile: true,
       render: (row) => (
-        <span className={row.active_sessions ? 'text-sm font-medium text-emerald-600' : 'text-[13px] text-ink-muted'}>
+        <span className={row.active_sessions ? 'text-sm font-medium text-emerald-700' : 'text-[13px] text-ink-muted'}>
           {formatNumber(row.active_sessions)}
         </span>
       ),
