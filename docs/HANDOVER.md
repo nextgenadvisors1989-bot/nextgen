@@ -91,6 +91,16 @@ Checks: `python scripts/verify-*.py` (each suite is independent; set `VERIFY_ADM
 `VERIFY_ADMIN_ID`, `VERIFY_ADMIN_NAME` for your demo administrator). Never stop or rebuild the server while a suite is running:
 `verify-settings.py` rewrites the settings table and puts it back at the end.
 
+## 4b. The demo for the client (one connected story)
+
+`scripts/seed-client-demo.py` builds one company, **Demo Industries Private Limited (DEMO-001)**, and everything the roles do with it, through the site's own API:
+an HR manager and three employees (payroll run for last month with published payslips), two auditors on the company (one of them is also a verifier: one login, both
+workspaces), a separate verifier, a signed audit report with four site photographs, a Permit to Work with six drawn signatures, Form 3, five days of factory data entered
+and verified by the employer, and a CAPAR report from the findings to the closing signatures. Every PDF is fetched at the end and its size printed. Run it after the
+installers, with `LIVE_ADMIN_EMAIL`, `LIVE_ADMIN_PASSWORD` and `DEMO_PASSWORD` exported (the password is typed on the server, never stored in the repository).
+It is safe to run again. The demo logins are listed by the Go-live Checklist; deactivate them before real clients are given theirs.
+The site photographs are in `scripts/fixtures/demo-photos` (made with a local image model; empty scenes, no people).
+
 ## 5. Open items
 
 * **Form 5** of the Environmental Audit is named in the client's list but no file was sent; "Environmental Risk Assessment" is shown as the Environmental Aspects and Impacts Register and

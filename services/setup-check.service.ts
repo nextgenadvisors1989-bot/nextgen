@@ -26,7 +26,9 @@ export interface SetupCheck {
 /** The sign-in password that is printed in the project's public README and test scripts. */
 const PUBLIC_DEMO_ADMIN_PASSWORD = 'Admin@2026';
 const WEAK_BY_HASH = new Map<string, boolean>();
-const DEMO_EMAIL_PATTERN = ['%@demo.complianceos.local', '%@complianceos.local', '%@emp.demo.complianceos.local', '%@complianceos.example'];
+/** Logins of the demo (the local seed data and scripts/seed-client-demo.py): the checklist asks for them to be switched off before real clients are given theirs. */
+const DEMO_EMAIL_PATTERN = ['%@demo.complianceos.local', '%@complianceos.local', '%@emp.demo.complianceos.local', '%@complianceos.example',
+  'demo.admin@nextgenseadvisors.com', 'team.auditor@nextgenseadvisors.com', 'employer@gmail.com', 'employee@gmail.com', 'auditor@gmail.com', 'verifier@gmail.com'];
 
 async function settings(group: string, keys: string[]): Promise<Record<string, string>> {
   const rows = await query<RowDataPacket>(

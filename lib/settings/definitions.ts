@@ -55,8 +55,8 @@ const CURRENCIES = [
 export const SETTING_DEFINITIONS: Record<SettingGroup, SettingDefinition[]> = {
   system: [
     {
-      key: 'app_name', label: 'Application name', type: 'text', fallback: 'ComplianceOS', section: 'Identity',
-      description: 'Shown in the sidebar, the page title, emails and PDF headers.', isPublic: true, example: 'ComplianceOS',
+      key: 'app_name', label: 'Application name', type: 'text', fallback: 'NextGen Socio & Enviro Advisors', section: 'Identity',
+      description: 'Shown in the sidebar, the page title, emails and PDF headers.', isPublic: true, example: 'NextGen Socio & Enviro Advisors',
     },
     {
       key: 'timezone', label: 'Timezone', type: 'select', fallback: 'Asia/Kolkata', section: 'Locale', isPublic: true,
@@ -114,13 +114,13 @@ export const SETTING_DEFINITIONS: Record<SettingGroup, SettingDefinition[]> = {
   ],
 
   company: [
-    { key: 'company_name', label: 'Legal company name', type: 'text', fallback: '', section: 'Identity', isPublic: true, description: 'Appears on invoices, PDFs and the email footer.', example: 'ComplianceOS Technologies Private Limited' },
+    { key: 'company_name', label: 'Legal company name', type: 'text', fallback: '', section: 'Identity', isPublic: true, description: 'Appears on invoices, PDFs and the email footer.', example: 'NextGen Socio and Enviro Advisors' },
     { key: 'company_address', label: 'Registered address', type: 'textarea', fallback: '', section: 'Identity', isPublic: true, example: '4th Floor, Anna Salai, Chennai 600002, Tamil Nadu, India' },
-    { key: 'company_email', label: 'Support email', type: 'email', fallback: '', section: 'Contact', isPublic: true, example: 'support@complianceos.example' },
+    { key: 'company_email', label: 'Support email', type: 'email', fallback: '', section: 'Contact', isPublic: true, example: 'info@nextgenseadvisors.com' },
     { key: 'company_phone', label: 'Support phone', type: 'text', fallback: '', section: 'Contact', isPublic: true, example: '+91 44 4000 0000' },
     { key: 'company_phone_secondary', label: 'Secondary phone', type: 'text', fallback: '', section: 'Contact', isPublic: true, description: 'A second number shown in the Help menu of every panel and in the site footer.', example: '+91 98765 43210' },
     { key: 'company_whatsapp', label: 'WhatsApp number', type: 'text', fallback: '', section: 'Contact', isPublic: true, description: 'With country code. The Help menu and footer open a WhatsApp chat with it. Blank uses the support phone.', example: '+91 94884 65966' },
-    { key: 'company_website', label: 'Website', type: 'url', fallback: '', section: 'Contact', isPublic: true, placeholder: 'https://', example: 'https://complianceos.example' },
+    { key: 'company_website', label: 'Website', type: 'url', fallback: '', section: 'Contact', isPublic: true, placeholder: 'https://', example: 'https://www.nextgenseadvisors.com' },
     { key: 'company_timing', label: 'Working hours', type: 'text', fallback: '', section: 'Contact', isPublic: true, description: 'Shown in the public site top bar.', example: 'Mon - Sat: 9:00 AM - 6:00 PM' },
     { key: 'company_tagline', label: 'Tagline', type: 'text', fallback: '', section: 'Identity', isPublic: true, description: 'One line under the logo in the public site footer.', example: 'Advice. Liaison. Compliance. Training' },
     { key: 'social_facebook', label: 'Facebook page', type: 'url', fallback: '', section: 'Social links', isPublic: true, placeholder: 'https://facebook.com/...', description: 'Leave a link blank to hide its icon on the public site.' },
@@ -160,9 +160,9 @@ export const SETTING_DEFINITIONS: Record<SettingGroup, SettingDefinition[]> = {
     { key: 'smtp_secure', label: 'Use SSL (port 465)', type: 'boolean', fallback: 'false', section: 'Server' },
     { key: 'smtp_username', label: 'SMTP username', type: 'text', fallback: '', section: 'Credentials', hint: 'Often “apikey” for SendGrid, or the full mailbox address for Office 365', example: 'apikey' },
     { key: 'smtp_password', label: 'SMTP password / API key', type: 'password', fallback: '', section: 'Credentials', secret: true, description: 'Encrypted with AES-256-GCM before it is stored. Leave blank to keep the current value.' },
-    { key: 'from_email', label: 'From address', type: 'email', fallback: '', section: 'Identity', example: 'noreply@complianceos.example' },
-    { key: 'from_name', label: 'From name', type: 'text', fallback: 'ComplianceOS', section: 'Identity', example: 'ComplianceOS' },
-    { key: 'reply_to', label: 'Reply-to address', type: 'email', fallback: '', section: 'Identity', example: 'support@complianceos.example' },
+    { key: 'from_email', label: 'From address', type: 'email', fallback: '', section: 'Identity', example: 'noreply@nextgenseadvisors.com' },
+    { key: 'from_name', label: 'From name', type: 'text', fallback: 'NextGen Socio & Enviro Advisors', section: 'Identity', example: 'NextGen Socio & Enviro Advisors' },
+    { key: 'reply_to', label: 'Reply-to address', type: 'email', fallback: '', section: 'Identity', example: 'info@nextgenseadvisors.com' },
   ],
 
   sms: [
@@ -191,7 +191,7 @@ export const SETTING_DEFINITIONS: Record<SettingGroup, SettingDefinition[]> = {
     { key: 'retention_days', label: 'Retention (days)', type: 'number', fallback: '30', section: 'Schedule', min: 1, max: 3650, description: 'Dumps older than this are deleted after a successful run.' },
     { key: 'storage_path', label: 'Backup directory', type: 'text', fallback: './storage/backups', section: 'Storage', description: 'Absolute path, or relative to the application root.', example: './storage/backups' },
     { key: 'include_uploads', label: 'Include uploaded files', type: 'boolean', fallback: 'true', section: 'Storage', description: 'Copies the vault contents alongside the SQL dump.' },
-    { key: 'notification_emails', label: 'Notify on completion', type: 'text', fallback: '', section: 'Notifications', hint: 'Comma-separated addresses; leave blank for no email', example: 'ops@complianceos.example, cto@complianceos.example' },
+    { key: 'notification_emails', label: 'Notify on completion', type: 'text', fallback: '', section: 'Notifications', hint: 'Comma-separated addresses; leave blank for no email', example: 'ops@nextgenseadvisors.com' },
   ],
 
   audit: [

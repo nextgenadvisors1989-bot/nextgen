@@ -1,6 +1,8 @@
 /** Application-wide constants shared by UI, services, validators and PDFs. */
 
-export const APP_NAME = process.env.APP_NAME ?? 'NextGen Socio and Enviro Advisors';
+/** The name shown on the site, in e-mails and on PDFs. A value left over from the example env file ("ComplianceOS") is ignored: the client's name is the one in the logo. */
+const ENV_APP_NAME = process.env.APP_NAME?.trim();
+export const APP_NAME = ENV_APP_NAME && !/complianceos/i.test(ENV_APP_NAME) ? ENV_APP_NAME : 'NextGen Socio & Enviro Advisors';
 export const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
 
 /** The date the privacy policy and terms text was last revised. Change it whenever that text changes (never "today": a legal date must not move by itself). */

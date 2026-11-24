@@ -105,7 +105,7 @@ export function ResourcesRegister({ canCreate, canEdit, canDelete }: { canCreate
 
   function exportCsv() {
     downloadCsv(
-      `complianceos-resources-${new Date().toISOString().slice(0, 10)}.csv`,
+      `nextgen-resources-${new Date().toISOString().slice(0, 10)}.csv`,
       ['Title', 'Type', 'Category', 'Act', 'Status', 'Sign-in', 'Source', 'Downloads', 'Published'],
       list.data.map((row) => [
         row.title, row.resource_type, row.category ?? '', row.act_name ?? '', row.status,

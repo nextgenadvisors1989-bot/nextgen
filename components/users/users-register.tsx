@@ -71,7 +71,7 @@ export function UsersRegister({
 
   function exportCsv() {
     downloadCsv(
-      `complianceos-users-${new Date().toISOString().slice(0, 10)}.csv`,
+      `nextgen-users-${new Date().toISOString().slice(0, 10)}.csv`,
       ['Name', 'Email', 'Username', 'Roles', 'Portal', 'Status', 'Locked', 'Pending activation', 'Live sessions', 'Last sign-in', 'Created'],
       rows.map((row) => [
         `${row.first_name} ${row.last_name}`,

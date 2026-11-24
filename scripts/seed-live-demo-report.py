@@ -13,6 +13,7 @@ title is not created twice.
 
 SEED_BASE (default http://127.0.0.1:3001) is the app's address; SAMPLE_TITLE changes the report title.
 Pillow, if installed, puts readable labels on the demo photos; without it plain coloured images are used.
+PHOTO_DIR (default scripts/fixtures/demo-photos) holds real site photographs by name (fire_extinguisher_blocked.jpg ...); a photo that is not there falls back to the labelled picture.
 """
 import base64
 import io
@@ -38,6 +39,23 @@ def need(name):
     if not value:
         sys.exit(f"Set {name} (see the top of this file).")
     return value
+
+
+PHOTO_DIR = Path(os.environ.get("PHOTO_DIR", Path(__file__).resolve().parent / "fixtures" / "demo-photos"))
+# the picture shown with the finding and the picture the employer sends back as proof, by the checklist document the finding is about
+BEFORE = {"Fire NOC": "fire_extinguisher_blocked", "First Aid Training": "first_aid_box_empty", "Leave records": "register_ledger", "Payroll": "register_ledger",
+          "Waste disposal records": "chemical_drums_no_spill_tray"}
+AFTER = {"Fire NOC": "fire_extinguisher_fixed", "First Aid Training": "first_aid_box_stocked", "Leave records": "register_ledger", "Payroll": "register_ledger",
+         "Waste disposal records": "register_ledger"}
+
+
+def picture(key, label, colour=(176, 190, 197)):
+    """(file name, mime, bytes) in the order multipart() wants them: the real photograph when the folder has it, the labelled demo picture otherwise."""
+    for ext, mime in (("jpg", "image/jpeg"), ("png", "image/png")):
+        path = PHOTO_DIR / f"{key}.{ext}" if key else None
+        if path and path.exists():
+            return path.name, mime, path.read_bytes()
+    return "site-photo.png", "image/png", photo(label, colour)
 
 
 TITLE = os.environ.get("SAMPLE_TITLE", "CAPAR - Demo Industries - Buyer Compliance Audit (sample)")
@@ -182,7 +200,7 @@ for group, name, rule, requirement, finding, root, plan, due, label, _fix in iss
         "finding": finding, "root_cause": root, "action_plan": plan, "timeline_date": due, "recommendation": "Close the action before the buyer follow-up visit.",
         "assessment": "Evidence sampled on site and cross-checked with the register."})
     fid = ok(f"finding: {name}", status, body)["data"]["id"]
-    payload, ctype = multipart([("kind", "Photo"), ("caption", label)], [("files", "site-photo.png", "image/png", photo(label))])
+    payload, ctype = multipart([("kind", "Photo"), ("caption", label)], [("files", *picture(BEFORE.get(name), label))])
     ok("   photo", *auditor.send("POST", f"/api/capar/{rid}/findings/{fid}/files", payload, content_type=ctype))
 for group, name in (("Governance", "Company Profile"), ("Governance", "Business Registration License"), ("Social Security System", "Minimum wage Notification")):
     ok(f"no issue: {name}", *auditor.send("POST", f"/api/capar/{rid}/findings", {"evidence_item_id": item(group, name)["id"], "outcome": "No Violation", "item_status": "Not findings", "finding": "Checked and in order."}))
@@ -199,7 +217,7 @@ ok("auditor message", *auditor.send("POST", f"/api/capar/{rid}/findings/{first['
 fixes = {issue[1]: issue[9] for issue in issues}
 for f in issue_rows:
     text = next(v for k, v in fixes.items() if f["evidence_item_name"].startswith(k.split(" ")[0]))
-    payload, ctype = multipart([], [("files", "proof.png", "image/png", photo("Proof: " + f["evidence_item_name"][:34], (190, 215, 190)))])
+    payload, ctype = multipart([], [("files", *picture(next((AFTER[k] for k in AFTER if f["evidence_item_name"].startswith(k.split(" ")[0])), None), "Proof: " + f["evidence_item_name"][:34], (190, 215, 190)))])
     ok("   proof", *employer.send("POST", f"/api/capar/{rid}/findings/{f['id']}/employer-files", payload, content_type=ctype))
     ok(f"   answered and signed: {f['evidence_item_name'][:30]}", *employer.send("POST", f"/api/capar/{rid}/findings/{f['id']}/respond", {"response_text": text, "signature_kind": "drawn", "signature_data": signature(7 + f['id'] % 5)}))
 
@@ -210,7 +228,7 @@ for f in issue_rows[:-1]:
     ok(f"   approved: {f['evidence_item_name'][:30]}", *auditor.send("POST", f"/api/capar/{rid}/findings/{f['id']}/review", {"decision": "approve"}))
 
 print("6. The employer answers the declined one again, the auditor approves, the report closes")
-payload, ctype = multipart([], [("files", "manifest.png", "image/png", photo("September manifest and sheet", (190, 215, 190)))])
+payload, ctype = multipart([], [("files", *picture(AFTER["Waste disposal records"], "September manifest and sheet", (190, 215, 190)))])
 ok("   proof", *employer.send("POST", f"/api/capar/{rid}/findings/{declined['id']}/employer-files", payload, content_type=ctype))
 ok("   answered again", *employer.send("POST", f"/api/capar/{rid}/findings/{declined['id']}/respond", {"response_text": "The September manifest and the reconciliation sheet are attached. All manifests are now filed at the site.", "signature_kind": "drawn", "signature_data": signature(11)}))
 ok("   approved", *auditor.send("POST", f"/api/capar/{rid}/findings/{declined['id']}/review", {"decision": "approve"}))

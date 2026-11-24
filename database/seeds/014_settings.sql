@@ -5,7 +5,7 @@ SET NAMES utf8mb4;
 
 INSERT INTO settings (setting_group, setting_key, setting_value, value_type, label, description, is_public, is_encrypted, sort_order) VALUES
   -- System
-  ('system', 'app_name',                 'ComplianceOS',            'string',  'Application Name',        'Shown in the sidebar, emails and PDF headers', TRUE,  FALSE, 1),
+  ('system', 'app_name',                 'NextGen Socio & Enviro Advisors',            'string',  'Application Name',        'Shown in the sidebar, emails and PDF headers', TRUE,  FALSE, 1),
   ('system', 'timezone',                 'Asia/Kolkata',            'string',  'Timezone',                'Used for all date and time rendering',          TRUE,  FALSE, 2),
   ('system', 'date_format',               'DD MMM YYYY',            'string',  'Date Format',              'Display format for dates across the platform',  TRUE,  FALSE, 3),
   ('system', 'currency',                  'INR',                    'string',  'Currency',                 'Currency code used in payroll and reports',     TRUE,  FALSE, 4),
@@ -16,9 +16,9 @@ INSERT INTO settings (setting_group, setting_key, setting_value, value_type, lab
   ('system', 'audit_retention_days',      '2555',                   'number',  'Audit Log Retention (days)','Activity log retention; default 7 years',      FALSE, FALSE, 9),
 
   -- Company
-  ('company', 'company_name',        'ComplianceOS Technologies Private Limited', 'string', 'Legal Company Name', 'Appears on invoices, PDFs and emails', TRUE, FALSE, 1),
+  ('company', 'company_name',        'NextGen Socio and Enviro Advisors', 'string', 'Legal Company Name', 'Appears on invoices, PDFs and emails', TRUE, FALSE, 1),
   ('company', 'company_address',     '4th Floor, Anna Salai, Chennai 600002, Tamil Nadu, India', 'string', 'Registered Address', NULL, TRUE, FALSE, 2),
-  ('company', 'company_email',       'support@complianceos.example', 'string', 'Support Email',   NULL, TRUE, FALSE, 3),
+  ('company', 'company_email',       'info@nextgenseadvisors.com', 'string', 'Support Email',   NULL, TRUE, FALSE, 3),
   ('company', 'company_phone',       '+91 44 4000 0000',            'string', 'Support Phone',     NULL, TRUE, FALSE, 4),
   ('company', 'company_gstin',       '33AABCC1234D1Z5',             'string', 'GSTIN',             NULL, TRUE, FALSE, 5),
   ('company', 'company_pan',         'AABCC1234D',                  'string', 'Company PAN',       NULL, FALSE, FALSE, 6),
@@ -32,9 +32,9 @@ INSERT INTO settings (setting_group, setting_key, setting_value, value_type, lab
   ('email', 'smtp_secure',    'false',                   'boolean', 'Use SSL',         'Enable for port 465',                     FALSE, FALSE, 4),
   ('email', 'smtp_username',  '',                        'string',  'SMTP Username',   'Often "apikey" for SendGrid',             FALSE, FALSE, 5),
   ('email', 'smtp_password',  '',                        'string',  'SMTP Password',   'API key or app password',                 FALSE, TRUE,  6),
-  ('email', 'from_email',     'noreply@complianceos.example', 'string', 'From Email', NULL,                                   FALSE, FALSE, 7),
-  ('email', 'from_name',      'ComplianceOS',            'string',  'From Name',       NULL,                                      FALSE, FALSE, 8),
-  ('email', 'reply_to',       'support@complianceos.example', 'string', 'Reply-To Email', NULL,                                 FALSE, FALSE, 9),
+  ('email', 'from_email',     'noreply@nextgenseadvisors.com', 'string', 'From Email', NULL,                                   FALSE, FALSE, 7),
+  ('email', 'from_name',      'NextGen Socio & Enviro Advisors',            'string',  'From Name',       NULL,                                      FALSE, FALSE, 8),
+  ('email', 'reply_to',       'info@nextgenseadvisors.com', 'string', 'Reply-To Email', NULL,                                 FALSE, FALSE, 9),
 
   -- SMS
   ('sms', 'enabled',            'true',    'boolean', 'SMS Enabled',        'Master switch for outbound SMS', FALSE, FALSE, 1),

@@ -188,7 +188,7 @@ export function MediaLibrary({ canUpload, canEdit, canDelete }: { canUpload: boo
 
   function exportCsv() {
     downloadCsv(
-      `complianceos-media-${new Date().toISOString().slice(0, 10)}.csv`,
+      `nextgen-media-${new Date().toISOString().slice(0, 10)}.csv`,
       ['Title', 'File', 'Kind', 'Folder', 'Size', 'Dimensions', 'Uploaded', 'URL'],
       list.data.map((row) => [
         row.title ?? '', row.file_name, row.media_type, row.folder ?? '', formatFileSize(Number(row.size_bytes)),

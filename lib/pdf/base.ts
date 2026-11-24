@@ -45,11 +45,11 @@ export function createPdf(meta: PdfMeta, options: { landscape?: boolean } = {}):
     bufferPages: true,
     info: {
       Title: meta.title,
-      Author: meta.author ?? 'ComplianceOS',
+      Author: meta.author ?? 'NextGen Socio & Enviro Advisors',
       Subject: meta.subject ?? meta.title,
       Keywords: meta.keywords ?? 'compliance, audit, statutory register',
-      Creator: 'ComplianceOS',
-      Producer: 'ComplianceOS',
+      Creator: 'NextGen Socio & Enviro Advisors',
+      Producer: 'NextGen Socio & Enviro Advisors',
     },
   });
   registerFonts(doc);

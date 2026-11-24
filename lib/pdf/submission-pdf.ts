@@ -63,7 +63,7 @@ export async function companyInfo(employerId: number | null): Promise<CompanyInf
   );
   const setting = Object.fromEntries(rows.map((row) => [String(row.setting_key), String(row.setting_value ?? '').trim()]));
   return {
-    name: setting.company_name || 'ComplianceOS',
+    name: setting.company_name || 'NextGen Socio & Enviro Advisors',
     addressLines: setting.company_address ? [setting.company_address] : [],
     registrationLine: [setting.company_email, setting.company_phone, setting.company_gstin ? `GSTIN ${setting.company_gstin}` : ''].filter(Boolean).join('  |  '),
   };
@@ -142,9 +142,9 @@ export function renderBlocks(doc: Doc, blocks: DocBlock[], hooks: { onSection?: 
       doc.fillColor(COLORS.ink).text(block.label, MARGIN, doc.y + 2, { width: CONTENT_WIDTH });
       for (const item of block.items) {
         setFont(doc, 9);
-        doc.fillColor(COLORS.body).text(`Attached: ${item.name}`, MARGIN + 14, doc.y + 2, { width: CONTENT_WIDTH - 14 });
+        if (!block.signature) doc.fillColor(COLORS.body).text(`Attached: ${item.name}`, MARGIN + 14, doc.y + 2, { width: CONTENT_WIDTH - 14 });
         if (!item.image) continue;
-        const scale = Math.min(1, 380 / item.image.width, 300 / item.image.height);
+        const scale = block.signature ? Math.min(1, 190 / item.image.width, 64 / item.image.height) : Math.min(1, 380 / item.image.width, 300 / item.image.height);
         const w = Math.max(20, item.image.width * scale);
         const h = Math.max(20, item.image.height * scale);
         ensureSpace(doc, h + 12);

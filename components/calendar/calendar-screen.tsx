@@ -256,7 +256,7 @@ export function CalendarScreen({
 
   function exportCsv() {
     downloadCsv(
-      `complianceos-calendar-${new Date().toISOString().slice(0, 10)}.csv`,
+      `nextgen-calendar-${new Date().toISOString().slice(0, 10)}.csv`,
       ['Reference', 'Title', 'Type', 'Starts', 'Ends', 'Status', 'Priority', 'Company', 'Unit', 'Audit', 'Location'],
       list.data.map((row) => [
         `EVT-${row.id}`,

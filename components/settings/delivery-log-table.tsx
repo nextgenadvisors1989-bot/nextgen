@@ -68,7 +68,7 @@ export function DeliveryLogTable({ channel }: { channel: 'email' | 'sms' | 'what
 
   function exportCsv() {
     downloadCsv(
-      `complianceos-${channel}-log-${new Date().toISOString().slice(0, 10)}.csv`,
+      `nextgen-${channel}-log-${new Date().toISOString().slice(0, 10)}.csv`,
       ['Recipient', 'Template', 'Subject', 'Status', 'Provider', 'Sent at', 'Error'],
       list.data.map((row) => [
         row.recipient, row.template_code ?? '', row.subject ?? '', row.status,

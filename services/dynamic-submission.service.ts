@@ -801,6 +801,8 @@ export async function reviewSubmission(submissionId: number, rawPayload: unknown
     throw invalidState(`This submission is already ${status.replace(/_/g, ' ')}`);
   }
 
+  if (payload.signature_file_id && payload.action === 'approve') await writeVerifierSignature(record, payload.signature_file_id, actor);
+
   const nextStatus = payload.action === 'approve' ? 'approved' : payload.action === 'reject' ? 'rejected' : 'changes_requested';
   const reviewAction = payload.action === 'approve' ? 'approved' : payload.action === 'reject' ? 'rejected' : 'returned';
 
@@ -859,6 +861,28 @@ export async function reviewSubmission(submissionId: number, rawPayload: unknown
   return { submissionId, status: nextStatus, reviewAction, scorePercentage: scorePercent };
 }
 
+/**
+ * The verifier signs the report when approving it: the drawn signature (uploaded to this very submission by the verifier), the verifier's name and today's date are written
+ * into the form's "Verifier" fields (keys sig_verifier_*), so the printed report carries both the auditor's and the verifier's signature.
+ */
+async function writeVerifierSignature(record: RowDataPacket | Record<string, unknown>, fileId: number, actor: SubmissionActor): Promise<void> {
+  const file = await findFile(fileId).catch(() => null);
+  if (!file || String(file.entity_type) !== 'SUBMISSION' || Number(file.entity_id) !== Number(record.id) || Number(file.uploaded_by) !== actor.id) {
+    throw invalidState('The signature must be drawn by you on this report');
+  }
+  const bundle = await moduleRepo.getStructure(Number(record.form_id));
+  const field = (key: string) => bundle.fields.find((f) => String(f.field_key) === key && !f.deleted_at);
+  const signature = field('sig_verifier_signature');
+  if (!signature) return; // a form without a verifier block simply records the approval
+  const write = async (key: string, type: string, value: unknown) => {
+    const f = field(key);
+    if (f) await repo.setOneValue(Number(record.id), Number(record.form_id), { id: Number(f.id), section_id: f.section_id ? Number(f.section_id) : null, field_key: key, field_type: type }, value);
+  };
+  await write('sig_verifier_signature', 'signature', fileId);
+  await write('sig_verifier_name', 'text', actor.name ?? '');
+  await write('sig_verifier_date', 'date', sqlNow().slice(0, 10));
+}
+
 function submitterUrl(record: Record<string, unknown>): string {
   const role = String(record.submitter_role ?? '');
   if (role === 'employer') return `/employer/dynamic-submissions/${record.id}`;
@@ -891,7 +915,7 @@ export async function deleteSubmission(submissionId: number, actor: SubmissionAc
 async function attachedFilesOf(submissionId: number, structure: { fields: { field_key: string; field_type: string }[] }, values: ValueMap): Promise<Map<number, AttachedFile>> {
   const found = new Map<number, AttachedFile>();
   for (const field of structure.fields) {
-    if (!['file', 'image', 'multi_file'].includes(field.field_type)) continue;
+    if (!['file', 'image', 'multi_file', 'signature'].includes(field.field_type)) continue;
     const raw = values[field.field_key];
     for (const id of (Array.isArray(raw) ? raw : raw ? [raw] : []).map(Number)) {
       if (!Number.isInteger(id) || id <= 0 || found.has(id)) continue;

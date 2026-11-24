@@ -30,7 +30,7 @@ export function SupportMenu() {
   }, [open]);
 
   const rows: { label: string; value: string; href: string; external?: boolean }[] = [];
-  if (contact?.whatsapp) rows.push({ label: 'WhatsApp', value: contact.whatsapp, href: `https://wa.me/${digits(contact.whatsapp)}?text=${encodeURIComponent('Hello, I need help with ComplianceOS.')}`, external: true });
+  if (contact?.whatsapp) rows.push({ label: 'WhatsApp', value: contact.whatsapp, href: `https://wa.me/${digits(contact.whatsapp)}?text=${encodeURIComponent('Hello, I need help with the NextGen platform.')}`, external: true });
   if (contact?.phone) rows.push({ label: 'Call', value: contact.phone, href: `tel:${contact.phone.replace(/\s/g, '')}` });
   if (contact?.phone2) rows.push({ label: 'Call (alternate)', value: contact.phone2, href: `tel:${contact.phone2.replace(/\s/g, '')}` });
   if (contact?.email) rows.push({ label: 'Email', value: contact.email, href: `mailto:${contact.email}` });

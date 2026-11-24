@@ -101,7 +101,7 @@ export function RolesTable({
 
   function exportCsv() {
     downloadCsv(
-      `complianceos-roles-${new Date().toISOString().slice(0, 10)}.csv`,
+      `nextgen-roles-${new Date().toISOString().slice(0, 10)}.csv`,
       ['Role', 'Slug', 'Type', 'Logins', 'Permissions', 'Description', 'Created'],
       list.data.map((role) => [
         role.name,

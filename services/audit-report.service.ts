@@ -1315,7 +1315,7 @@ async function buildTemplateData(report: repo.ReportListRow, extra: Record<strin
     minor_findings: Number(report.minor_findings ?? 0),
     submitted_date: report.submitted_at ? formatDateTime(String(report.submitted_at)) : '—',
     report_url: `${APP_URL}/admin/audit-reports/${report.id}`,
-    platform_name: 'ComplianceOS',
+    platform_name: 'NextGen Socio & Enviro Advisors',
     ...extra,
   };
 }

@@ -31,7 +31,7 @@ export async function generateWaterNocPdf(detail: Detail, preparedBy: string): P
   const doc = createPdf({
     title: `Groundwater NOC - ${String(noc.noc_number)}`,
     subject: `Groundwater NOC compliance report for ${String(noc.employer_name)}`,
-    author: branding.name || 'ComplianceOS',
+    author: branding.name || 'NextGen Socio & Enviro Advisors',
   });
 
   drawLetterhead(doc, { firm: branding.name, address: branding.address, logo: branding.logo, letterhead: branding.letterhead });

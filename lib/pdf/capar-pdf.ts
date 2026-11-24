@@ -180,7 +180,7 @@ export async function generateCaparPdf(input: CaparPdfInput): Promise<Buffer> {
   const doc = createPdf({
     title: `CAPAR - ${String(report.report_number)}`,
     subject: String(report.title ?? 'Corrective Action and Preventive Action Report'),
-    author: String(report.audit_firm || branding.name || 'ComplianceOS'),
+    author: String(report.audit_firm || branding.name || 'NextGen Socio & Enviro Advisors'),
   });
 
   /* ── 1. letterhead and title ── */

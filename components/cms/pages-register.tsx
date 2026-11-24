@@ -158,7 +158,7 @@ export function PagesRegister({ canCreate, canEdit, canDelete }: { canCreate: bo
 
   function exportCsv() {
     downloadCsv(
-      `complianceos-cms-pages-${new Date().toISOString().slice(0, 10)}.csv`,
+      `nextgen-cms-pages-${new Date().toISOString().slice(0, 10)}.csv`,
       ['Title', 'Slug', 'Type', 'Status', 'Template', 'Menu', 'Sections', 'Views', 'Published', 'Updated'],
       list.data.map((row) => [
         row.title, `/${row.slug}`, CMS_PAGE_TYPE_LABELS[row.page_type] ?? row.page_type, row.status, row.template,

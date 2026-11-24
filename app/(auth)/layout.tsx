@@ -7,23 +7,23 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <aside className="relative hidden w-1/2 flex-col justify-between bg-sidebar p-12 text-white lg:flex">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500 text-lg font-bold">C</span>
-          <span className="text-xl font-bold">{APP_NAME}</span>
+        <Link href="/" className="inline-flex w-fit items-center rounded-2xl bg-white px-5 py-3 shadow-lg" aria-label={`${APP_NAME} - home`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/logo.png" alt={APP_NAME} className="h-14 w-auto max-w-[240px] object-contain" />
         </Link>
 
         <div>
           <p className="text-3xl font-bold leading-tight">
-            Compliance, audits, HR and payroll — one platform.
+            All Compliance Under One Umbrella.
           </p>
           <p className="mt-4 max-w-md text-slate-300">
-            Run statutory compliance registers, schedule and verify safety audits, maintain employee records,
-            and process payroll with bilingual payslips.
+            Statutory compliance, industrial safety, occupational health, labour welfare, social compliance, environmental management, ESG and climate action,
+            with every audit, report and record in one place.
           </p>
           <ul className="mt-8 space-y-3 text-sm text-slate-300">
             {[
               'Role-based panels for Admin, Auditor, Employer, Employee and Verifier',
-              'Dynamic audit modules — HAZOP, HACCP, safety, risk and inspections',
+              'Audits, assessments, permits and reports signed and verified on the screen',
               'Legal register with expiry reminders on email, SMS and WhatsApp',
               'PF, ESI, PT and gratuity aware payroll engine',
             ].map((item) => (

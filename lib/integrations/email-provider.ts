@@ -68,7 +68,7 @@ export async function getEmailConfig(): Promise<EmailConfig> {
     username: map.get('smtp_username') || process.env.SMTP_USERNAME || null,
     password,
     fromEmail: map.get('from_email') || process.env.SMTP_FROM_EMAIL || 'noreply@localhost',
-    fromName: map.get('from_name') || process.env.SMTP_FROM_NAME || 'ComplianceOS',
+    fromName: map.get('from_name') || process.env.SMTP_FROM_NAME || 'NextGen Socio & Enviro Advisors',
     replyTo: map.get('reply_to') || process.env.SMTP_REPLY_TO || null,
     enabled: (map.get('enabled') ?? 'true') === 'true',
   };

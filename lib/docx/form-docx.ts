@@ -94,9 +94,9 @@ function render(blocks: DocBlock[], page: number): (Paragraph | Table)[] {
     } else if (block.kind === 'files') {
       body.push(new Paragraph({ keepNext: true, spacing: { before: 100, after: 20 }, children: [run(block.label, { bold: true, size: 18 })] }));
       for (const item of block.items) {
-        body.push(new Paragraph({ spacing: { before: 20, after: 20 }, indent: { left: 280 }, children: [run(`Attached: ${item.name}`, { size: 18 })] }));
+        if (!block.signature) body.push(new Paragraph({ spacing: { before: 20, after: 20 }, indent: { left: 280 }, children: [run(`Attached: ${item.name}`, { size: 18 })] }));
         if (!item.image) continue;
-        const scale = Math.min(1, 440 / item.image.width, 340 / item.image.height);
+        const scale = block.signature ? Math.min(1, 190 / item.image.width, 64 / item.image.height) : Math.min(1, 440 / item.image.width, 340 / item.image.height);
         body.push(new Paragraph({
           spacing: { before: 40, after: 100 }, indent: { left: 280 },
           children: [new ImageRun({ type: item.image.format, data: item.image.data, transformation: { width: Math.max(20, Math.round(item.image.width * scale)), height: Math.max(20, Math.round(item.image.height * scale)) } })],

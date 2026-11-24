@@ -17,7 +17,7 @@ export type DocBlock =
   | { kind: 'section'; title: string; note?: string; pageBreak: boolean }
   | { kind: 'checklist'; rows: { sr: number; item: string; response: string }[]; blank: boolean }
   | { kind: 'pair'; label: string; value: string; wide: boolean }
-  | { kind: 'files'; label: string; items: AttachedFile[] }
+  | { kind: 'files'; label: string; items: AttachedFile[]; /** a drawn signature: the picture alone, small, without an "Attached" line */ signature?: boolean }
   | { kind: 'qa'; rows: { q: string; a: string }[] }
   | { kind: 'heading'; text: string }
   | { kind: 'paragraph'; text: string }
@@ -213,8 +213,12 @@ export function buildDocumentBlocks(input: { structure: FormStructure; values?: 
       }
       if (type === 'rich_text') { blocks.push({ kind: 'pair', label, value: richTextToPlain(values[String(field.field_key)]) || '—', wide: true }); continue; }
       if (type === 'signature') {
-        const signed = Boolean(values[String(field.field_key)]);
-        blocks.push({ kind: 'pair', label: String(field.label), value: signed ? `Signed — file #${String(values[String(field.field_key)])}` : 'Not signed', wide: true });
+        const id = Number(values[String(field.field_key)]);
+        if (Number.isInteger(id) && id > 0) {
+          blocks.push({ kind: 'files', signature: true, label: String(field.label), items: [input.files?.get(id) ?? { id, name: `Signature #${id}` }] });
+        } else {
+          blocks.push({ kind: 'pair', label: String(field.label), value: 'Not signed', wide: true });
+        }
         continue;
       }
       blocks.push({ kind: 'pair', label, value: answerFor(field, values), wide });

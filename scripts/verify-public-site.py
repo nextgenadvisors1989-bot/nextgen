@@ -37,6 +37,13 @@ check("the portrait file is served", anon.send("GET", "/brand/kannan.jpg", raw=T
 check("the numbered register labels (§ 01 ...) are gone", "§ 0" not in home)
 check("the sign-in bar is on the page", "portal-heading" in home)
 
+print("== the old product name is nowhere")
+for page in ("/", "/login", "/forgot-password", "/about", "/services", "/contact", "/calculators", "/resources", "/privacy-policy", "/terms-conditions"):
+    status, body = get(page)
+    check(f"{page} does not show ComplianceOS or One Legal Culture", status == 200 and "complianceos" not in body.lower() and "legal culture" not in body.lower(), status)
+status, login = get("/login")
+check("the sign-in page shows the logo and the client's tagline", "/brand/logo.png" in login and "All Compliance Under One Umbrella" in login)
+
 print("== the menu")
 header = re.search(r"<header[\s\S]*?</header>", home)
 hrefs = re.findall(r'<a[^>]+href="([^"]+)"', header.group(0) if header else "")

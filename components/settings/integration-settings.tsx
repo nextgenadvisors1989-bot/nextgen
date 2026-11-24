@@ -61,7 +61,7 @@ export function IntegrationSettings({
   const [message, setMessage] = useState(
     channel === 'email'
       ? ''
-      : `ComplianceOS test message. If you received this, ${channel === 'sms' ? 'SMS' : 'WhatsApp'} delivery is working.`
+      : `NextGen test message. If you received this, ${channel === 'sms' ? 'SMS' : 'WhatsApp'} delivery is working.`
   );
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<TestResult | null>(null);

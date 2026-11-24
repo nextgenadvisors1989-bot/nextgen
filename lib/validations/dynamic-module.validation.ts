@@ -354,6 +354,8 @@ export const submissionReviewSchema = z.object({
   score_obtained: z.coerce.number().min(-100000).max(1000000).optional().nullable(),
   score_max: z.coerce.number().min(0).max(1000000).optional().nullable(),
   notify_submitter: booleanish.optional().default(true),
+  /** The verifier's drawn signature (a file uploaded to this submission); it is written into the form's "Verifier signature" field when the report is approved. */
+  signature_file_id: z.coerce.number().int().positive().optional().nullable(),
 });
 
 export type ModulePayload = z.infer<typeof modulePayloadSchema>;

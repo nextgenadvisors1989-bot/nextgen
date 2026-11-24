@@ -819,7 +819,7 @@ function AuditDocument({ workspace, body }: { workspace: AuditWorkspaceBundle; b
   return (
     <Card className="mx-auto max-w-4xl">
       <div className="border-b border-line px-6 py-5">
-        <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">ComplianceOS Audit Report</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">Audit Report</p>
         <h2 className="mt-1 text-lg font-semibold text-ink-strong">{String(assignment.audit_title)}</h2>
         <p className="mt-1 text-sm text-ink-soft">
           {String(assignment.employer_name ?? '')}
@@ -943,7 +943,7 @@ function AuditDocument({ workspace, body }: { workspace: AuditWorkspaceBundle; b
       </div>
 
       <div className="border-t border-line px-6 py-3 text-xs text-ink-muted">
-        Report {String(report?.report_number ?? '—')} · Version {Number(report?.current_version ?? 1)} · Generated from the ComplianceOS audit register.
+        Report {String(report?.report_number ?? '—')} · Version {Number(report?.current_version ?? 1)} · Generated from the NextGen audit register.
         {workspace.decisions.length ? ` · ${truncate(workspace.decisions[0].comments, 120)}` : ''}
       </div>
     </Card>

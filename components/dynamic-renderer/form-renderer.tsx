@@ -174,6 +174,8 @@ export function FormRenderer({
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'return'>('approve');
   const [reviewComments, setReviewComments] = useState('');
+  const [verifierInk, setVerifierInk] = useState<string | undefined>(undefined);
+  const hasVerifierSignature = structure.fields.some((field) => field.field_key === 'sig_verifier_signature');
   const [reviewScore, setReviewScore] = useState<{ obtained: string; max: string }>({ obtained: '', max: '' });
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [localSubmissionId, setLocalSubmissionId] = useState<number | null>(submissionId ?? null);
@@ -333,9 +335,23 @@ export function FormRenderer({
   async function review() {
     if (!submission) return;
     try {
+      let signatureFileId: number | null = null;
+      if (reviewAction === 'approve' && hasVerifierSignature && verifierInk) {
+        const blob = await (await fetch(verifierInk)).blob();
+        const formData = new FormData();
+        formData.append('files', new File([blob], 'verifier-signature.png', { type: 'image/png' }));
+        formData.append('entityType', 'SUBMISSION');
+        formData.append('entityId', String(submission.id));
+        formData.append('category', 'signature');
+        const uploaded = await fetch('/api/files/upload', { method: 'POST', headers: { 'X-CSRF-Token': getCsrfToken() }, body: formData });
+        const payload = await uploaded.json() as { files?: UploadedFileMeta[]; message?: string };
+        if (!uploaded.ok || !payload.files?.[0]) throw new Error(payload.message ?? 'The signature could not be saved');
+        signatureFileId = Number(payload.files[0].id);
+      }
       const response = await api.put<{ status: string }>(`${reviewApi}/${submission.id}`, {
         action: reviewAction,
         comments: reviewComments,
+        signature_file_id: signatureFileId,
         score_obtained: reviewScore.obtained === '' ? null : Number(reviewScore.obtained),
         score_max: reviewScore.max === '' ? null : Number(reviewScore.max),
         notify_submitter: true,
@@ -530,7 +546,7 @@ export function FormRenderer({
             <Button variant="outline" onClick={() => setReviewOpen(false)}>Cancel</Button>
             <Button
               variant={reviewAction === 'approve' ? 'success' : reviewAction === 'reject' ? 'danger' : 'warning'}
-              disabled={reviewComments.trim().length < 5}
+              disabled={reviewComments.trim().length < 5 || (reviewAction === 'approve' && hasVerifierSignature && !verifierInk)}
               onClick={review}
             >
               Confirm
@@ -546,6 +562,9 @@ export function FormRenderer({
             onChange={(event) => setReviewComments(event.target.value)}
             helper="At least 5 characters. The submitter is notified with this text."
           />
+          {reviewAction === 'approve' && hasVerifierSignature && (
+            <SignaturePad label="Your signature as the verifier" value={verifierInk} onChange={setVerifierInk} helper="Draw with a mouse, stylus or finger. It is printed on the report with your name and today's date." />
+          )}
           <div className="grid grid-cols-2 gap-3">
             <Input
               label="Score awarded (optional)"

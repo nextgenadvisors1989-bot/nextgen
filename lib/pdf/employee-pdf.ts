@@ -85,7 +85,7 @@ async function loadCompany(employerId: number, employerName: string): Promise<Co
   ].filter(Boolean).join('   ');
 
   return {
-    name: text(employer?.company_name || setting('company_name') || employerName, 'ComplianceOS'),
+    name: text(employer?.company_name || setting('company_name') || employerName, 'NextGen Socio & Enviro Advisors'),
     addressLines: addressLines as string[],
     registrationLine: registration,
   };

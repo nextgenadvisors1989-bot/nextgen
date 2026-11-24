@@ -442,6 +442,20 @@ export async function replaceValues(
   });
 }
 
+/** Writes one answer (for example the verifier's signature at approval) and leaves every other answer as it is. */
+export async function setOneValue(submissionId: number, formId: number, field: { id: number; section_id: number | null; field_key: string; field_type: string }, value: unknown): Promise<void> {
+  const columns = describeValue(value, field.field_type);
+  await transaction(async (conn) => {
+    await conn.query('DELETE FROM dynamic_form_submission_values WHERE submission_id = ? AND field_id = ?', [submissionId, field.id]);
+    await conn.query(
+      `INSERT INTO dynamic_form_submission_values
+        (submission_id, form_id, section_id, field_id, field_key, value_text, value_number, value_date, value_datetime, value_json, file_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [submissionId, formId, field.section_id, field.id, field.field_key, columns.value_text, columns.value_number, columns.value_date, columns.value_datetime, columns.value_json, columns.file_id]
+    );
+  });
+}
+
 export async function readValues(submissionId: number): Promise<SubmissionValueRow[]> {
   return query<SubmissionValueRow>(
     'SELECT * FROM dynamic_form_submission_values WHERE submission_id = ? ORDER BY id ASC',

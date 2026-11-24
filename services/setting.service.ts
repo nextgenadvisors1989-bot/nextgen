@@ -324,7 +324,7 @@ export async function sendTestEmail(input: {
       recipient_name: input.actor.user.fullName,
       sent_by_name: input.actor.user.fullName,
       sent_at: new Date().toISOString(),
-      subject_line: input.subject || 'ComplianceOS email delivery test',
+      subject_line: input.subject || 'NextGen email delivery test',
       app_url: APP_URL,
     },
     entityType: 'settings',
@@ -369,11 +369,11 @@ export async function sendTestSms(input: {
   actor: { user: AuthUser; ip?: string | null };
 }) {
   const message = input.message?.trim() ||
-    `ComplianceOS test message to ${input.actor.user.fullName}. If you received this, SMS delivery is working.`;
+    `NextGen test message to ${input.actor.user.fullName}. If you received this, SMS delivery is working.`;
   const result = await sendTemplateSms({
     to: input.to,
     templateCode: 'sms.otp',
-    data: { otp_code: message, platform_name: 'ComplianceOS' },
+    data: { otp_code: message, platform_name: 'NextGen Socio & Enviro Advisors' },
     rawMessage: message,
     entityType: 'settings',
     sentBy: input.actor.user.id,
@@ -412,11 +412,11 @@ export async function sendTestWhatsApp(input: {
   actor: { user: AuthUser; ip?: string | null };
 }) {
   const message = input.message?.trim() ||
-    `ComplianceOS test message to ${input.actor.user.fullName}. If you received this, WhatsApp delivery is working.`;
+    `NextGen test message to ${input.actor.user.fullName}. If you received this, WhatsApp delivery is working.`;
   const result = await sendTemplateWhatsApp({
     to: input.to,
     templateCode: 'whatsapp.welcome',
-    data: { platform_name: 'ComplianceOS', recipient_name: input.actor.user.fullName, login_url: `${APP_URL}/login` },
+    data: { platform_name: 'NextGen Socio & Enviro Advisors', recipient_name: input.actor.user.fullName, login_url: `${APP_URL}/login` },
     rawMessage: message,
     entityType: 'settings',
     sentBy: input.actor.user.id,

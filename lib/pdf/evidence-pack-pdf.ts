@@ -16,7 +16,7 @@ export interface EvidencePackPdfInput {
 export async function generateEvidencePackPdf(input: EvidencePackPdfInput): Promise<Buffer> {
   const { submission, sections } = input;
   const branding = await companyBranding(null);
-  const doc = createPdf({ title: `Document pack - ${submission.company_name}`, subject: 'Pre-audit document pack', author: branding.name || 'ComplianceOS' });
+  const doc = createPdf({ title: `Document pack - ${submission.company_name}`, subject: 'Pre-audit document pack', author: branding.name || 'NextGen Socio & Enviro Advisors' });
 
   setFont(doc, 15, { bold: true });
   doc.fillColor(COLORS.ink).text('PRE-AUDIT DOCUMENT PACK', MARGIN, doc.y, { width: CONTENT_WIDTH, align: 'center' });

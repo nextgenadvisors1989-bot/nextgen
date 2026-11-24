@@ -160,7 +160,7 @@ export function HolidaysRegister({
 
   function exportCsv() {
     downloadCsv(
-      `complianceos-holidays-${year}.csv`,
+      `nextgen-holidays-${year}.csv`,
       ['Holiday', 'Date', 'Day', 'Type', 'Paid', 'Applies to', 'Note'],
       list.data.map((row) => [
         row.holiday_name,

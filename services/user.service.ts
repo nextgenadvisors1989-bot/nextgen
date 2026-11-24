@@ -177,7 +177,7 @@ export async function createUser(
         temporary_password: temporaryPassword,
         role_name: roleNames,
         scope_label: linked.length ? 'Linked record' : 'Portal',
-        scope_value: linked.length ? linked.join(', ') : 'ComplianceOS',
+        scope_value: linked.length ? linked.join(', ') : 'NextGen Socio & Enviro Advisors',
         activate_url: `${APP_URL}/activate-account?token=${token}`,
       },
       entityType: 'user',
