@@ -14,7 +14,8 @@ panel has **Help & Guide** (sidebar, and the round "?" menu in the top bar) with
 | Company name, address, phones, e-mail, working hours, social links, GSTIN, bank details printed on invoices | Administration → Settings → **Company Settings** |
 | The mail server that sends password resets, notices and reminders | Settings → **Email Settings** (SMS / WhatsApp likewise) |
 | Backups (schedule, run now, history) | Settings → **Backup Settings** |
-| Other pages of the website (About, Services …), downloadable resources, media | CMS → Pages / Resources / Media Library |
+| **About Us** (the client's own text, with the Compliance, Safety and Environment Wings), the four compliance pages (Payroll & IR, Social Security, Health & Safety, Environmental), Services and every other page | CMS → **Pages**; the body is a Word-style editor (headings, bold, lists, tables; pasting from Word keeps the structure) |
+| Downloadable resources (only files that do not need a sign-in are listed on the public Resources page), media | CMS → Resources / Media Library |
 | Enquiries sent through the website form | CMS → **Contact Enquiries** |
 | Acts and Rules (chapters, sections, sub-sections, amendments) shown on the public site and to auditors | Compliance → **Acts & Rules** |
 | Employers, employees, auditors, verifiers, users, what each role may do | Organisation, Audit Operations, Administration menus |
@@ -24,8 +25,9 @@ panel has **Help & Guide** (sidebar, and the round "?" menu in the top bar) with
 The **footer lists** of services and Acts follow the Home Page blocks (change them once, both places update).
 
 ### Photo of the principal
+The portrait stands in the **top banner** of the home page (name and designation under it) and again, small, beside the message further down.
 Home Page → "Principal — photo and message" → Edit → *Choose photo* → Save. JPG, PNG or WebP up to 5 MB, a portrait works best.
-Until a photo is added the page shows a monogram (the first letter of the name). Designation and message are blank until
+Kannan's portrait ships with the site (`public/brand/kannan.jpg`), so it shows from the first deploy; a photo uploaded here replaces it. Designation and message are blank until
 the client writes them; nothing about the person is invented by the platform.
 
 ### Factory data (Data Management)
@@ -37,6 +39,16 @@ the client writes them; nothing about the person is invented by the platform.
 * **Emission factors are never pre-filled.** The administrator enters the client's official factors (value, unit, source, year, validity) and approves them;
   an activity without an approved factor is shown as "factor missing" and adds nothing. The Go-live Checklist says when none is approved.
 
+### Forms, permits and signatures
+* The seven **Permit to Work** forms (Cold Work, Confined Space to Entry, Electrical (Isolation), Excavation, Hot Work, Lifting Operation, Work at Height) are the client's PTW file word for
+  word, including its misspellings (for example "Danger/Waning Sign", "Arial lift", "utlities"): the client asked for no change of content. Fix a spelling in Compliance → Audit and Assessment → the form.
+* **Form 3** (records of hazardous and other wastes) and **Form 4** (annual return) of the Hazardous and Other Wastes Rules 2016 sit under the Environmental Audit. The sample data of the
+  client's filled files is not carried over.
+* Every audit, assessment, risk, study, inspection and permit form ends with **Signatures**: auditor and verifier (name, drawn signature, date), the other members of the audit team and
+  their signed sheets. Signatures are drawn with a mouse, stylus or finger. They are optional so a form can be saved before it is signed.
+* An auditor can also be a verifier: give the same user both roles (Administration → Users → Edit). The person then sees both workspaces and a link between them. In the auditor workspace
+  they act as an auditor, in the verifier workspace as a verifier; nobody verifies their own submission.
+
 ### Auditors
 Every auditor sees every audit, assessment, study and permit form and every company; nothing is handed to an auditor by the administrator.
 Audit Assignments remain for scheduling (they fill in the date and unit and appear under "Assigned Audits"). The Groundwater NOC register is still kept
@@ -44,8 +56,9 @@ by water auditors only.
 
 ## 2. What still needs a developer
 
-* The **header menus** (About, Compliance, Acts & Compliance, Services, Resources …) and the **footer "Quick links"** are
-  fixed in code (`components/public/site-header.tsx`, `site-footer.tsx`); the pages they open are CMS pages and are editable.
+* The **header menus** (About, Compliance, Services, Tools …) and the **footer "Quick links"** are
+  fixed in code (`components/public/site-header.tsx`, `site-footer.tsx`); the pages they open are CMS pages and are editable. Every entry opens its own page or its own heading on a page
+  (the heading ids come from `lib/utils/anchors.ts`): if you rename a heading in the CMS, the menu entry that points at it needs the new name in `site-header.tsx`.
 * The wording of **Privacy Policy** and **Terms & Conditions** (`app/(public)/privacy-policy`, `terms-conditions`) is in code.
   Their company details come from Company Settings. When the text is revised, update `LEGAL_TEXT_REVISED` in
   `lib/utils/constants.ts` (it is a fixed date on purpose; it no longer shows "today").
@@ -70,8 +83,9 @@ Company Settings, so enter the real details there.
    `git pull origin compliance-platform && npm ci --include=dev && npm run db:migrate && npm run build && systemctl restart complianceos`
    (if `package-lock.json` blocks the pull: `git checkout -- package-lock.json`; if the 2 GB build is killed, add swap and use
    `NODE_OPTIONS=--max-old-space-size=1200 npm run build`).
-4. Scripts that call the app API (`install-aa-forms.py`, `import-act.py`, `import-acts-list.py`) run **after** the restart, with
-   `LIVE_ADMIN_EMAIL` and `LIVE_ADMIN_PASSWORD` exported in the same terminal.
+4. Scripts that call the app API (`install-aa-forms.py`, `install-ptw-forms.py`, `import-act.py`, `import-acts-list.py`) run **after** the restart, with
+   `LIVE_ADMIN_EMAIL` and `LIVE_ADMIN_PASSWORD` exported in the same terminal. Migrations 054-057 (TSDF audit name, About Us page, compliance page text, signature blocks) run with `npm run db:migrate`.
+   `install-ptw-forms.py` never rebuilds a permit that somebody has already filled in (it lists it at the end).
 
 Checks: `python scripts/verify-*.py` (each suite is independent; set `VERIFY_ADMIN_EMAIL`, `VERIFY_ADMIN_PASSWORD`,
 `VERIFY_ADMIN_ID`, `VERIFY_ADMIN_NAME` for your demo administrator). Never stop or rebuild the server while a suite is running:
@@ -79,6 +93,9 @@ Checks: `python scripts/verify-*.py` (each suite is independent; set `VERIFY_ADM
 
 ## 5. Open items
 
+* **Form 5** of the Environmental Audit is named in the client's list but no file was sent; "Environmental Risk Assessment" is shown as the Environmental Aspects and Impacts Register and
+  "Environmental Compliance Report" as the Environmental Compliance Audit until the client says otherwise.
+* The Audit and Assessment forms and the Water Audit Report are filled form by form; one **compiled final report** that merges the forms of several auditors into one document is not built.
 * Data Management: the client's official emission factors must be entered before any carbon figure appears; attachments are photos/PDFs only.
 * Auditor self-registration with a referral code and administrator approval is not built.
 * Brevo (or other) SMTP key to be entered under Email Settings; the live administrator password to be changed.

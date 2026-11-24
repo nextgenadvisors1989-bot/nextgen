@@ -45,7 +45,7 @@ export async function ensureHomePage(): Promise<number> {
   }
   return insert(
     `INSERT INTO cms_pages (uuid, slug, title, subtitle, meta_title, page_type, template, status, is_homepage, published_at, show_in_menu, menu_label, sort_order)
-     VALUES (?, 'home', 'Home', 'The public home page', 'One Legal Culture - Compliance | Safety | Sustainability', 'landing', 'default', 'published', 1, NOW(), 0, 'Home', 0)`,
+     VALUES (?, 'home', 'Home', 'The public home page', 'NextGen Socio & Enviro Advisors - Compliance | Safety | Sustainability', 'landing', 'default', 'published', 1, NOW(), 0, 'Home', 0)`,
     [randomUUID()]
   );
 }

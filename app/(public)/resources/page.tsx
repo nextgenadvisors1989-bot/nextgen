@@ -75,8 +75,7 @@ export default async function ResourcesPage() {
             <div className="mt-14">
               <h2 className="text-2xl font-bold text-ink">Downloads</h2>
               <p className="mt-3 text-sm text-ink-muted">
-                Formats, checklists and explanatory notes published by our team. Everything here is free to
-                download; a few items ask you to sign in so we can tell you when they are revised.
+                Formats, checklists and explanatory notes published by our team. Everything here is free to download.
               </p>
               <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {downloads.map((resource) => (
@@ -97,7 +96,7 @@ export default async function ResourcesPage() {
                     <div className="mt-5 flex items-center justify-between">
                       <span className="text-xs text-ink-muted">
                         {resource.has_file ? `${formatNumber(resource.download_count)} download(s)` : 'External link'}
-                        {resource.requires_login ? ' · sign-in required' : ''}
+                        
                       </span>
                       <Link href={`/resources/${resource.slug}`} className="text-sm font-medium text-brand-600 hover:underline">
                         Open

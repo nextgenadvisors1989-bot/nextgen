@@ -47,8 +47,8 @@ export function HomeDirectory({ tabs }: { tabs: DirectoryTab[] }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-sm border border-[#0B1E36]/15 bg-white">
-      <div role="tablist" aria-label="Statutory directory" className="flex overflow-x-auto border-b border-[#0B1E36]/15 bg-[#F4F1E8]">
+    <div className="overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-[#0B1E36]/10 ring-1 ring-[#0B1E36]/5">
+      <div role="tablist" aria-label="Statutory directory" className="flex gap-2 overflow-x-auto px-4 pt-4 sm:px-6 sm:pt-6">
         {visible.map((tab, index) => {
           const selected = index === current;
           return (
@@ -63,27 +63,27 @@ export function HomeDirectory({ tabs }: { tabs: DirectoryTab[] }) {
               tabIndex={selected ? 0 : -1}
               onClick={() => setActive(index)}
               onKeyDown={(event) => onKey(event, index)}
-              className={`flex min-h-[48px] shrink-0 items-center gap-2 border-b-2 px-5 text-sm font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#C59B27] ${
-                selected ? 'border-[#C59B27] bg-white text-[#0B1E36]' : 'border-transparent text-slate-600 hover:text-[#0B1E36]'
+              className={`flex min-h-[46px] shrink-0 items-center gap-2 rounded-full px-5 text-sm font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#C59B27] ${
+                selected ? 'bg-[#0B1E36] text-white' : 'bg-[#FAF7F0] text-slate-700 hover:bg-[#F2E6C4]'
               }`}
             >
-              <SiteIcon name={tab.icon} className="h-4 w-4 text-[#9A7518]" />
+              <SiteIcon name={tab.icon} className={`h-4 w-4 ${selected ? 'text-[#E2B94A]' : 'text-[#9A7518]'}`} />
               <span>{tab.label}</span>
-              <span className="rounded-full bg-[#0B1E36]/10 px-2 py-0.5 font-mono text-xs font-semibold text-slate-700">{tab.rows.length}</span>
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${selected ? 'bg-white/20 text-white' : 'bg-[#0B1E36]/10 text-slate-700'}`}>{tab.rows.length}</span>
             </button>
           );
         })}
       </div>
 
       {visible.map((tab, index) => (
-        <div key={tab.id} role="tabpanel" id={`${uid}-panel-${tab.id}`} aria-labelledby={`${uid}-tab-${tab.id}`} hidden={index !== current} className="p-5 sm:p-7">
+        <div key={tab.id} role="tabpanel" id={`${uid}-panel-${tab.id}`} aria-labelledby={`${uid}-tab-${tab.id}`} hidden={index !== current} className="p-5 sm:p-8">
           <ul className="grid gap-x-10 sm:grid-cols-2">
             {tab.rows.map((row, i) => (
               <li key={i} className="border-b border-slate-200">
                 <RowLink row={row} className="group flex min-h-[48px] items-center justify-between gap-3 py-3 text-[15px] font-medium text-[#0B1E36] hover:text-[#9A7518]">
                   <span>{row.title}</span>
                   {row.subtitle ? (
-                    <span className="shrink-0 rounded-sm bg-[#F4F1E8] px-2 py-0.5 font-mono text-xs text-slate-600">{row.subtitle}</span>
+                    <span className="shrink-0 rounded-full bg-[#F2E6C4] px-2.5 py-0.5 text-xs font-semibold text-[#6B4F0E]">{row.subtitle}</span>
                   ) : (
                     <SiteIcon name={/^https?:/.test(row.link ?? '') ? 'external' : 'arrow'} className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-[#9A7518]" />
                   )}
@@ -92,7 +92,7 @@ export function HomeDirectory({ tabs }: { tabs: DirectoryTab[] }) {
             ))}
           </ul>
           <div className="mt-6">
-            <RowLink row={{ title: tab.action.label, link: tab.action.href }} className="inline-flex min-h-[44px] items-center gap-2 rounded-sm border border-[#0B1E36] px-5 text-sm font-bold text-[#0B1E36] transition-colors hover:bg-[#0B1E36] hover:text-white">
+            <RowLink row={{ title: tab.action.label, link: tab.action.href }} className="inline-flex min-h-[46px] items-center gap-2 rounded-full bg-[#0B1E36] px-6 text-sm font-bold text-white transition-colors hover:bg-[#16365c]">
               <span>{tab.action.label}</span>
               <SiteIcon name="arrow" className="h-4 w-4" />
             </RowLink>

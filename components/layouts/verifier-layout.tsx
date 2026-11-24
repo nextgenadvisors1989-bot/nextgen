@@ -10,7 +10,7 @@ export function VerifierLayout({ user, children, notifications, unreadCount, cou
   children: ReactNode;
   notifications?: TopbarNotification[];
   unreadCount?: number;
-  counts?: { pending?: number };
+  counts?: { pending?: number; alsoAuditor?: boolean };
 }) {
   return (
     <PanelShell

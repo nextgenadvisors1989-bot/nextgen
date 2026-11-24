@@ -13,6 +13,7 @@
  * one genuinely interactive block and are handled with local state.
  */
 import { useState } from 'react';
+import { anchorId } from '@/lib/utils/anchors';
 
 export interface CmsSectionItem {
   title?: string | null;
@@ -65,7 +66,7 @@ function Heading({ section, centered = true }: { section: CmsSection; centered?:
   if (!section.heading && !section.subheading) return null;
   return (
     <div className={centered ? 'text-center' : undefined}>
-      {section.heading && <h2 className="text-2xl font-bold text-ink lg:text-3xl">{section.heading}</h2>}
+      {section.heading && <h2 id={anchorId(section.heading)} className="scroll-mt-28 text-2xl font-bold text-ink lg:text-3xl">{section.heading}</h2>}
       {section.subheading && (
         <p className={`mt-3 text-[15px] leading-relaxed text-ink-muted ${centered ? 'mx-auto max-w-2xl' : 'max-w-3xl'}`}>
           {section.subheading}

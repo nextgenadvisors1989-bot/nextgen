@@ -10,7 +10,7 @@ export function AuditorLayout({ user, children, notifications, unreadCount, coun
   children: ReactNode;
   notifications?: TopbarNotification[];
   unreadCount?: number;
-  counts?: { openAudits?: number; isWater?: boolean };
+  counts?: { openAudits?: number; isWater?: boolean; alsoVerifier?: boolean };
 }) {
   return (
     <PanelShell

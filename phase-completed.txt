@@ -1,6 +1,6 @@
 ComplianceOS - phases completed
 Last updated: 2026-10-26
-Client: NextGen Socio & Enviro Advisors / One Legal Culture
+Client: NextGen Socio & Enviro Advisors
 Stack: Next.js 15, React 19, Tailwind 3, MariaDB (XAMPP), served on port 3001 with `npm run serve`
 
 SUMMARY

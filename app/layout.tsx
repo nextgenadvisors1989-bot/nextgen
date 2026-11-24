@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'NextGen Socio and Enviro Advisors' }],
   openGraph: {
     title: 'NextGen Socio & Enviro Advisors — Audit, Compliance, HR & Payroll Platform',
-    description: 'One Legal Culture: audits, legal compliance, HR and payroll in one place. www.nextgenseadvisors.com',
+    description: 'NextGen Socio & Enviro Advisors: audits, legal compliance, HR and payroll in one place. www.nextgenseadvisors.com',
     type: 'website',
   },
 };

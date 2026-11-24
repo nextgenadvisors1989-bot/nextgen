@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   try {
     const user = await requireVerifierApi(['submission.read']);
-    const actor = actorFromUser(user, request);
+    const actor = actorFromUser(user, request, 'verifier');
     const filters = filterObject(parseSearchParams(request));
     const [result, options] = await Promise.all([
       listSubmissions(actor, filters),

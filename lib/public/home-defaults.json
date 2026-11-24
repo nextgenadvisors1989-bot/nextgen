@@ -1,6 +1,6 @@
 {
   "settings": {
-    "company_name": "One Legal Culture / NextGen Socio & Enviro Advisors",
+    "company_name": "NextGen Socio & Enviro Advisors",
     "company_phone": "+91 94884 65966",
     "company_email": "info@nextgenseadvisors.com",
     "company_timing": "Mon - Sat: 9:00 AM - 6:00 PM",
@@ -16,7 +16,7 @@
     {
       "key": "hero",
       "type": "hero",
-      "heading": "ONE LEGAL CULTURE",
+      "heading": "NextGen Socio & Enviro Advisors",
       "subheading": "COMPLIANCE | SAFETY | SUSTAINABILITY",
       "content_html": "Your Trusted Partner for Legal Compliance, Risk Management, Environment, Safety and Sustainability Solutions.",
       "items": [

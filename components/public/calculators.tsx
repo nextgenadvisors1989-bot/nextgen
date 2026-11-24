@@ -2,9 +2,14 @@
 
 /** The "Safety & Environmental Calculation" hub, with the payroll calculators beside it. Nothing is stored or sent: it all runs in the browser. */
 import { useMemo, useState } from 'react';
-import { bonus, emissions, epf, esi, gratuity, manHours, overtime, pollutantLoadKgPerDay, riskScore, safetyRates, waterBalance } from '@/lib/calculators';
+import {
+  afr, asr, bonus, electricalPower, emissions, epf, esi, extinguishersFor, flammability, gratuity, incidentRate, ltifr, manHours, NOISE_TABLE, overtime, oxygenStatus, permissibleNoiseHours,
+  pollutantLoadKgPerDay, pressure, riskMatrix, riskScore, safeWorkingLoad, safetyRates, scaffoldLoad, trir, waterBalance,
+} from '@/lib/calculators';
 
 const GROUPS = [
+  { key: 'chart', label: 'Safety officer', tools: [['ltifr', 'LTIFR'], ['trir', 'TRIR'], ['afr', 'AFR'], ['asr', 'ASR'], ['incident', 'Incident rate'], ['manhours', 'Man-hours'], ['extinguisher', 'Fire extinguisher'],
+    ['noise', 'Noise dose'], ['oxygen', 'Safe oxygen'], ['lel', 'LEL & UEL'], ['scaffold', 'Scaffold load'], ['power', 'Electrical power'], ['pressure', 'Pressure'], ['swl', 'Lifting SWL'], ['matrix', 'Risk matrix']] },
   { key: 'safety', label: 'Safety', tools: [['rates', 'Frequency & severity rates'], ['risk', 'Risk score']] },
   { key: 'environment', label: 'Environment', tools: [['emissions', 'Emissions (CO2e)'], ['load', 'Effluent load'], ['water', 'Water balance']] },
   { key: 'payroll', label: 'Payroll', tools: [['epf', 'EPF'], ['esi', 'ESI'], ['gratuity', 'Gratuity'], ['bonus', 'Bonus'], ['overtime', 'Overtime']] },
@@ -159,10 +164,142 @@ function Overtime() {
   );
 }
 
-const VIEWS: Record<string, () => React.JSX.Element> = { rates: Rates, risk: Risk, emissions: Emissions, load: Load, water: Water, epf: Epf, esi: Esi, gratuity: Gratuity, bonus: Bonus, overtime: Overtime };
+/* ─────────── the safety officer's chart: the 15 calculations, each with the formula as the chart prints it ─────────── */
 
-export function Calculators({ initial = 'rates' }: { initial?: string }) {
-  const [tool, setTool] = useState(VIEWS[initial] ? initial : 'rates');
+const Formula = ({ children }: { children: React.ReactNode }) => <p className="mb-3 rounded-lg bg-surface-muted px-3 py-2 font-mono text-xs leading-relaxed text-ink-soft sm:col-span-2">{children}</p>;
+
+function RateTool({ title, formula, a, b, defaults, run, unit }: { title: string; formula: string; a: string; b: string; defaults: [string, string]; run: (x: number, y: number) => number; unit?: string }) {
+  const [v, set] = useFields({ a: defaults[0], b: defaults[1] });
+  const result = run(num(v.a), num(v.b));
+  return (
+    <Panel title={title} note="The formula and the example are the ones on the safety officer's chart."
+      inputs={<><Formula>{formula}</Formula><Field label={a} value={v.a} onChange={set('a')} /><Field label={b} value={v.b} onChange={set('b')} /></>}
+      results={<Result label={title.split(' - ')[0]} value={`${result.toLocaleString('en-IN')}${unit ?? ''}`} strong />} />
+  );
+}
+
+const Ltifr = () => <RateTool title="LTIFR - Lost Time Injury Frequency Rate" formula="LTIFR = (No. of Lost Time Injuries x 1,000,000) / Total man-hours worked" a="Lost time injuries (LTI)" b="Total man-hours worked" defaults={['2', '500000']} run={ltifr} />;
+const Trir = () => <RateTool title="TRIR - Total Recordable Incident Rate" formula="TRIR = (Recordable cases x 200,000) / Total man-hours worked" a="Recordable cases" b="Total man-hours worked" defaults={['5', '500000']} run={trir} />;
+const Afr = () => <RateTool title="AFR - Accident Frequency Rate" formula="AFR = (Total accidents x 1,000,000) / Total man-hours worked" a="Total accidents" b="Total man-hours worked" defaults={['3', '600000']} run={afr} />;
+const Asr = () => <RateTool title="ASR - Accident Severity Rate" formula="ASR = (Lost workdays x 1,000,000) / Total man-hours worked" a="Lost workdays" b="Total man-hours worked" defaults={['120', '600000']} run={asr} />;
+const IncidentRate = () => <RateTool title="Incident rate" formula="Incident rate = (Incidents x 200,000) / Total employees worked" a="Incidents" b="Total employees worked" defaults={['10', '250']} run={incidentRate} />;
+
+function ManHours() {
+  const [v, set] = useFields({ employees: '100', hours: '8', days: '26' });
+  return (
+    <Panel title="Man-hours calculation" note="Man-hours = number of employees x working hours x working days."
+      inputs={<><Formula>Man-hours = No. of employees x Working hours x Working days</Formula><Field label="Employees" value={v.employees} onChange={set('employees')} /><Field label="Hours per day" value={v.hours} onChange={set('hours')} /><Field label="Working days" value={v.days} onChange={set('days')} /></>}
+      results={<Result label="Man-hours" value={manHours(num(v.employees), num(v.hours), num(v.days)).toLocaleString('en-IN')} strong />} />
+  );
+}
+
+function Extinguisher() {
+  const [v, set] = useFields({ area: '1000' });
+  const r = extinguishersFor(num(v.area));
+  return (
+    <Panel title="Fire extinguisher coverage" note="One ABC fire extinguisher (6 kg) covers approximately 200 - 250 square metres, as per risk assessment and applicable standards. The count is a planning figure, not a substitute for the risk assessment."
+      inputs={<Field label="Area to cover (square metres)" value={v.area} onChange={set('area')} />}
+      results={<><Result label="Fewest (at 250 sq m each)" value={String(r.fewest)} strong /><Result label="Most (at 200 sq m each)" value={String(r.most)} strong /></>} />
+  );
+}
+
+function Noise() {
+  const [v, set] = useFields({ level: '91' });
+  const level = num(v.level);
+  return (
+    <Panel title="Noise dose (permissible exposure)" note="The chart's table, halving the time for every 3 dB. Type any level to see the time allowed."
+      inputs={<Field label="Sound level (dB)" value={v.level} onChange={set('level')} />}
+      results={<>
+        <Result label={`Maximum exposure at ${level || 0} dB`} value={level >= 85 ? `${permissibleNoiseHours(level)} hours` : 'above 8 hours (below 85 dB)'} strong />
+        <table className="mt-3 w-full text-sm"><thead><tr className="text-left text-xs text-ink-muted"><th className="py-1 font-semibold">Sound level (dB)</th><th className="py-1 font-semibold">Maximum exposure time</th></tr></thead>
+          <tbody>{NOISE_TABLE.map((row) => <tr key={row.level} className="border-t border-line"><td className="py-1.5">{row.level} dB</td><td className="py-1.5">{row.hours} {row.hours === 1 ? 'Hour' : 'Hours'}</td></tr>)}</tbody></table>
+      </>} />
+  );
+}
+
+function Oxygen() {
+  const [v, set] = useFields({ oxygen: '20.9' });
+  const status = oxygenStatus(num(v.oxygen));
+  return (
+    <Panel title="Safe oxygen level (confined space)" note="Safe oxygen level is 19.5 % - 23.5 %. Below 19.5 % the air is oxygen deficient; above 23.5 % it is a fire risk."
+      inputs={<Field label="Oxygen reading (%)" value={v.oxygen} onChange={set('oxygen')} />}
+      results={<div className={`py-2 text-base font-bold ${status === 'Safe' ? 'text-emerald-700' : 'text-red-700'}`}>{status}</div>} />
+  );
+}
+
+function Lel() {
+  const [v, set] = useFields({ reading: '0.4', lel: '5', uel: '15' });
+  const r = flammability(num(v.reading), num(v.lel), num(v.uel));
+  return (
+    <Panel title="LEL and UEL (flammable gas)" note="LEL is the lowest concentration that can ignite, UEL the highest. Between them is the flammable range. Safe practice: the gas level should be below 10 % of the LEL before a Hot Work Permit is issued. Use the LEL and UEL of your own gas from its safety data sheet."
+      inputs={<><Field label="Gas reading (% by volume)" value={v.reading} onChange={set('reading')} /><Field label="LEL of the gas (%)" value={v.lel} onChange={set('lel')} /><Field label="UEL of the gas (%)" value={v.uel} onChange={set('uel')} /></>}
+      results={<><Result label="Where the reading sits" value={r.zone} strong /><Result label="Reading as a share of the LEL" value={`${r.percentOfLel} %`} />
+        <div className={`py-2 text-sm font-semibold ${r.hotWorkAllowed ? 'text-emerald-700' : 'text-red-700'}`}>{r.hotWorkAllowed ? 'Below 10 % of the LEL: acceptable for a Hot Work Permit.' : 'At or above 10 % of the LEL: do not issue a Hot Work Permit.'}</div></>} />
+  );
+}
+
+function Scaffold() {
+  const [v, set] = useFields({ dead: '500', live: '1500', wind: '300' });
+  const r = scaffoldLoad(num(v.dead), num(v.live), num(v.wind));
+  return (
+    <Panel title="Scaffold load calculation" note="Total load = dead load + live load + wind load."
+      inputs={<><Formula>Total load = Dead load + Live load + Wind load</Formula><Field label="Dead load (kg)" value={v.dead} onChange={set('dead')} /><Field label="Live load (kg)" value={v.live} onChange={set('live')} /><Field label="Wind load (kg)" value={v.wind} onChange={set('wind')} /></>}
+      results={<><Result label="Total load" value={`${r.kg.toLocaleString('en-IN')} kg`} strong /><Result label="In tonnes" value={`${r.tonnes} ton`} /></>} />
+  );
+}
+
+function Power() {
+  const [v, set] = useFields({ volts: '230', amps: '10' });
+  const r = electricalPower(num(v.volts), num(v.amps));
+  return (
+    <Panel title="Electrical power" note="Power (P) = Voltage (V) x Current (I)."
+      inputs={<><Formula>P = V x I</Formula><Field label="Voltage (V)" value={v.volts} onChange={set('volts')} /><Field label="Current (A)" value={v.amps} onChange={set('amps')} /></>}
+      results={<><Result label="Power" value={`${r.watts.toLocaleString('en-IN')} W`} strong /><Result label="In kilowatts" value={`${r.kilowatts} kW`} /></>} />
+  );
+}
+
+function PressureTool() {
+  const [v, set] = useFields({ force: '1000', area: '2' });
+  return (
+    <Panel title="Pressure calculation" note="Pressure (P) = Force (F) / Area (A). Unit: pascal (Pa) = N per square metre."
+      inputs={<><Formula>P = F / A</Formula><Field label="Force (N)" value={v.force} onChange={set('force')} /><Field label="Area (square metres)" value={v.area} onChange={set('area')} /></>}
+      results={<Result label="Pressure" value={`${pressure(num(v.force), num(v.area)).toLocaleString('en-IN')} Pa`} strong />} />
+  );
+}
+
+function Swl() {
+  const [v, set] = useFields({ breaking: '10', fos: '5' });
+  return (
+    <Panel title="Lifting load check (SWL)" note="Safe working load (SWL) = breaking load / factor of safety (FOS). Keep the load at or below the SWL."
+      inputs={<><Formula>SWL = Breaking load / Factor of safety (FOS)</Formula><Field label="Breaking load (ton)" value={v.breaking} onChange={set('breaking')} /><Field label="Factor of safety (FOS)" value={v.fos} onChange={set('fos')} /></>}
+      results={<Result label="Safe working load" value={`${safeWorkingLoad(num(v.breaking), num(v.fos))} ton`} strong />} />
+  );
+}
+
+const MATRIX_TONE: Record<string, string> = { Low: 'bg-emerald-200 text-emerald-950', Medium: 'bg-yellow-200 text-yellow-950', High: 'bg-orange-300 text-orange-950', Extreme: 'bg-red-400 text-red-950' };
+
+function Matrix() {
+  const [v, set] = useFields({ likelihood: '4', severity: '5' });
+  const r = riskScore(num(v.likelihood), num(v.severity));
+  return (
+    <Panel title="Risk rating matrix" note="Risk score = likelihood x severity, each 1 to 5 (likelihood 5 = almost certain, severity 5 = catastrophic). Bands: 1-4 low, 5-9 medium, 10-16 high, 17-25 extreme, the bands this platform's risk registers use."
+      inputs={<><Formula>Risk score = Likelihood x Severity</Formula><Field label="Likelihood (1-5)" value={v.likelihood} onChange={set('likelihood')} step="1" /><Field label="Severity (1-5)" value={v.severity} onChange={set('severity')} step="1" /></>}
+      results={<>
+        <Result label="Risk score" value={String(r.score)} strong /><Result label="Band" value={`${r.level} risk`} strong />
+        <table className="mt-3 w-full table-fixed border-separate border-spacing-1 text-center text-sm" aria-label="Risk matrix: likelihood down, severity across">
+          <thead><tr><th className="text-[11px] font-semibold text-ink-muted">L \ S</th>{[1, 2, 3, 4, 5].map((s) => <th key={s} className="text-[11px] font-semibold text-ink-muted">{s}</th>)}</tr></thead>
+          <tbody>{riskMatrix().map((row) => (
+            <tr key={row.likelihood}><th className="text-[11px] font-semibold text-ink-muted">{row.likelihood}</th>{row.cells.map((cell) => (
+              <td key={cell.severity} className={`rounded py-1.5 font-semibold ${MATRIX_TONE[cell.level]} ${cell.severity === num(v.severity) && row.likelihood === num(v.likelihood) ? 'ring-2 ring-ink' : ''}`}>{cell.score}</td>))}</tr>))}</tbody>
+        </table>
+      </>} />
+  );
+}
+
+const VIEWS: Record<string, () => React.JSX.Element> = { ltifr: Ltifr, trir: Trir, afr: Afr, asr: Asr, incident: IncidentRate, manhours: ManHours, extinguisher: Extinguisher, noise: Noise, oxygen: Oxygen, lel: Lel, scaffold: Scaffold, power: Power, pressure: PressureTool, swl: Swl, matrix: Matrix, rates: Rates, risk: Risk, emissions: Emissions, load: Load, water: Water, epf: Epf, esi: Esi, gratuity: Gratuity, bonus: Bonus, overtime: Overtime };
+
+export function Calculators({ initial = 'ltifr' }: { initial?: string }) {
+  const [tool, setTool] = useState(VIEWS[initial] ? initial : 'ltifr');
   const View = VIEWS[tool];
   const group = useMemo(() => GROUPS.find((g) => g.tools.some(([key]) => key === tool)), [tool]);
   return (
@@ -170,7 +307,7 @@ export function Calculators({ initial = 'rates' }: { initial?: string }) {
       <div className="space-y-3">
         {GROUPS.map((g) => (
           <div key={g.key} className="flex flex-wrap items-center gap-2">
-            <span className={`w-24 text-xs font-bold uppercase tracking-wide ${group?.key === g.key ? 'text-brand-600' : 'text-ink-muted'}`}>{g.label}</span>
+            <span className={`w-28 text-xs font-bold uppercase tracking-wide ${group?.key === g.key ? 'text-brand-600' : 'text-ink-muted'}`}>{g.label}</span>
             {g.tools.map(([key, label]) => (
               <button key={key} type="button" onClick={() => setTool(key)} aria-pressed={tool === key}
                 className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${tool === key ? 'border-brand-500 bg-brand-600 text-white' : 'border-line bg-white text-ink-soft hover:bg-surface-muted'}`}>{label}</button>

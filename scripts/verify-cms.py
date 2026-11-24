@@ -811,7 +811,9 @@ def main():
 
     status, html, _ = public_fetch("/resources")
     check("the resource library reads (200)", status == 200, status)
-    check("the published resource is listed", title_ext in html.decode("utf-8", "replace"))
+    shown = html.decode("utf-8", "replace")
+    check("a published resource that needs no sign-in is listed", title_file in shown)
+    check("a resource that needs a sign-in is not advertised on the public list (2026-11-24)", title_ext not in shown)
 
     status, html, _ = public_fetch(f"/resources/{slug_ext}")
     check("the gated resource's page reads (200)", status == 200, status)

@@ -15,7 +15,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ subm
   if (!Number.isInteger(id) || id <= 0) return notFound('Submission');
   try {
     const user = await requireVerifierApi(['submission.read']);
-    return ok(await submissionWorkspace(id, actorFromUser(user, request)));
+    return ok(await submissionWorkspace(id, actorFromUser(user, request, 'verifier')));
   } catch (error) {
     return handleRouteError(error, { route: '/api/verifier/submissions/[submissionId]', method: 'GET' });
   }
@@ -29,7 +29,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ subm
     const user = await requireVerifierApi(['submission.verify']);
     const body = await request.json();
     const result = await reviewSubmission(id, body, {
-      ...actorFromUser(user, request), ip: clientIp(request), userAgent: userAgent(request),
+      ...actorFromUser(user, request, 'verifier'), ip: clientIp(request), userAgent: userAgent(request),
     });
     return ok(result, { message: `Submission ${result.status.replace(/_/g, ' ')}` });
   } catch (error) {

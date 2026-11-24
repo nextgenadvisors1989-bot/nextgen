@@ -652,6 +652,7 @@ export function publishedCmsResources(limit = 60) {
        LEFT JOIN compliance_acts a ON a.id = r.act_id
        LEFT JOIN files f ON f.id = r.file_id
       WHERE r.status = 'published' AND r.deleted_at IS NULL
+        AND r.requires_login = 0 -- a document that needs a sign-in is not advertised on the public list (the client's reference files are of that kind)
       ORDER BY r.sort_order ASC, r.published_at DESC
       LIMIT ${Math.min(limit, 200)}`
   );

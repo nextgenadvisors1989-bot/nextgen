@@ -85,6 +85,59 @@ export function riskScore(likelihood: number, consequence: number): { score: num
   return { score, level: score <= 4 ? 'Low' : score <= 9 ? 'Medium' : score <= 16 ? 'High' : 'Extreme' };
 }
 
+/* ─────────── the safety officer's chart ("Safety Calculations as Safety Officer", client's file, 2026-11-14) ───────────
+ * The 15 calculations as the chart prints them, each with the chart's own example in scripts/test-calculators.ts. The chart's multipliers are used as printed
+ * (LTIFR and AFR per 1,000,000 man-hours, TRIR and the incident rate per 200,000), so a result can be checked against the chart line by line. */
+
+const rate = (count: number, base: number, per: number) => (base > 0 ? round2((count * per) / base) : 0);
+
+/** LTIFR = lost-time injuries x 1,000,000 / total man-hours worked. */
+export const ltifr = (lostTimeInjuries: number, hoursWorked: number) => rate(lostTimeInjuries, hoursWorked, 1000000);
+/** TRIR = recordable cases x 200,000 / total man-hours worked. */
+export const trir = (recordableCases: number, hoursWorked: number) => rate(recordableCases, hoursWorked, 200000);
+/** AFR = total accidents x 1,000,000 / total man-hours worked. */
+export const afr = (accidents: number, hoursWorked: number) => rate(accidents, hoursWorked, 1000000);
+/** ASR = lost workdays x 1,000,000 / total man-hours worked. */
+export const asr = (lostWorkdays: number, hoursWorked: number) => rate(lostWorkdays, hoursWorked, 1000000);
+/** Incident rate = incidents x 200,000 / total employees worked, as the chart prints it. */
+export const incidentRate = (incidents: number, employees: number) => rate(incidents, employees, 200000);
+
+/** One ABC extinguisher (6 kg) covers about 200 - 250 square metres, "as per risk assessment and applicable standards": the fewest and the most to plan for. */
+export function extinguishersFor(areaSqm: number): { fewest: number; most: number } {
+  if (!(areaSqm > 0)) return { fewest: 0, most: 0 };
+  return { fewest: Math.ceil(areaSqm / 250), most: Math.ceil(areaSqm / 200) };
+}
+
+/** The chart's table of permissible exposure: 85 dB 8 hours, 88 dB 4, 91 dB 2, 94 dB 1 (halved for every 3 dB). */
+export const NOISE_TABLE: { level: number; hours: number }[] = [{ level: 85, hours: 8 }, { level: 88, hours: 4 }, { level: 91, hours: 2 }, { level: 94, hours: 1 }];
+export const permissibleNoiseHours = (level: number) => round2(8 / Math.pow(2, (level - 85) / 3));
+
+/** Safe oxygen in a confined space is 19.5 % - 23.5 %: below is oxygen deficient, above is a fire risk. */
+export function oxygenStatus(percent: number): 'Oxygen deficient' | 'Safe' | 'Fire risk' {
+  return percent < 19.5 ? 'Oxygen deficient' : percent > 23.5 ? 'Fire risk' : 'Safe';
+}
+
+/** Where a gas reading sits against its explosive limits; hot work needs the gas level below 10 % of the LEL before a permit is issued. */
+export function flammability(readingPercent: number, lel: number, uel: number): { zone: 'Below LEL - too lean' | 'LEL to UEL - flammable range' | 'Above UEL - too rich'; percentOfLel: number; hotWorkAllowed: boolean } {
+  const zone = readingPercent < lel ? 'Below LEL - too lean' : readingPercent > uel ? 'Above UEL - too rich' : 'LEL to UEL - flammable range';
+  const percentOfLel = lel > 0 ? round2((readingPercent / lel) * 100) : 0;
+  return { zone, percentOfLel, hotWorkAllowed: percentOfLel < 10 };
+}
+
+/** Scaffold load = dead load + live load + wind load (kg), and the same in tonnes. */
+export const scaffoldLoad = (dead: number, live: number, wind: number) => ({ kg: round2(dead + live + wind), tonnes: round2((dead + live + wind) / 1000) });
+/** Electrical power P = V x I (watts), and in kilowatts. */
+export const electricalPower = (volts: number, amps: number) => ({ watts: round2(volts * amps), kilowatts: round2((volts * amps) / 1000) });
+/** Pressure P = F / A in pascals (N per square metre). */
+export const pressure = (forceN: number, areaSqm: number) => (areaSqm > 0 ? round2(forceN / areaSqm) : 0);
+/** Safe working load SWL = breaking load / factor of safety. */
+export const safeWorkingLoad = (breakingLoad: number, factorOfSafety: number) => (factorOfSafety > 0 ? round2(breakingLoad / factorOfSafety) : 0);
+
+/** The 5 x 5 matrix of the chart: risk score = likelihood x severity, with the colour band of each square (likelihood 5 at the top, 1 at the bottom). */
+export function riskMatrix(): { likelihood: number; cells: { severity: number; score: number; level: 'Low' | 'Medium' | 'High' | 'Extreme' }[] }[] {
+  return [5, 4, 3, 2, 1].map((likelihood) => ({ likelihood, cells: [1, 2, 3, 4, 5].map((severity) => ({ severity, ...riskScore(likelihood, severity) })) }));
+}
+
 /* ───────────────────────────── environment ───────────────────────────── */
 
 export interface EmissionLine { label: string; quantity: number; factor: number; kg: number }

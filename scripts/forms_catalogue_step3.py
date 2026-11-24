@@ -5,6 +5,7 @@ from forms_dsl import (
     COMPLIANCE, YES_NO_NA, area, checklist, col, coldate, colformula, colnum, colsel, date, form, formula, header, note, num, reset_keys, sec, select,
     signoff, table, table_sec, text,
 )
+from forms_catalogue_ptw import PTW_CATALOGUE
 
 STATUS = ["Open", "In progress", "Closed", "Verified"]
 SATISFACTORY = ["Satisfactory", "Needs improvement", "Unsatisfactory", "Not applicable"]
@@ -174,40 +175,10 @@ def risk_assessment(name, prefix, description, hazards):
 
 
 # ───────────────────────────── WORK PERMITS ─────────────────────────────
-
-def work_permit(name, prefix, description, checks, extra=None):
-    def build():
-        reset_keys()
-        return form(name, description, prefix, [
-            sec("Permit details", text("Work location", req=True), area("Description of work", w=12, req=True), text("Contractor / department"), text("Permit requested by"), date("Valid from", req=True), text("From time"), date("Valid to", req=True), text("To time"),
-                *(extra or [])),
-            checklist("Precautions before the work starts", checks, options=YES_NO_NA),
-            sec("Workers and equipment", text("Names of workers / supervisor"), text("Tools and equipment used"), text("Emergency contact number")),
-            sec("Permit closure", text("Permit issued by (name and designation)"), text("Permit accepted by (name and designation)"), select("Work status", ["Completed", "Suspended", "Cancelled"]), date("Closed on"),
-                area("Remarks on closure (area left safe, tools removed)", w=12), cols=2),
-        ], form_type="CHECKLIST")
-    return build
-
-
-PERMITS = [
-    ("Work at Height Permit", "WAH", "Permit for work above 1.8 metres: scaffolds, ladders, platforms and roof work.",
-     ["Work platform / scaffold inspected and tagged", "Full body harness with double lanyard worn and anchored", "Anchor point rated and checked", "Edges and openings guarded", "Ladder secured at the correct angle",
-      "Area below barricaded", "Tools secured against falling", "Weather suitable (no high wind, rain)", "Rescue arrangement available"], ["SAFETY", "FIRE"], [num("Working height (m)")]),
-    ("Lifting Operation Permit", "LOP", "Permit for crane and hoist lifting: load, sling, signal and area controls.",
-     ["Load weight known and within crane capacity", "Crane inspected and load test certificate valid", "Slings, shackles and hooks inspected", "Lifting area barricaded", "Trained operator and rigger", "Signal person assigned", "Ground condition and outriggers checked",
-      "Weather and wind suitable"], ["SAFETY"], [num("Load to be lifted (kg)"), num("Crane rated capacity (ton)")]),
-    ("Cold Work Permit", "CWP", "Permit for non-hot maintenance work on equipment that is in service or may hold residual energy.",
-     ["Equipment isolated and depressurised", "Residual material drained and area cleaned", "Hazardous materials identified", "Correct tools used", "PPE worn", "Housekeeping maintained", "Supervisor present"], ["SAFETY"], None),
-    ("Confined Space Entry Permit", "CSE", "Permit for entry into tanks, pits, vessels and other confined spaces.",
-     ["Space isolated from all lines and energy sources", "Space cleaned, vented and ventilated", "Oxygen 19.5 - 23.5 percent confirmed by gas test", "Flammable and toxic gas readings within limits", "Standby person stationed outside", "Rescue equipment and trained team available",
-      "Communication established", "Lighting is low voltage / flameproof", "Entry and exit logged"], ["SAFETY", "FIRE"], [text("Space description"), text("Gas test result (O2 / LEL / H2S / CO)")]),
-    ("Electrical Isolation (LOTO) Permit", "LOT", "Permit for lock-out tag-out of electrical and mechanical energy before maintenance.",
-     ["Equipment to be isolated identified", "All energy sources isolated (electrical, pneumatic, hydraulic, stored)", "Personal lock and tag fitted", "Zero energy verified by test", "Earthing applied where required", "Affected persons informed",
-      "Authorised electrician in charge", "Restoration plan agreed"], ["ELEC", "SAFETY"], [text("Equipment / panel isolated"), text("Lock and tag number")]),
-    ("Excavation Permit", "EXC", "Permit for digging, trenching and breaking ground.",
-     ["Underground services (cable, pipe) checked on drawings", "Cable / pipe locator used", "Sides sloped, shored or benched", "Barricades and warning signs placed", "Safe access / egress ladder", "Spoil kept away from the edge", "Dewatering arrangement", "Atmosphere tested if deep"],
-     ["SAFETY"], [num("Depth (m)")]),
-]
+# The permits are the client's own seven (PTW's .pdf, "Please don't change any content"): see forms_catalogue_ptw.py. The shorter permits this file
+# used to build were replaced on 2026-11-24; scripts/install-ptw-forms.py swaps them on a site that already has them.
+PERMIT_CODES = {"Work at Height Permit": ["SAFETY", "FIRE"], "Lifting Operation Permit": ["SAFETY"], "Cold Work Permit": ["SAFETY"], "Confined Space to Entry Permit": ["SAFETY", "FIRE"],
+                "Electrical (Isolation) Permit": ["ELEC", "SAFETY"], "Excavation Permit": ["SAFETY"]}
 
 
 def yesno_field(label):
@@ -231,5 +202,5 @@ STEP3_CATALOGUE = [
     ("Food Safety Audit", food_safety_audit, "AUDIT", "Food Safety", ["FOOD"]),
     ("HACCP Study", haccp_study, "STUDY", "Food Safety", ["FOOD"]),
     *[(name, risk_assessment(name, prefix, description, hazards), "RISK", "Environment", codes) for name, prefix, description, hazards, codes in RISKS],
-    *[(name, work_permit(name, prefix, description, checks, extra), "WORK_PERMIT", "Permits", codes) for name, prefix, description, checks, codes, extra in PERMITS],
+    *[(name, builder, module_type, category, PERMIT_CODES[name]) for name, builder, module_type, category, _old in PTW_CATALOGUE if name in PERMIT_CODES],
 ]

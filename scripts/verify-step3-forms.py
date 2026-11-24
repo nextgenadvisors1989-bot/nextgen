@@ -11,6 +11,7 @@ sys.path.insert(0, __file__.rsplit("scripts", 1)[0] + "scripts")
 from seed_lib import PASSWORDS, Session, db  # noqa: E402
 from forms_catalogue import CATALOGUE  # noqa: E402
 from forms_catalogue_step3 import STEP3_CATALOGUE  # noqa: E402
+from forms_catalogue_ptw import PTW_CATALOGUE  # noqa: E402
 
 PASS, FAIL = [], []
 
@@ -46,7 +47,10 @@ admin = login("demo.admin@complianceos.local", "admin")
 print("== modules exist, are published, have the right type")
 module_ids = {}
 for name, builder, module_type, category, codes in STEP3_CATALOGUE:
-    row = db(f"SELECT m.id, m.module_type, m.status, f.id, f.status FROM dynamic_modules m JOIN dynamic_forms f ON f.module_id = m.id WHERE m.name = '{sql(name)}' AND m.deleted_at IS NULL")
+    # a permit that already carries records keeps its earlier name (install-ptw-forms.py never rebuilds a filled-in permit)
+    earlier = {c[0]: c[4] for c in PTW_CATALOGUE if c[4]}.get(name)
+    names = f"'{sql(name)}'" + (f", '{sql(earlier)}'" if earlier else "")
+    row = db(f"SELECT m.id, m.module_type, m.status, f.id, f.status FROM dynamic_modules m JOIN dynamic_forms f ON f.module_id = m.id WHERE m.name IN ({names}) AND m.deleted_at IS NULL")
     ok = bool(row) and row[0][1] == module_type and row[0][2] == "published" and row[0][4] == "published"
     check(f"{name} is a published {module_type}", ok, str(row))
     if row:
@@ -71,7 +75,7 @@ check("water auditor sees STP assessment", "STP Functionality Assessment" in for
 # Any auditor may do any audit (2026-11-14): nothing is hidden by auditor type any more.
 check("a water auditor sees Energy Audit too", "Energy Audit" in forms_by_type["WATER"])
 check("GHG auditor sees Energy Audit and GHG verification", "Energy Audit" in forms_by_type["GHG"] and "GHG Inventory Verification" in forms_by_type["GHG"])
-check("a GHG auditor sees the permits too", "Confined Space Entry Permit" in forms_by_type["GHG"])
+check("a GHG auditor sees the permits too", "Confined Space to Entry Permit" in forms_by_type["GHG"] or "Confined Space Entry Permit" in forms_by_type["GHG"])
 check("fire auditor sees Work at Height Permit", "Work at Height Permit" in forms_by_type["FIRE"])
 check("env auditor sees TSDF audit and Environmental Statement", "TSDF Audit" in forms_by_type["ENV"] and "Environmental Statement (Form V)" in forms_by_type["ENV"])
 

@@ -6,7 +6,7 @@ import { SiteIcon } from '@/components/public/icons';
 
 const OTHER = 'Something else / not sure yet';
 const EMPTY = { company_name: '', contact_person: '', email: '', phone: '', district_state: '', service: '', notes: '' };
-const FIELD = 'w-full rounded-sm border border-slate-400 bg-white px-3.5 py-3 text-base text-[#0B1E36] placeholder:text-slate-400 focus:border-[#0B1E36] focus:outline-none focus:ring-2 focus:ring-[#C59B27]/60';
+const FIELD = 'w-full rounded-xl border border-slate-300 bg-[#FAF7F0] px-4 py-3 text-base text-[#0B1E36] placeholder:text-slate-400 focus:border-[#0B1E36] focus:outline-none focus:ring-2 focus:ring-[#C59B27]/60';
 const LABEL = 'mb-1.5 block text-sm font-bold text-[#0B1E36]';
 
 /** The "Official Plant Audit Request Form": every submission lands in the admin's Contact Enquiries inbox. */
@@ -46,7 +46,7 @@ export function EnquiryForm({ services = [] }: { services?: string[] }) {
 
   const id = (name: string) => `${uid}-${name}`;
   return (
-    <div className="rounded-sm border border-[#0B1E36]/25 bg-white p-6 shadow-[6px_6px_0_0_rgba(11,30,54,0.08)] sm:p-8">
+    <div className="rounded-[2rem] bg-white p-6 shadow-2xl shadow-[#0B1E36]/10 ring-1 ring-[#0B1E36]/5 sm:p-9">
       <h3 className="font-display text-2xl font-semibold text-[#0B1E36]">Request a plant audit</h3>
       <p className="mt-1 text-[15px] text-slate-600">Tell us about your plant. Fields marked * are needed.</p>
 
@@ -93,15 +93,15 @@ export function EnquiryForm({ services = [] }: { services?: string[] }) {
         </div>
 
         <div aria-live="polite">
-          {errors.form && <div role="alert" className="rounded-sm border border-red-300 bg-red-50 p-3 text-[15px] font-semibold text-red-800">{errors.form}</div>}
+          {errors.form && <div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 text-[15px] font-semibold text-red-800">{errors.form}</div>}
           {state === 'done' && (
-            <div role="status" className="rounded-sm border border-emerald-300 bg-emerald-50 p-3.5 text-[15px] font-semibold text-emerald-900">
+            <div role="status" className="rounded-xl border border-emerald-300 bg-emerald-50 p-3.5 text-[15px] font-semibold text-emerald-900">
               Thank you — your enquiry has reached our team. We will contact you on the e-mail or mobile number you gave.
             </div>
           )}
         </div>
 
-        <button type="submit" disabled={state === 'sending'} className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-sm bg-[#0B1E36] px-6 text-base font-bold text-white transition-colors hover:bg-[#16365c] disabled:opacity-60 motion-reduce:transition-none">
+        <button type="submit" disabled={state === 'sending'} className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[#0B1E36] px-6 text-base font-bold text-white transition-colors hover:bg-[#16365c] disabled:opacity-60 motion-reduce:transition-none">
           <span>{state === 'sending' ? 'Sending…' : 'Send enquiry'}</span>
           <SiteIcon name="send" className="h-4 w-4 text-[#C59B27]" />
         </button>

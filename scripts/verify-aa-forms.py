@@ -66,12 +66,21 @@ FORMS = {
     "Safety Audit Report": ("Safety Audits (IS 14489:2018)", ["Part 1 - Preamble", "Non-conformities", "Electrical safety observations", "Regulatory compliance", "Records examined"]),
     "Factory Capability and Capacity Audit": ("Factory Capacity and Capability Audit", ["Scoring summary", "Factory contacts", "Sampling lead time", "Corrective action plan", "Total storage capacity"]),
     "Life Cycle Assessment Report": ("Life Cycle Assessment", ["Characterised impacts per occupant per year", "Functional unit", "Low impact strategies", "Inventory analysis", "Interpretation"]),
-    "Integrated CHWTSDF Audit Report": ("Common and Captive TSDF", ["Form-1 checklist", "Environmental sensitivity", "Hazardous wastes accepted at the facility", "Chapter III - Description of the environment", "Name of the project"]),
+    "Integrated CHWTSDF Audit Report": ("Integrated Common Hazardous Waste Treatment, Storage and Disposal Facility Audit", ["Form-1 checklist", "Environmental sensitivity", "Hazardous wastes accepted at the facility", "Chapter III - Description of the environment", "Name of the project"]),
     "Certified Compliance Report (CCR)": ("Certified Compliance Report", ["Annual production details", "Litigation details", "EC conditions", "Reason for seeking the CCR", "Approval and e-signing"]),
     "Resource Data Management (Water, Waste and Energy)": ("Energy Audit and Water Audit", ["Bore well output", "Waste stream", "Purchased from the grid", "Boiler steam", "Purified water, rain water and recycled water"]),
     "Ground Water Extraction NOC Application": ("Ground Water Extraction NOC", ["Covering letter", "Father's / husband's name", "Hours of pumping per day", "Declaration", "Number of abstraction structures"]),
     # the carbon footprint sample (DOC-20260828-WA0017.pdf, 2026-11-09)
     "Carbon Footprint Report": ("GHG / Carbon Footprint", ["Executive summary - key figures", "Mobility emissions - activity and gross emissions by source", "Emission factors of the reporting year", "Homeworking methodology", "Appendix III - GRI 302-4", "Waste by European Waste Catalogue code", "Certificates of retirement of verified carbon units"]),
+    # the client's filled Form 3 register and Form 4 annual return (Shakthi Knitting, 2025-2026), message of 2026-11-14
+    "Form 3 - Records of Hazardous and Other Wastes": ("Environmental Audit and Statement", ["FORMAT FOR MAINTAINING RECORDS OF HAZARDOUS AND OTHER WASTES", "Date of issuance of Authorisation and its reference Number",
+                                                                                            "Description of Hazardous and Other Wastes Handled: (Generated or Received)", "Type of Waste with Category as per Schedule I, II and III of these Rules",
+                                                                                            "SAFE Disposal: Destined to or Received From", "Manifest No & Date"]),
+    "Form 4 - Annual Return (Hazardous and Other Wastes)": ("Integrated Common Hazardous Waste", ["FORM FOR FILLING ANNUAL RETURNS", "Part A. To be filled by Hazardous Waste Generator",
+                                                                                                  "Part B. To be filled by Treatment, storage and disposal facility operators",
+                                                                                                  "Part C. To be filled by Re - Cyclers or co-processors or other users",
+                                                                                                  "Quantity of Products Dispatched During the Year (Wherever applicable)",
+                                                                                                  "Signature of the Occupier or Operator of the disposal facility"]),
     "General Audit and Assessment Report": ("6S Project", ["Scope and method", "Compliance count", "Observations, non-conformities and recommendations", "Recommendation / corrective action", "Conclusion"]),
     "ETP Treatment Level Assessment": ("ETP Design and Functionality Assessment",["Treatment levels and processes", "Sludge treatment and disposal", "Stages of reverse osmosis", "Pictures of the treatment levels", "Findings and corrective action plan"]),
 }
@@ -99,7 +108,7 @@ for name, (entry_prefix, phrases) in FORMS.items():
     fields = int(q1(f"SELECT COUNT(*) FROM dynamic_form_fields WHERE form_id = {form_id} AND deleted_at IS NULL", 0))
     check("has its sections and fields", sections >= 4 and fields >= 10, (sections, fields))
     # the Ground Water NOC is an application form to hand in, so it prints as a plain form; every other form prints as a report
-    expected_style = "standard" if name == "Ground Water Extraction NOC Application" else "report"
+    expected_style = "standard" if name in ("Ground Water Extraction NOC Application", "Form 3 - Records of Hazardous and Other Wastes", "Form 4 - Annual Return (Hazardous and Other Wastes)") else "report"
     check(f"prints as a {expected_style} form", q1(f"SELECT output_style FROM dynamic_forms WHERE id = {form_id}") == expected_style)
 
     st, pdf = admin.send("GET", f"/api/documents/form/{form_id}?format=pdf", raw=True)
@@ -138,10 +147,10 @@ for name in list(openable)[:2]:
     fid = q1(f"SELECT f.id FROM dynamic_forms f WHERE f.name = '{name}' AND f.deleted_at IS NULL ORDER BY f.id LIMIT 1")
     st, blob = auditor.send("GET", f"/api/documents/form/{fid}?format=docx", raw=True)
     check(f"auditor downloads Word of a listed form ({name[:30]})", st == 200 and blob[:2] == b"PK", st)
-# a form that no audit entry offers stays closed to an auditor whose type does not include it
+# every auditor sees every published form (2026-11-14): a form no audit entry offers is open to an auditor of any type
 fid = q1("SELECT f.id FROM dynamic_forms f WHERE f.name = 'GOTS Manufacturing - Audit Requirements' AND f.deleted_at IS NULL ORDER BY f.id LIMIT 1")
 st, _ = auditor.send("GET", f"/api/documents/form/{fid}?format=pdf", raw=True)
-check("auditor still refused a form no audit entry offers and outside their type", st == 403, st)
+check("an auditor can open a published form that no audit entry offers, whatever their type", st == 200, st)
 
 # a filled submission
 print("\n== filled submission")

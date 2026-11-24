@@ -1,5 +1,8 @@
 /** Unit checks for lib/calculators: npx tsx scripts/test-calculators.ts */
-import { bonus, emissions, epf, esi, gratuity, manHours, overtime, pollutantLoadKgPerDay, riskScore, safetyRates, waterBalance } from '../lib/calculators';
+import {
+  afr, asr, bonus, electricalPower, emissions, epf, esi, extinguishersFor, flammability, gratuity, incidentRate, ltifr, manHours, NOISE_TABLE, overtime, oxygenStatus, permissibleNoiseHours,
+  pollutantLoadKgPerDay, pressure, riskMatrix, riskScore, safeWorkingLoad, safetyRates, scaffoldLoad, trir, waterBalance,
+} from '../lib/calculators';
 
 let failed = 0;
 function check(name: string, actual: unknown, expected: unknown) {
@@ -55,6 +58,29 @@ check('emissions add up', [e.totalKg, e.totalTonnes], [8340, 8.34]);
 check('pollutant load: 250 KLD at 400 mg/l is 100 kg a day', pollutantLoadKgPerDay(250, 400), 100);
 check('water balance', waterBalance({ freshKld: 80, recycledKld: 20, dischargedKld: 70, unitsPerDay: 50 }), { intensity: 2, recycledShare: 20, freshWater: 80, lossOrUnaccounted: 30 });
 check('water balance with nothing produced', waterBalance({ freshKld: 10, recycledKld: 0, dischargedKld: 5, unitsPerDay: 0 }).intensity, 0);
+
+// the safety officer's chart: each line is the chart's own worked example
+check('chart 1 LTIFR: 2 LTI, 500,000 hours = 4', ltifr(2, 500000), 4);
+check('chart 2 TRIR: 5 cases, 500,000 hours = 2', trir(5, 500000), 2);
+check('chart 3 AFR: 3 accidents, 600,000 hours = 5', afr(3, 600000), 5);
+check('chart 4 ASR: 120 lost workdays, 600,000 hours = 200', asr(120, 600000), 200);
+check('chart 5 incident rate: 10 incidents, 250 employees = 8,000', incidentRate(10, 250), 8000);
+check('chart 6 man-hours: 100 x 8 x 26 = 20,800', manHours(100, 8, 26), 20800);
+check('chart rates with no hours are 0, not a divide by zero', [ltifr(1, 0), trir(1, 0), afr(1, 0), asr(1, 0), incidentRate(1, 0)], [0, 0, 0, 0, 0]);
+check('chart 7 extinguishers: 1,000 sq m needs 4 to 5', extinguishersFor(1000), { fewest: 4, most: 5 });
+check('chart 7 extinguishers: 0 area needs none', extinguishersFor(0), { fewest: 0, most: 0 });
+check("chart 8 noise table is the chart's", NOISE_TABLE.map((row) => permissibleNoiseHours(row.level)), [8, 4, 2, 1]);
+check('chart 8 noise: 97 dB allows half an hour', permissibleNoiseHours(97), 0.5);
+check('chart 9 oxygen: 19.5 and 23.5 are safe, outside is not', [oxygenStatus(19.4), oxygenStatus(19.5), oxygenStatus(20.9), oxygenStatus(23.5), oxygenStatus(23.6)], ['Oxygen deficient', 'Safe', 'Safe', 'Safe', 'Fire risk']);
+check('chart 10 LEL/UEL: methane 5 - 15 %', [flammability(3, 5, 15).zone, flammability(10, 5, 15).zone, flammability(20, 5, 15).zone], ['Below LEL - too lean', 'LEL to UEL - flammable range', 'Above UEL - too rich']);
+check('chart 10 hot work needs gas below 10 % of the LEL', [flammability(0.4, 5, 15).hotWorkAllowed, flammability(0.5, 5, 15).hotWorkAllowed], [true, false]);
+check('chart 11 scaffold: 500 + 1500 + 300 = 2300 kg (2.3 t)', scaffoldLoad(500, 1500, 300), { kg: 2300, tonnes: 2.3 });
+check('chart 12 power: 230 V x 10 A = 2300 W (2.3 kW)', electricalPower(230, 10), { watts: 2300, kilowatts: 2.3 });
+check('chart 13 pressure: 1000 N on 2 sq m = 500 Pa', pressure(1000, 2), 500);
+check('chart 13 pressure on no area is 0', pressure(1000, 0), 0);
+check('chart 14 SWL: 10 ton breaking load, FOS 5 = 2 ton', safeWorkingLoad(10, 5), 2);
+check('chart 15 risk: likelihood 4 x severity 5 = 20', riskScore(4, 5).score, 20);
+check('chart 15 matrix is 5 x 5 with 1 at the bottom left and 25 at the top right', [riskMatrix().length, riskMatrix()[0].cells.length, riskMatrix()[4].cells[0].score, riskMatrix()[0].cells[4].score], [5, 5, 1, 25]);
 
 console.log(failed ? `\n${failed} FAILED` : '\nall passed');
 process.exit(failed ? 1 : 0);

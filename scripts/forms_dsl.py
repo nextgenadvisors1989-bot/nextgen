@@ -83,6 +83,22 @@ def date(label, **kw):
     return _field(label, "date", **kw)
 
 
+def clock(label, **kw):
+    """A time of day (HH:MM)."""
+    return _field(label, "time", **kw)
+
+
+def sign(label, **kw):
+    """A drawn signature (mouse, stylus or finger); it is kept as a file and printed on the permit."""
+    kw.setdefault("w", 12)
+    return _field(label, "signature", **kw)
+
+
+def heading(label):
+    """A heading inside a section (printed as a heading, not a question)."""
+    return {"field_key": unique("heading"), "label": label[:250], "field_type": "heading", "column_width": 12, "show_in_pdf": True}
+
+
 def select(label, options, **kw):
     return _field(label, "select", options=options, **kw)
 
@@ -139,6 +155,10 @@ def colnum(label, key=None, **kw):
 
 def coldate(label, key=None, **kw):
     return col(label, key, "date", **kw)
+
+
+def colclock(label, key=None, **kw):
+    return col(label, key, "time", **kw)
 
 
 def colsel(label, options, key=None, **kw):
@@ -198,6 +218,12 @@ def signoff(extra_note=None):
     fields = [
         area("Overall conclusion and recommendations", w=12),
         _field("I confirm this audit was carried out on site and the entries above are true to the records seen", "checkbox", key="declaration", w=12, req=True),
+        # the same fields migration 057 adds to the forms that were built before: the auditor signs, the verifier (who may be one of the auditors) signs
+        text("Auditor name", key="sig_auditor_name", w=6), date("Auditor signed on", key="sig_auditor_date", w=6), sign("Auditor signature", key="sig_auditor_signature"),
+        text("Verifier name", key="sig_verifier_name", w=6, help="The verifier may be one of the auditors of the team."), date("Verifier signed on", key="sig_verifier_date", w=6),
+        sign("Verifier signature", key="sig_verifier_signature"),
+        area("Other members of the audit team (name and designation)", key="sig_team_members", help="One line for each auditor who took part in the audit."),
+        upload("Signed sheets of the other team members", key="sig_team_sheets", help="Photograph or scan of the signed sheet, if the team signed on paper."),
     ]
     if extra_note:
         fields.insert(0, note(extra_note))

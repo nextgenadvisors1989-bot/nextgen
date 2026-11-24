@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   try {
     const user = await requireEmployeeApi(['submission.read']);
-    const actor = actorFromUser(user, request);
+    const actor = actorFromUser(user, request, 'employee');
     const filters = filterObject(parseSearchParams(request));
     const [result, options] = await Promise.all([
       listSubmissions(actor, filters),
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     userId = user.id;
     body = await request.json();
     const result = await startSubmission(body, {
-      ...actorFromUser(user, request), ip: clientIp(request), userAgent: userAgent(request),
+      ...actorFromUser(user, request, 'employee'), ip: clientIp(request), userAgent: userAgent(request),
     });
     return created(
       { submissionId: result.submissionId, submissionNumber: result.submissionNumber, resumed: result.resumed },

@@ -16,7 +16,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ subm
   if (!Number.isInteger(id) || id <= 0) return notFound('Submission');
   try {
     const user = await requireEmployeeApi(['submission.read']);
-    return ok(await submissionWorkspace(id, actorFromUser(user, request)));
+    return ok(await submissionWorkspace(id, actorFromUser(user, request, 'employee')));
   } catch (error) {
     return handleRouteError(error, { route: '/api/employee/submissions/[submissionId]', method: 'GET' });
   }
@@ -30,7 +30,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ subm
     const user = await requireEmployeeApi(['submission.update']);
     const body = await request.json();
     const result = await saveDraft(id, body, {
-      ...actorFromUser(user, request), ip: clientIp(request), userAgent: userAgent(request),
+      ...actorFromUser(user, request, 'employee'), ip: clientIp(request), userAgent: userAgent(request),
     });
     return ok(result, { message: `Draft saved — ${result.filled} answer(s) captured` });
   } catch (error) {
@@ -44,7 +44,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ s
   if (!Number.isInteger(id) || id <= 0) return notFound('Submission');
   try {
     const user = await requireEmployeeApi(['submission.delete']);
-    const result = await deleteSubmission(id, actorFromUser(user, request));
+    const result = await deleteSubmission(id, actorFromUser(user, request, 'employee'));
     return ok(result, { message: `${result.submissionNumber} deleted` });
   } catch (error) {
     return handleRouteError(error, { route: '/api/employee/submissions/[submissionId]', method: 'DELETE' });

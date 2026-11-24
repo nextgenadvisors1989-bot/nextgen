@@ -20,7 +20,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sub
     const user = await requireEmployerApi(['submission.update']);
     const body = await request.json();
     const result = await saveDraft(id, body, {
-      ...actorFromUser(user, request), ip: clientIp(request), userAgent: userAgent(request),
+      ...actorFromUser(user, request, 'employer'), ip: clientIp(request), userAgent: userAgent(request),
     }, { submit: true });
     return ok(result, {
       message: result.status === 'under_review'

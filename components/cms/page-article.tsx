@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { CmsSectionList } from '@/components/cms/section-renderer';
 import { formatDate } from '@/lib/utils/dates';
 import { formatNumber } from '@/lib/utils/formatting';
+import { withHeadingIds } from '@/lib/utils/anchors';
+import { sanitizeActHtml } from '@/lib/utils/sanitize-html';
 
 export interface CmsArticleBundle {
   page: Record<string, unknown>;
@@ -38,7 +40,7 @@ export function CmsArticle({
   badge?: string;
 }) {
   const { page, sections } = bundle;
-  const body = String(page.content_html ?? '').trim();
+  const body = withHeadingIds(sanitizeActHtml(page.content_html)).trim();
   const author = page.author_first ? `${String(page.author_first)} ${String(page.author_last ?? '')}`.trim() : null;
 
   return (
@@ -80,7 +82,7 @@ export function CmsArticle({
 
       <div className="mx-auto max-w-4xl px-4 py-12 lg:px-8">
         {body && (
-          <div className="space-y-4 text-[15px] leading-relaxed text-ink-soft" dangerouslySetInnerHTML={{ __html: body }} />
+          <div className="page-prose" dangerouslySetInnerHTML={{ __html: body }} />
         )}
 
         {sections.length > 0 && (

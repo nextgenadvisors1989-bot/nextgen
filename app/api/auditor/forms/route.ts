@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   try {
     const user = await requireAuditorApi(['module.read', 'form.read']);
-    const actor = actorFromUser(user, request);
+    const actor = actorFromUser(user, request, 'auditor');
     const [modules, stats] = await Promise.all([
       availableModules(user.id, user.primaryRole),
       submissionStats(actor),

@@ -40,11 +40,13 @@ import {
 } from '@/lib/validations/dynamic-module.validation';
 
 /** Every route builds its actor through this, so activity logs and file rows agree. */
-export function actorFromUser(user: { id: number; fullName?: string; primaryRole?: string }, request?: Request): SubmissionActor {
+/** `panel` is the workspace the request came from: a person who is both auditor and verifier acts as an auditor in the auditor workspace and as a verifier in the verifier workspace. */
+export function actorFromUser(user: { id: number; fullName?: string; primaryRole?: string; roles?: { slug: string }[] }, request?: Request, panel?: string): SubmissionActor {
   return {
     id: user.id,
     name: user.fullName ?? null,
-    role: user.primaryRole ?? null,
+    role: panel ?? user.primaryRole ?? null,
+    roles: panel ? [panel] : user.roles?.map((role) => role.slug),
     ip: request ? (request.headers.get('x-forwarded-for') ?? null) : null,
     userAgent: request ? request.headers.get('user-agent') : null,
   };
@@ -59,6 +61,8 @@ export interface SubmissionActor {
   id: number;
   name?: string | null;
   role?: string | null;
+  /** Every role the person holds (an auditor can also be a verifier). `role` is the first one. */
+  roles?: string[];
   ip?: string | null;
   userAgent?: string | null;
 }
@@ -76,10 +80,10 @@ const ADMIN_ROLES = new Set(['admin', 'super_admin']);
 const REVIEWER_ROLES = new Set(['admin', 'super_admin', 'verifier']);
 
 function isAdmin(actor: SubmissionActor): boolean {
-  return ADMIN_ROLES.has(String(actor.role ?? ''));
+  return ADMIN_ROLES.has(String(actor.role ?? '')) || Boolean(actor.roles?.some((slug) => ADMIN_ROLES.has(slug)));
 }
 function isReviewer(actor: SubmissionActor): boolean {
-  return REVIEWER_ROLES.has(String(actor.role ?? ''));
+  return REVIEWER_ROLES.has(String(actor.role ?? '')) || Boolean(actor.roles?.some((slug) => REVIEWER_ROLES.has(slug)));
 }
 
 /* ─────────────────────────── load + access ─────────────────────────────── */

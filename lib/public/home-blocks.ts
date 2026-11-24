@@ -120,7 +120,7 @@ export const HOME_BLOCKS: HomeBlockMeta[] = [
     key: 'spotlight',
     name: 'Principal — photo and message',
     where: 'Between the services and the statutory directory',
-    help: 'The photo, name and a few words from the person clients deal with. Add the photo here; until then a monogram of the name is shown.',
+    help: 'The photo, name and a few words from the person clients deal with. The portrait of Kannan is already on the site; choose another photo here to replace it.',
     headingLabel: 'Name',
     subheadingLabel: 'Designation (for example Founder & Principal Consultant)',
     textLabel: 'Message',

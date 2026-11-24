@@ -15,7 +15,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ form
   if (!Number.isInteger(id) || id <= 0) return notFound('Form');
   try {
     const user = await requireAuditorApi(['form.read']);
-    return ok(await formSpec(id, actorFromUser(user, request)));
+    return ok(await formSpec(id, actorFromUser(user, request, 'auditor')));
   } catch (error) {
     return handleRouteError(error, { route: '/api/auditor/forms/[formId]', method: 'GET' });
   }

@@ -19,6 +19,7 @@
  *     the CMS row points at the vault file rather than duplicating it.
  */
 import { randomUUID } from 'node:crypto';
+import { sanitizeActHtml } from '@/lib/utils/sanitize-html';
 import { queryOne, type RowDataPacket } from '@/lib/db/mysql';
 import * as repo from '@/repositories/cms.repository';
 import {
@@ -184,7 +185,7 @@ export async function createPage(payload: unknown, actor: ActorContext) {
     metaDescription: input.meta_description ?? null,
     metaKeywords: input.meta_keywords ?? null,
     heroImage: input.hero_image ?? null,
-    contentHtml: input.content_html ?? null,
+    contentHtml: input.content_html ? sanitizeActHtml(input.content_html) : null,
     parentPageId: input.parent_page_id ?? null,
     sortOrder: input.sort_order ?? 0,
     showInMenu: Boolean(input.show_in_menu),
@@ -248,7 +249,7 @@ export async function updatePage(pageId: number, payload: unknown, actor: ActorC
   assign('meta_description', 'meta_description');
   assign('meta_keywords', 'meta_keywords');
   assign('hero_image', 'hero_image');
-  assign('content_html', 'content_html');
+  assign('content_html', 'content_html', (value) => (value ? sanitizeActHtml(value) : null));
   assign('parent_page_id', 'parent_page_id');
   assign('sort_order', 'sort_order');
   assign('menu_label', 'menu_label');

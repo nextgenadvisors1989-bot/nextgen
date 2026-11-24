@@ -32,6 +32,7 @@ from forms_catalogue_aa_batch3 import AA_BATCH3_CATALOGUE  # noqa: E402
 from forms_catalogue_aa_etp import AA_ETP_CATALOGUE  # noqa: E402
 from forms_catalogue_aa_general import AA_GENERAL_CATALOGUE  # noqa: E402
 from forms_catalogue_aa_carbon import AA_CARBON_CATALOGUE  # noqa: E402
+from forms_catalogue_aa_wastes import AA_WASTE_CATALOGUE  # noqa: E402
 
 EMAIL = os.environ.get("LIVE_ADMIN_EMAIL", "demo.admin@complianceos.local")
 PASSWORD = os.environ.get("LIVE_ADMIN_PASSWORD", "Admin@2026")
@@ -43,12 +44,19 @@ LINKS = {
     "Fire Safety Audit": ["Fire Safety Audit Report", "Risk Engineering Compliance Report"],
     "Safety Audits (IS 14489:2018)": ["Safety Audit Report"],
     "Factory Capacity and Capability Audit": ["Factory Capability and Capacity Audit"],
-    "Common and Captive TSDF Audit": ["Integrated CHWTSDF Audit Report"],
+    # renamed by migration 054 to the client's name; the old name is kept here so the script still works before that migration has run
+    "Integrated Common Hazardous Waste Treatment, Storage and Disposal Facility Audit": ["Integrated CHWTSDF Audit Report", "Form 3 - Records of Hazardous and Other Wastes",
+                                                                                         "Form 4 - Annual Return (Hazardous and Other Wastes)"],
+    "Common and Captive TSDF Audit": ["Integrated CHWTSDF Audit Report", "Form 3 - Records of Hazardous and Other Wastes", "Form 4 - Annual Return (Hazardous and Other Wastes)"],
     "Life Cycle Assessment": ["Life Cycle Assessment Report"],
     "Certified Compliance Report": ["Certified Compliance Report (CCR)"],
     "Ground Water Extraction NOC": ["Ground Water Extraction NOC Application"],
     "Environmental Audit and Statement": ["Environmental Audit Report", "Risk Engineering Compliance Report", "ETP Functionality Assessment",
-                                          "ETP Assessment Document List", "ETP Treatment Level Assessment", "Environmental Aspects and Impacts Register"],
+                                          "ETP Assessment Document List", "ETP Treatment Level Assessment", "Environmental Aspects and Impacts Register",
+                                          # the client's six forms of the Environmental Audit (message of 2026-11-14): the risk assessment is the Aspects and Impacts
+                                          # Register above, the compliance report is the Environmental Compliance Audit, Form 5 is still to come from the client
+                                          "Environmental Compliance Audit", "Environmental Statement (Form V)", "Form 3 - Records of Hazardous and Other Wastes",
+                                          "Form 4 - Annual Return (Hazardous and Other Wastes)"],
     "Energy Audit and Water Audit": ["Water Audit Report", "Resource Data Management (Water, Waste and Energy)"],
     "Environmental Impact Assessment": ["Environmental Impact Assessment Report"],
     "GHG / Carbon Footprint": ["Carbon Footprint Report"],
@@ -158,7 +166,7 @@ print("Forms")
 for name in RETIRE:
     retire(name)
 installed = {}
-for name, builder, module_type, category, codes in [*AA_SITE_CATALOGUE, *AA_ENV_CATALOGUE, *AA_STUDIES_CATALOGUE, *AA_BATCH3_CATALOGUE, *AA_ETP_CATALOGUE, *AA_GENERAL_CATALOGUE, *AA_CARBON_CATALOGUE]:
+for name, builder, module_type, category, codes in [*AA_SITE_CATALOGUE, *AA_ENV_CATALOGUE, *AA_STUDIES_CATALOGUE, *AA_BATCH3_CATALOGUE, *AA_ETP_CATALOGUE, *AA_GENERAL_CATALOGUE, *AA_CARBON_CATALOGUE, *AA_WASTE_CATALOGUE]:
     result = install(name, builder, module_type, category)
     if result:
         installed[name] = (result[0], result[1], codes)

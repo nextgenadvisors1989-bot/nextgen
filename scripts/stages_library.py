@@ -72,7 +72,7 @@ IMAGES = {
     "3.05.26 PM (1)": ("NextGen brochure - integrated safety, environment and compliance solutions", "Brochures"),
     "3.05.26 PM": ("NextGen website home page design", "Brand and website designs"),
     "3.05.28 PM (1)": ("NextGen professional services poster", "Brochures"),
-    "3.05.28 PM": ("One Legal Culture website home page design", "Brand and website designs"),
+    "3.05.28 PM": ("NextGen website home page design", "Brand and website designs"),
     "3.05.29 PM (1)": ("NextGen core compliance services brochure", "Brochures"),
     "3.05.29 PM": ("Risk rating matrix and standard risk heat map", "Calculations and formulas"),
     "3.05.30 PM (1)": ("NextGen services brochure - factory and statutory compliance", "Brochures"),
@@ -82,7 +82,7 @@ IMAGES = {
     "3.05.31 PM": ("HIRA versus risk assessment", "Safety and risk references"),
     "3.05.32 PM": ("Smart employee ID card and workforce management software", "Brochures"),
     "10.30.39 AM (1)": ("NextGen website home page design (full page)", "Brand and website designs"),
-    "10.30.39 AM": ("One Legal Culture website home page design (full page)", "Brand and website designs"),
+    "10.30.39 AM": ("NextGen website home page design (full page)", "Brand and website designs"),
 }
 
 

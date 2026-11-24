@@ -11,7 +11,7 @@ export default async function VerifierPanelLayout({ children }: { children: Reac
       user={context.topbar}
       notifications={context.notifications}
       unreadCount={context.unreadCount}
-      counts={counts}
+      counts={{ ...counts, alsoAuditor: user.roles.some((role) => role.slug === 'auditor') }}
     >
       {children}
     </VerifierLayout>

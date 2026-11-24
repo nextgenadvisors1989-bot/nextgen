@@ -47,6 +47,8 @@ export interface SiteInfo {
   social: { facebook: string; linkedin: string; twitter: string; instagram: string; youtube: string };
 }
 
+export const DEFAULT_PRINCIPAL_PHOTO = '/brand/kannan.jpg';
+
 const SETTING_KEYS = Object.keys(defaults.settings) as (keyof typeof defaults.settings)[];
 const EXTRA_KEYS = ['social_youtube', 'company_phone_secondary', 'company_whatsapp'];
 
@@ -108,7 +110,8 @@ export async function getHomeBlocks(): Promise<Record<string, SiteBlock>> {
       subheading: section.subheading ?? '',
       html: section.content_html ?? '',
       items: section.items ?? [],
-      imageUrl: '',
+      // The principal's portrait ships with the site (public/brand/kannan.jpg); a photo uploaded in the Home page editor replaces it.
+      imageUrl: section.key === 'spotlight' ? DEFAULT_PRINCIPAL_PHOTO : '',
       hidden: false,
       customised: false,
     };
@@ -140,7 +143,7 @@ export async function getHomeBlocks(): Promise<Record<string, SiteBlock>> {
       html: optionalBlock ? String(row.content_html ?? '').trim() : String(row.content_html ?? '').trim() || base.html,
       // A saved list is the editor's, even when they emptied it; a block saved without any list keeps the default rows.
       items: row.content_json === null || row.content_json === undefined ? base.items : items,
-      imageUrl: String(row.image_url ?? '').trim(),
+      imageUrl: String(row.image_url ?? '').trim() || base.imageUrl,
       hidden: String(row.status) !== 'active',
       customised: true,
     };

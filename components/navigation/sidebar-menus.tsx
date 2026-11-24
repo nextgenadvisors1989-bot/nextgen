@@ -189,9 +189,10 @@ export function adminMenu(counts: { employees?: number; employers?: number; pend
   ];
 }
 
-export function auditorMenu(counts: { openAudits?: number; isWater?: boolean } = {}): MenuSection[] {
+export function auditorMenu(counts: { openAudits?: number; isWater?: boolean; alsoVerifier?: boolean } = {}): MenuSection[] {
   return [
     { items: [{ label: 'Dashboard', href: '/auditor/dashboard', icon: icon('dashboard') }] },
+    ...(counts.alsoVerifier ? [{ title: 'You are also a verifier', items: [{ label: 'Verifier workspace', href: '/verifier/dashboard', icon: icon('verify') }] }] : []),
     {
       title: 'My Work',
       items: [
@@ -356,9 +357,10 @@ export function employeeMenu(options: { dataManagement?: boolean } = {}): MenuSe
   ];
 }
 
-export function verifierMenu(counts: { pending?: number } = {}): MenuSection[] {
+export function verifierMenu(counts: { pending?: number; alsoAuditor?: boolean } = {}): MenuSection[] {
   return [
     { items: [{ label: 'Dashboard', href: '/verifier/dashboard', icon: icon('dashboard') }] },
+    ...(counts.alsoAuditor ? [{ title: 'You are also an auditor', items: [{ label: 'Auditor workspace', href: '/auditor/dashboard', icon: icon('clipboard') }] }] : []),
     {
       title: 'Verification',
       items: [

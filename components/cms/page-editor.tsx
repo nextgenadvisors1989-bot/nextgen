@@ -11,6 +11,7 @@
  */
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Card, CardBody } from '@/components/ui/card';
 import { Button, LinkButton } from '@/components/ui/button';
@@ -31,6 +32,8 @@ import {
   slugify,
 } from '@/lib/validations/cms.validation';
 import { SectionEditorModal, type SectionDraft } from '@/components/cms/section-editor-modal';
+
+const WordEditor = dynamic(() => import('@/components/ui/word-editor'), { ssr: false, loading: () => <div className="rounded-lg border border-line px-4 py-10 text-center text-sm text-ink-muted">Loading the editor…</div> });
 
 export interface SectionRow {
   id: number;
@@ -455,10 +458,10 @@ export function PageEditor({
                 label="Subtitle" value={form.subtitle}
                 onChange={(event) => set('subtitle', event.target.value)}
               />
-              <Textarea
-                label="Page body" rows={8} value={form.content_html}
-                helper="The page's main prose. Blocks below are appended underneath it, in order."
-                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => set('content_html', event.target.value)}
+              <WordEditor
+                label="Page body" value={form.content_html} minHeight={320}
+                helper="The page's main text: headings, bold, lists, quotes and tables. Pasting from Word keeps the structure. Blocks below are appended underneath it, in order."
+                onChange={(html) => set('content_html', html)}
               />
             </CardBody>
           </Card>

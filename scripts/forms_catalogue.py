@@ -1,4 +1,4 @@
-"""The client's audit forms (Shakthi Knitting / One Legal Culture documents) expressed as form-builder structures.
+"""The client's audit forms (Shakthi Knitting / NextGen documents) expressed as form-builder structures.
 
 Every entry in CATALOGUE is one dynamic module with one form, and names the auditor types that work with it.
 Auditor type codes: WATER, ENV, GHG, SAFETY, FIRE, LEGAL, SOCIAL, PAYROLL, TEXSTD, ELEC.

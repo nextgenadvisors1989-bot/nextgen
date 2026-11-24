@@ -11,7 +11,7 @@ export default async function AuditorPanelLayout({ children }: { children: React
       user={context.topbar}
       notifications={context.notifications}
       unreadCount={context.unreadCount}
-      counts={counts}
+      counts={{ ...counts, alsoVerifier: user.roles.some((role) => role.slug === 'verifier') }}
     >
       {children}
     </AuditorLayout>
