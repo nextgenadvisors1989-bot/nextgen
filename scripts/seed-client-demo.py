@@ -263,6 +263,8 @@ step("5. The audits (two auditors on one company)")
 ASSIGNMENTS = [
     ("Demo: Fire safety and statutory document audit", auditor_id, int(team_user["id"]), "Statutory registers, fire safety, welfare amenities and the documents in the Audit Documents checklist."),
     ("Demo: Water, waste and permit audit", team_id, int(verifier_user["id"]), "Hazardous waste records, the work permits in use and the effluent treatment plant."),
+    ("Demo: Labour law and payroll audit", auditor_id, int(verifier_user["id"]), "Wage registers, leave records, social security returns and the payslips of the last quarter."),
+    ("Demo: Housekeeping and 6S audit", team_id, int(verifier_user["id"]), "Housekeeping, storage, signage and the 6S scores of every department."),
 ]
 assignment = {}
 for title, who, verifies, scope in ASSIGNMENTS:
@@ -278,7 +280,7 @@ for title, who, verifies, scope in ASSIGNMENTS:
         "scope": scope, "instructions": "Demo audit."}))
     assignment[title] = int(data_of(result).get("assignmentId") or result.get("assignmentId"))
     print(f"   assigned: {title}")
-FIRE_AUDIT, WATER_AUDIT = assignment[ASSIGNMENTS[0][0]], assignment[ASSIGNMENTS[1][0]]
+FIRE_AUDIT, WATER_AUDIT, LABOUR_AUDIT, SIXS_AUDIT = (assignment[a[0]] for a in ASSIGNMENTS)
 admin.send("POST", "/api/admin/capar/management/suggest", {})
 
 # ── the records ─────────────────────────────────────────────────────────────────────
@@ -486,36 +488,35 @@ if added:
     print(f"   {added} records entered and verified by the employer")
 
 step("10b. Payroll for last month: salary structures, attendance, payroll run, payslips published to the employees")
-first_of_month = TODAY.replace(day=1)
-last_month_end = first_of_month - timedelta(days=1)
-month, year = last_month_end.month, last_month_end.year
-employees = [e for e in rows(admin.send("GET", f"/api/admin/employees?employer_id={employer_id}&limit=100")[1]) if int(e.get("employer_id", employer_id) or employer_id) == employer_id]
-for employee in employees:
-    basic = float(employee.get("basic_salary") or 15000)
-    status, body = admin.send("POST", "/api/admin/payroll/structures", {
-        "employee_id": int(employee["id"]), "structure_name": "Standard wage structure", "effective_from": iso(-400), "basic": basic, "da": round(basic * 0.25), "hra": round(basic * 0.2),
-        "ta": 500, "pa": 300, "ea": 200, "npba": 100, "other_allowances": 400, "wage_type": "Per Month", "pf_applicable": basic <= 21000, "esi_applicable": basic <= 21000,
-        "pt_state": "Tamil Nadu", "lwf_applicable": True, "revision_reason": "Initial structure"})
-admin.send("PUT", "/api/admin/payroll/attendance", {"employer_id": employer_id, "month": month, "year": year, "default_status": "Present"})
-if employees:
-    admin.send("POST", "/api/admin/payroll/attendance", {"employee_id": int(employees[-1]["id"]), "attendance_date": f"{year}-{month:02d}-12", "status": "Absent", "remarks": "Unauthorised absence"})
-admin.send("POST", "/api/admin/payroll/leave/ledger", {"employer_id": employer_id, "year": year})
-status, body = admin.send("GET", f"/api/admin/payroll?employer_id={employer_id}&month={month}&year={year}&limit=5")
-run_row = next((r for r in rows(body) if int(r.get("month", 0)) == month and int(r.get("year", 0)) == year and int(r.get("employer_id", employer_id)) == employer_id), None)
-if run_row:
-    print(f"   payroll run {month}/{year} already there ({run_row.get('status')})")
-else:
-    status, body = admin.send("POST", "/api/admin/payroll", {"employer_id": employer_id, "month": month, "year": year, "calculation_notes": f"{last_month_end.strftime('%B %Y')} payroll"})
-    run_id = (data_of(body).get("id") if status in (200, 201) else None)
-    if not run_id:
-        print(f"   ! payroll run not created ({status}): {body.get('message') if isinstance(body, dict) else body}")
+last_month_end = (TODAY.replace(day=1) - timedelta(days=1))
+for month, year in ((last_month_end.month, last_month_end.year), (TODAY.month, TODAY.year)):
+    employees = [e for e in rows(admin.send("GET", f"/api/admin/employees?employer_id={employer_id}&limit=100")[1]) if int(e.get("employer_id", employer_id) or employer_id) == employer_id]
+    for employee in employees:
+        basic = float(employee.get("basic_salary") or 15000)
+        status, body = admin.send("POST", "/api/admin/payroll/structures", {
+            "employee_id": int(employee["id"]), "structure_name": "Standard wage structure", "effective_from": iso(-400), "basic": basic, "da": round(basic * 0.25), "hra": round(basic * 0.2),
+            "ta": 500, "pa": 300, "ea": 200, "npba": 100, "other_allowances": 400, "wage_type": "Per Month", "pf_applicable": basic <= 21000, "esi_applicable": basic <= 21000,
+            "pt_state": "Tamil Nadu", "lwf_applicable": True, "revision_reason": "Initial structure"})
+    admin.send("PUT", "/api/admin/payroll/attendance", {"employer_id": employer_id, "month": month, "year": year, "default_status": "Present"})
+    if employees:
+        admin.send("POST", "/api/admin/payroll/attendance", {"employee_id": int(employees[-1]["id"]), "attendance_date": f"{year}-{month:02d}-12", "status": "Absent", "remarks": "Unauthorised absence"})
+    admin.send("POST", "/api/admin/payroll/leave/ledger", {"employer_id": employer_id, "year": year})
+    status, body = admin.send("GET", f"/api/admin/payroll?employer_id={employer_id}&month={month}&year={year}&limit=5")
+    run_row = next((r for r in rows(body) if int(r.get("month", 0)) == month and int(r.get("year", 0)) == year and int(r.get("employer_id", employer_id)) == employer_id), None)
+    if run_row:
+        print(f"   payroll run {month}/{year} already there ({run_row.get('status')})")
     else:
-        for path, payload in ((f"/api/admin/payroll/{run_id}/calculate", {}), (f"/api/admin/payroll/{run_id}/status", {"status": "Approved", "note": "Checked and approved"}),
-                              (f"/api/admin/payroll/{run_id}/generate", {}), (f"/api/admin/payroll/{run_id}/publish", {})):
-            status, body = admin.send("POST", path, payload)
-            if status not in (200, 201):
-                print(f"   ! {path.rsplit('/', 1)[1]} ({status}): {body.get('message') if isinstance(body, dict) else body}")
-        print(f"   payroll run {month}/{year} calculated, approved, payslips generated and published")
+        status, body = admin.send("POST", "/api/admin/payroll", {"employer_id": employer_id, "month": month, "year": year, "calculation_notes": f"{date(year, month, 1).strftime('%B %Y')} payroll"})
+        run_id = (data_of(body).get("id") if status in (200, 201) else None)
+        if not run_id:
+            print(f"   ! payroll run not created ({status}): {body.get('message') if isinstance(body, dict) else body}")
+        else:
+            for path, payload in ((f"/api/admin/payroll/{run_id}/calculate", {}), (f"/api/admin/payroll/{run_id}/status", {"status": "Approved", "note": "Checked and approved"}),
+                                  (f"/api/admin/payroll/{run_id}/generate", {}), (f"/api/admin/payroll/{run_id}/publish", {})):
+                status, body = admin.send("POST", path, payload)
+                if status not in (200, 201):
+                    print(f"   ! {path.rsplit('/', 1)[1]} ({status}): {body.get('message') if isinstance(body, dict) else body}")
+            print(f"   payroll run {month}/{year} calculated, approved, payslips generated and published")
 
 step("11. CAPAR report from the findings to the closing signatures")
 env = dict(os.environ, AUDITOR_EMAIL=LOGIN["auditor"], AUDITOR_PASSWORD=DEMO_PASSWORD, EMPLOYER_EMAIL=LOGIN["employer"], EMPLOYER_PASSWORD=DEMO_PASSWORD,
@@ -524,6 +525,172 @@ run = subprocess.run([sys.executable, str(HERE / "seed-live-demo-report.py")], e
 print("   " + "\n   ".join((run.stdout or "").strip().splitlines()[-4:]))
 if run.returncode != 0:
     print("   ! the CAPAR journey stopped:", (run.stderr or "").strip()[-300:])
+
+step("11b. Every other module gets a record (compliance documents, leave, attendance, audit documents, invoice, groundwater NOC, audit reports, one report waiting)")
+from seed_lib import make_pdf  # noqa: E402
+
+
+def soft(label, status, body, expect=(200, 201)):
+    """These extra records are best-effort: a refusal is printed, the rest of the demo goes on."""
+    if status in expect:
+        return True
+    print(f"   ! {label}: HTTP {status} {(body.get('message') if isinstance(body, dict) else body) or ''}")
+    return False
+
+
+# -- compliance documents of the company (licences, registrations, certificates) with a PDF each
+status, body = admin.send("GET", f"/api/admin/compliance/documents?employer_id={employer_id}&limit=50")
+have = len([d for d in rows(body) if int(d.get("employer_id", employer_id) or employer_id) == employer_id]) if status == 200 else 0
+if have >= 4:
+    print(f"   compliance documents: {have} already there")
+else:
+    made = 0
+    for index, (name, kind, authority, expires, validity) in enumerate([
+            ("Factory Licence", "Licence", "Inspector of Factories", 400, 730), ("PF Establishment Registration", "Registration", "EPFO Regional Office", None, None),
+            ("ESI Registration", "Registration", "ESIC Sub-Regional Office", None, None), ("Fire NOC", "Certificate", "Tamil Nadu Fire & Rescue Services", 24, 365),
+            ("Boiler Inspection Certificate", "Certificate", "Directorate of Boilers", 60, 365), ("Factory Insurance Policy", "Insurance", "New India Assurance", 150, 365)]):
+        number = f"DEMO/{name[:3].upper()}/2026/{100 + index}"
+        status, body = admin.send("POST", "/api/admin/compliance/documents", {
+            "employer_id": employer_id, "document_name": name, "document_type": kind, "issuing_authority": authority, "document_number": number,
+            "renewal_responsibility": "HR Manager", "remind_days_before": 30, "issue_date": iso(expires - validity) if expires is not None else iso(-500),
+            "expiry_date": iso(expires) if expires is not None else None, "fee_amount": 1500 + index * 750, "notes": "Demo record.", "is_verified": index % 2 == 0})
+        if soft(f"document {name}", status, body):
+            made += 1
+            doc_id = data_of(body).get("documentId") or body.get("documentId")
+            if doc_id:
+                admin.upload(f"{name.lower().replace(' ', '-')}.pdf", make_pdf(name, [f"Issued by: {authority}", f"Number: {number}", f"Valid until: {iso(expires) if expires is not None else 'Perpetual'}"]),
+                             "COMPLIANCE_DOCUMENT", int(doc_id), name)
+    print(f"   {made} compliance documents added")
+
+# -- leave: the employee applies, the HR manager decides
+S = {"employee": Session((LOGIN["employee"], DEMO_PASSWORD))}
+S["employee"].login()
+status, body = S["employee"].send("GET", "/api/employee/leave?limit=5")
+if status == 200 and rows(body):
+    print("   leave: already there")
+else:
+    status, body = S["employee"].send("GET", "/api/employee/leave/types")
+    types_ = rows(body) or (body.get("types") if isinstance(body, dict) else []) or []
+    if types_:
+        type_id = int(types_[0].get("id") or types_[0].get("value"))
+        soft("leave request", *S["employee"].send("POST", "/api/employee/leave", {"leave_type_id": type_id, "date_from": iso(9), "date_to": iso(10), "reason": "Family function"}))
+        soft("second leave request", *S["employee"].send("POST", "/api/employee/leave", {"leave_type_id": type_id, "date_from": iso(20), "date_to": iso(20), "reason": "Bank work"}))
+        pending = rows(E.send("GET", "/api/employer/leave?status=Pending&limit=20")[1])
+        if pending:
+            soft("leave decision", *E.send("POST", f"/api/employer/leave/{pending[-1]['id']}/decision", {"decision": "approve", "approver_comments": "Approved"}))
+        print(f"   leave: {len(pending)} request(s) filed, the HR manager approved one")
+    else:
+        print("   ! leave types are not set up on this site; leave skipped")
+
+# -- attendance of this month too (last month was done with the payroll)
+soft("attendance this month", *admin.send("PUT", "/api/admin/payroll/attendance", {"employer_id": employer_id, "month": TODAY.month, "year": TODAY.year, "default_status": "Present"}))
+
+# -- Audit Documents: the company's document pack is submitted and the auditor downloads it
+checklist = data_of(admin.send("GET", f"/api/evidence/employers/{employer_id}")[1])
+if checklist.get("sections"):
+    if not checklist.get("latest"):
+        for item in [i for section in checklist["sections"] for i in section["items"]][:8]:
+            admin.send("PUT", f"/api/evidence/employers/{employer_id}/items/{item['id']}", {"status": "Provided", "reference_no": f"DEMO-{item['id']}", "valid_until": "", "notes": "Demo record"})
+        soft("submit the document pack", *admin.send("POST", f"/api/evidence/employers/{employer_id}/submit", {"note": "Documents for the audit"}))
+        checklist = data_of(admin.send("GET", f"/api/evidence/employers/{employer_id}")[1])
+    if checklist.get("latest") and not checklist.get("downloaded_at"):
+        sessions["auditor"].send("GET", f"/api/pdf/evidence-pack/{checklist['latest']['id']}", raw=True)
+    print("   audit documents: the pack is submitted and downloaded by the auditor")
+
+# -- billing: an invoice to the company, issued, part paid
+status, body = admin.send("GET", f"/api/admin/billing/invoices?search=Demo%20Industries&limit=5")
+if status == 200 and rows(body):
+    print("   invoice: already there")
+else:
+    status, body = admin.send("POST", "/api/admin/billing/invoices", {
+        "employer_id": employer_id, "buyer_name": "Demo Industries Private Limited", "buyer_address": "21, Industrial Estate, Coimbatore, Tamil Nadu 641021", "buyer_state_code": "33",
+        "invoice_date": iso(-10), "payment_terms": "Net 30 days", "place_of_supply": "Tamil Nadu", "notes": "Statutory compliance audit and safety audit, 2 days on site.",
+        "items": [{"description": "Statutory compliance audit (on site, per day)", "sac_code": "998311", "quantity": 2, "uom": "Days", "unit_price": 8000, "gst_percent": 18},
+                  {"description": "Fire safety audit report", "sac_code": "998311", "quantity": 1, "uom": "Nos", "unit_price": 9500, "gst_percent": 18}]})
+    if soft("invoice", status, body):
+        invoice_id = int(data_of(body).get("id") or body.get("id") or 0)
+        if invoice_id:
+            admin.send("POST", f"/api/admin/billing/invoices/{invoice_id}/issue", {})
+            admin.send("POST", f"/api/admin/billing/invoices/{invoice_id}/payments", {"amount": 10000, "payment_date": iso(-3), "mode": "Cheque", "reference": "Cheque 004512"})
+            print("   invoice issued and part paid")
+
+# -- Groundwater NOC with meters and weekly readings
+status, body = admin.send("GET", f"/api/water-noc?employer_id={employer_id}&limit=5")
+if status == 200 and [n for n in rows(body) if str(n.get("noc_number", "")).startswith("DEMO")]:
+    print("   groundwater NOC: already there")
+else:
+    status, body = admin.send("POST", "/api/water-noc", {
+        "employer_id": employer_id, "unit_id": unit_id, "noc_number": "DEMO/WRD/GW/2026/0101", "issuing_authority": "Water Resources Department, SG & SWRDC, Chennai",
+        "issue_date": iso(-130), "expiry_date": iso(965), "approved_quantity_lpd": 50000, "purpose": "Domestic", "purpose_domestic_lpd": 20000, "purpose_gardening_lpd": 5000,
+        "purpose_other_lpd": 25000, "well_type": "Bore well", "well_depth_m": 198, "well_diameter_in": 6.5, "pump_hp": 5, "pumping_hours_per_day": 6, "abstraction_structures": 1, "standard_conditions": True})
+    if soft("groundwater NOC", status, body):
+        noc_id = int(data_of(body).get("id") or body.get("id"))
+        status, body = admin.send("GET", f"/api/water-noc/{noc_id}")
+        for condition in (data_of(body).get("conditions") or [])[:6]:
+            admin.send("PATCH", f"/api/water-noc/{noc_id}/conditions/{condition['id']}", {"compliance": "Compliant", "remarks": "Checked on site."})
+        for name, source, counts, base in (("Borewell O/P (M1)", "Borewell", True, 41250.0), ("RO feed water", "RO Feed", False, 12800.0)):
+            status, body = admin.send("POST", f"/api/water-noc/{noc_id}/meters", {"name": name, "source": source, "reading_unit": "KL", "counts_toward_noc": counts})
+            if soft(f"meter {name}", status, body):
+                meter_id = int(data_of(body).get("id") or body.get("id"))
+                for week in range(8):
+                    admin.send("POST", f"/api/water-noc/{noc_id}/meters/{meter_id}/readings", {"reading_date": iso(-7 * (7 - week)), "reading_value": round(base + week * (45 if counts else 20) * 7, 1)})
+        print("   groundwater NOC with 2 meters and 8 weekly readings")
+
+# -- audit reports (the report register: auditor -> verifier): one approved, one rejected, one waiting
+BODY = {"executive_summary": "The audit covered the statutory registers, fire safety and the welfare amenities of the Main Plant. Most points are in order; the findings below need action.",
+        "methodology": "Document sampling for six months, a walk through the plant with the Safety Officer and short interviews with workers.",
+        "observations": ["Emergency exit in the production hall was partly blocked.", "Fire extinguisher inspection tags were faded."],
+        "regulatory_references": ["Factories Act 1948", "Tamil Nadu Factories Rules 1950"], "recommendations": ["Keep every exit clear.", "Renew the inspection tags and display the next due date."]}
+
+
+def audit_report(title, assignment_id, who, verifier, decision):
+    status, body = admin.send("GET", f"/api/admin/audit-reports?search={title.replace(' ', '%20')}&limit=5")
+    if status == 200 and any(str(r.get("audit_title")) == title for r in rows(body)):
+        return f"   audit report '{title}': already there"
+    status, body = admin.send("POST", "/api/admin/audit-reports", {"assignment_id": assignment_id, "employer_id": employer_id, "unit_id": unit_id, "auditor_id": who, "audit_title": title,
+                                                                    "report_type": "AUDIT", "audit_date": iso(-2), "audit_period_from": iso(-30), "audit_period_to": iso(-2),
+                                                                    "score_obtained": 78, "score_max": 100, "body": BODY})
+    if not soft(f"audit report {title}", status, body):
+        return ""
+    rid = int(data_of(body).get("reportId") or body.get("reportId") or 0)
+    status, body = admin.send("POST", f"/api/admin/audit-reports/{rid}/submit", {"change_summary": "Initial submission for verification", "verifier_id": verifier["id"], "send_to_verifier": True})
+    if not soft(f"submit {title}", status, body):
+        return ""
+    if decision:
+        reviewer = sessions["team"] if int(verifier["id"]) == int(team_user["id"]) else sessions["verifier"]
+        payload = {"action": decision, "comments": "Checked against the records and the photographs of the visit; the findings are correctly described."}
+        if decision != "approve":
+            payload.update({"reason": "The effluent test report is missing; attach it and resubmit."})
+        soft(f"review {title}", *reviewer.send("POST", f"/api/verifier/reports/{rid}/review", payload))
+    return f"   audit report '{title}': {'approved' if decision == 'approve' else 'rejected' if decision == 'reject' else 'waiting for the verifier'}"
+
+
+for line in (audit_report("Demo: Fire safety audit - report register" + SUFFIX, FIRE_AUDIT, auditor_id, team_user, "approve"),
+             audit_report("Demo: Water and waste audit - first report" + SUFFIX, WATER_AUDIT, team_id, verifier_user, "reject"),
+             audit_report("Demo: Labour law and payroll audit - report" + SUFFIX, LABOUR_AUDIT, auditor_id, verifier_user, "approve"),
+             audit_report("Demo: Housekeeping and 6S audit - report" + SUFFIX, SIXS_AUDIT, team_id, verifier_user, None)):
+    if line:
+        print(line)
+
+# -- one form report waiting for the verifier, so the signature pad can be shown live
+title = "Demo: Form 3 - waiting for verification" + SUFFIX
+sid, state = existing_submission(sessions["team"], title)
+if not sid:
+    T = sessions["team"]
+    form = form_id_of(T, "Form 3 - Records of Hazardous and Other Wastes")
+    sid = start(T, form, title, WATER_AUDIT)
+    keys = {f["label"]: f["field_key"] for s_ in structure_of(T, form)["sections"] for f in s_["fields"]}
+    values = {keys["Name of the Facility"]: "Demo Industries Private Limited", keys["Address of the Facility"]: "21, Industrial Estate, Coimbatore, Tamil Nadu 641021",
+              keys["Authorisation No."]: "DEMO-HW-2026-001", keys["Date of Issue"]: iso(-200), keys["Year (April to March)"]: "2026-2027"}
+    values.update(sign_values(T, sid, "auditor", 51))
+    T.send("PUT", f"/api/auditor/submissions/{sid}", {"values": values, "table_rows": {"wastes_handled": [{"waste": "Schedule I / 33.1 Empty barrels contaminated with hazardous chemicals", "process": "Chemical handling",
+                                                                                                         "source": "Dyeing unit", "waste_type": "Recyclable", "storage": "Covered shed", "transport": "Authorised recycler", "annual_quantity": "0.5 MT/Annum"}],
+                                                                  "monthly_records": [{"month": TODAY.strftime("%b-%y"), "date": iso(-1), "waste": "Schedule I / 33.1", "quantity": 0.02, "stock": 0.02, "destined_to": "Authorised recycler",
+                                                                                       "manifest": "MAN/2026/52", "vehicle": "TN 38 AB 4521", "transporter": "Kovai Green Transport"}]}})
+    soft("submit the waiting Form 3", *T.send("POST", f"/api/auditor/submissions/{sid}/submit", {"send_to_reviewer": True}))
+    print(f"   Form 3 #{sid} is waiting for the verifier (open Module Submissions and approve it with the signature pad)")
+else:
+    print(f"   waiting Form 3 #{sid} already there ({state})")
 
 step("12. The reports (every record's PDF is fetched)")
 for label, sid, owner in RECORDS:
